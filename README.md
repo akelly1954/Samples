@@ -4,13 +4,15 @@
 
 The sources are organized in a source tree which is built using cmake (minimum version 3.10). 
 
-New work is checked into the **dev** branch. The **main** branch is stable. The **master** branch is only accessible to the owner of the repository.  
+New work is checked into the **dev** branch. The **main** branch is stable. 
 
-The **source** directory is where all the sources, build script(s) and CMake rlated source files are. (CMake runtime files are created elsewhere - see the **build** directory below).
+The **source** directory is where all the sources, build script(s) and CMake rlated source files are. (CMake runtime files are created elsewhere - see the **build** directory mentioned below).
 
-After running the **linux-build.bash** script, the **build** directory is created (at the same level as the **source** directory).  It contains **ALL** the build artifacts.  
+The script **base-linux-build.bash** in the **source** directory builds **everything linux**. After running it, the **build** directory is created (if it does not exist) at the same level as the **source** directory (as in **./source/../build/**) and it contains **ALL** the build artifacts.  
 
-The **build** directory can always be removed without affecting any source files.  The **source** directory never has any build-related artifacts created within it.
+Again, this is an "out of source" build environment.  The **build** directory can always be removed without affecting any source files.  The **source** directory never has any build-related artifacts created within it.  To clean everything, simply remove the **build** directory (**./source/../build**). 
+
+The various other directories that are base directories for the various projects included under **source**, each has its own **linux-build.bash** script which builds that particular project.  
 
 These sources have been built and tested on Debian 11 (bullseye), with 
 Eclipse version 4.21,
@@ -19,10 +21,15 @@ and cmake 3.18.4.
 
 The Eclipse IDE is not required. The build scripts can be run (with the 
 right flags) just using g++, cmake, and (optionally) your favorite IDE if it's supported 
-by the CMake version used for the build.
+by the CMake version used for the build. 
+
+### Current deficiencies:
 
 Currently the Windows' WIN32 configuration has not been built and tested yet. 
 This may be added in the future.
+
+The **base-linux-build.bash** script is currently hardcoded to produce **eclipse/make** projects.  Many other options are available courtesy of **cmake**, and this will be accommodated in the future (complete with a --help flag which does not exist right now).
+
 
 ## After Building: ##
 
