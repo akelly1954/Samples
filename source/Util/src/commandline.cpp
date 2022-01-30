@@ -28,7 +28,7 @@ void Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
     auto it = cmdmap.find(flag);
     if (it != cmdmap.end() && it->second.length() > 0)
     {
-        var = atoi(it->second.c_str());
+        var = strtol(it->second.c_str(), NULL, 10);
     }
 }
 
@@ -46,7 +46,7 @@ void Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
     auto it = cmdmap.find(flag);
     if (it != cmdmap.end() && it->second.length() > 0)
     {
-        var = atof(it->second.c_str());
+    	var = strtod(it->second.c_str(), NULL);
     }
 }
 
