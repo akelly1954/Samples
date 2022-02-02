@@ -27,6 +27,11 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+//
+// At the end of the file there is an ifdef'ed section showing how to run
+// this program from the command line.
+//
+
 static int intParam1 = -1;
 static long longParam1 = -1;
 static long long longlongParam1 = -1;

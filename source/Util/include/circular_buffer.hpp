@@ -15,7 +15,7 @@
 //
 // Reference: https://en.wikipedia.org/wiki/Circular_buffer
 //
-// See example of use at the end of the file.
+// For example of use, see the main program in main_programs/main_circular_buffer.cpp
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
