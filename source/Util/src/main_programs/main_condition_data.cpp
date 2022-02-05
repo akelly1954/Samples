@@ -3,7 +3,9 @@
 
 #include <thread>
 #include <vector>
+#include <utility>
 #include <algorithm>
+#include <mutex>
 #include <string>
 #include <sstream>
 #include <ostream>
@@ -52,9 +54,14 @@
 // $ LD_LIBRARY_PATH=".:" ./main_condition_data 60
 //
 // By default, the output is sorted chronologically (when each thread finishes its work).
-// To sort the output by the thread number, pipe the output:                              | sort -k3 -n
-// To sort the output by the milliseconds' delay, pipe the output:                        | sort -k7 -n
-// To sort the output by the data obtained from the condition variable, pipe the output:  | sort -k10 -n
+// To sort the output by the thread number, pipe the output:                   | sort -k2 -n
+// To sort the output by the milliseconds' delay, pipe the output:             | sort -k6 -n
+// To sort the output by the previous thread number from the condition variable, pipe the output:
+//                                                                             | sort -k11 -n
+//
+// NOTE FROM THE AUTHOR:  I got the program to fail on a std::bad_alloc at somewhere between
+// 30,000 and 40,000 threads running (succeeded at 30,000, failed on 40,000).  Very specific
+// to the system that was used of course (8 core i7 cpu, 32Gb mem, Debian 11 linux).  YMMV.
 //
 
 void Usage(std::ostream& strm, std::string command)
@@ -83,6 +90,7 @@ int parse(int argc, const char *argv[])
 	return strtol(argv[1], NULL, 10);
 }
 
+
 int main(int argc, const char *argv[])
 {
 	using namespace Util;
@@ -102,10 +110,19 @@ int main(int argc, const char *argv[])
 
     std::cerr << "Number of threads chosen: " << numthreads << std::endl;
 
-    std::vector<int> sleeptimes;
-    condition_data<int> condvar(0); // loads 0 as the initial data
+	// Used to lock the vector of threadData pair<> results below
+	std::mutex m_ready_mutex;
 
-    for (int i = 0; i<numthreads; i++)
+	// The unit of data accumulated in each thread
+    typedef std::pair<int, std::string> threadData;
+
+    // accumulation of result pairs protexted by m_ready_mutex
+    std::vector<threadData> resultPairsVector;
+
+    std::vector<int> sleeptimes;
+    condition_data<threadData> condvar(threadData(0, std::string("Initial - this is not from a thread")));
+
+    for (int i = 0; i < numthreads; i++)
     {
         sleeptimes.push_back(Utility::get_rand(300));
     }
@@ -116,38 +133,54 @@ int main(int argc, const char *argv[])
     // First create all the threads, enter them, and then wait
     // for the go signal from the main program.
     for (int i = 1; i <= numthreads; i++) {
-    			    workers.push_back( std::thread([i,sleeptimes,&condvar]()
+    			    workers.push_back( std::thread([i,sleeptimes,&condvar, &m_ready_mutex, &resultPairsVector]()
 					{
 						int slp = sleeptimes[i-1];
+
+						// The point behind this sleep is for all threads to be started
+						// and initialized before continuing
 						std::this_thread::sleep_for(std::chrono::milliseconds(slp));
 
 						// After sleeping for various times, all threads wait for the main()
 						// function to see if they should start. The condition variable allowing
-						// them to continue is set by the main() function after all threads have
+						// them to continue is set by the main() function once, after all threads have
 						// been initialized.
 						condvar.wait_for_ready();
 
 						// It's ready - get the data and reset it to a new value
-						int oldvalue = condvar.get_data();
+						threadData oldvalue = condvar.get_data();
 
 						//using this so that each thread output comes out on a single line
 						std::ostringstream lostr;
-						lostr << "thread function " << i << "  --  sleeping for " << slp << " -- got " << oldvalue << "\n";
-						std::cout << lostr.str() << std::flush;
+						lostr << "thread " << i << " slept " << slp <<
+								 " msec -- from thread " <<
+								 oldvalue.first << " = \"" << oldvalue.second.substr(0, 74) << "...";
+						threadData newvalue = threadData(i, lostr.str());
+
+						{ // scope braces for the lock
+							std::lock_guard<std::mutex> lock(m_ready_mutex);
+							resultPairsVector.push_back(newvalue);
+						}
 
 						// And set it free
-						condvar.send_ready(i);
+						condvar.send_ready(newvalue);
 					}));
     }
     std::cerr << "main thread: Sending ready message to all threads\n";
 
     // All threads have been initialized.  Set the condition variable loose....
-    condvar.send_ready(0);
+    condvar.send_ready(condvar.get_data());
 
     // wait for the last condition to be met...
     std::this_thread::sleep_for(std::chrono::milliseconds(400));
     condvar.wait_for_ready();
-    std::cerr << "Last condition data: " << condvar.get_data() << std::endl;
+    std::cerr << "Last condition thread done" << std::endl;
+
+    for (auto & element: resultPairsVector)
+    {
+		std::lock_guard<std::mutex> lock(m_ready_mutex);
+    	std::cout << "Thread " << element.first << ": \"" << element.second << "\"" << std::endl;
+    }
 
     std::for_each(workers.begin(), workers.end(), [](std::thread &t)
     {
