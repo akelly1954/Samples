@@ -86,8 +86,6 @@ bool parse(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-    using namespace std;
-
     std::string argv0 = const_cast<const char *>(argv[0]);
 
     // If no parameters were supplied, or help was requested:

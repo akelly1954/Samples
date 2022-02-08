@@ -8,7 +8,8 @@ file(GLOB SOURCEFILES "src/*.cpp")
 file(GLOB HEADERS "include/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} )
 
-include_directories( ${Util_HEADERS} ${UtilCommon_HEADERS} )
+#######     include_directories( ${Util_HEADERS} ${UtilCommon_HEADERS} )
+include_directories( ${Util_HEADERS} )
 
 add_library( ${Util} ${LIBTYPE} ${SOURCES} )
 target_link_libraries( ${Util}
@@ -35,7 +36,7 @@ install(TARGETS main_circular_buffer DESTINATION localrun)
 # Command line main
 #
 set (main_commandline "main_commandline${DBG}")
-add_executable (main_commandline src/main_programs/main_commandline.cpp)
+add_executable (main_commandline src/main_programs/main_commandline.cpp ${Util_HEADERS})
 target_link_libraries( main_commandline 
                             ${Util_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 

@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include "condition_data.hpp"
 #include "Utility.hpp"
-#include "commandline.hpp"
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
