@@ -32,3 +32,5 @@ else()
     message (STATUS "WINDOWS system detected. - NOT IMPLEMENTED FOR THIS PROJECT YET" )
 endif()
 
+set( TOOLS_INCLUDED:BOOL ON )
+

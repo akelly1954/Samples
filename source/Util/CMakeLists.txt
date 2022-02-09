@@ -8,7 +8,9 @@ file(GLOB SOURCEFILES "src/*.cpp")
 file(GLOB HEADERS "include/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} )
 
-#######     include_directories( ${Util_HEADERS} ${UtilCommon_HEADERS} )
+set ( LIBTYPE "${Util_LIBTYPE}" )
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
+
 include_directories( ${Util_HEADERS} )
 
 add_library( ${Util} ${LIBTYPE} ${SOURCES} )
@@ -47,7 +49,6 @@ install(TARGETS main_commandline DESTINATION localrun)
 #
 # Condition_data main
 #
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 set (main_condition_data "main_condition_data${DBG}")
 add_executable (main_condition_data src/main_programs/main_condition_data.cpp)
 target_link_libraries( main_condition_data 

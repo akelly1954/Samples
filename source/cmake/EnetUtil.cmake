@@ -4,11 +4,11 @@
 #
 cmake_minimum_required(VERSION 3.10)
 
-include (${SampleRoot_DIR}/source/cmake/Util.cmake)
+include (${SampleRoot_DIR}/source/cmake/tools.cmake)
 
 if (NOT WIN32)
     set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
-    set (LIBTYPE "SHARED")
+    set (Enet_LIBTYPE "SHARED")
 
     find_package( Threads )
 else()
@@ -16,5 +16,5 @@ else()
 endif()
 
 set (EnetUtil "EnetUtil${DBG}")
-set (EnetUtil_HEADERS "${SampleRoot_DIR}/source/EnetUtil/include")
+set (EnetUtil_HEADERS "${SampleRoot_DIR}/source/EnetUtil/include" )
 

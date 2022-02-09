@@ -8,7 +8,7 @@ include (${SampleRoot_DIR}/source/cmake/tools.cmake)
 
 if (NOT WIN32)
     set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
-    set (LIBTYPE "SHARED")
+    set (Util_LIBTYPE "SHARED")
 
     find_package( Threads )
 else()

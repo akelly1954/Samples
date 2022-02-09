@@ -40,3 +40,4 @@ namespace EnetUtil {
 std::vector<std::string> get_all_self_mac_addresses();
 
 } // namespace EnetUtil
+

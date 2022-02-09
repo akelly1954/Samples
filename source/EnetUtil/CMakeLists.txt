@@ -8,14 +8,11 @@ file(GLOB SOURCEFILES "src/*.cpp")
 file(GLOB HEADERS "include/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} )
 
-# include_directories( ${EnetUtil_HEADERS} 
-#                      ${EnetUtilCommon_HEADERS} 
-#                      ${Util_HEADERS} 
-#                      ${UtilCommon_HEADERS} 
-#                    )
+set ( LIBTYPE "${Enet_LIBTYPE}" )
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 
 include_directories( ${EnetUtil_HEADERS} 
-                     ${Util_HEADERS} 
+                     ../Util/include
                    )
 
 add_library( ${EnetUtil} ${LIBTYPE} ${SOURCES} )
@@ -27,10 +24,11 @@ install(TARGETS ${EnetUtil} DESTINATION lib)
 install(TARGETS ${EnetUtil} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/EnetUtil)
 
+set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
+
 #
 # EnetEnetUtils main
 #
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 set (main_enet_util "main_enet_util${DBG}")
 add_executable (main_enet_util src/main_programs/main_enet_util.cpp)
 target_link_libraries( main_enet_util 

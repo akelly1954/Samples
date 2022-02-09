@@ -6,13 +6,12 @@ CMAKE_ECLIPSE_VERSION="4.21"
 
 bldpath="../../build"
 rootsrc="`realpath ..`"
+projectname=`basename "$PWD"`
 
 # Make sure the directories are there, or realpath will fail.
 mkdir -p $bldpath
 bldpath="`realpath $bldpath`"
-
 export CXX="/usr/bin/g++"                   # This overcomes a cmake issue
-
 PATH=.:~/bin:/sbin:/usr/sbin:$PATH
 
 ##########################################################################
@@ -165,10 +164,13 @@ cpus="`lscpu | grep '^CPU(s):' | sed 's/.*: *//'`"
 # Set up cmake options
 #
 ################################
+btype="error"
 if [ "$ARG_DEBUG" = "true" ]
 then
+    btype="Debug"
     CMAKE_SET_D="CMAKE_BUILD_TYPE=Debug"
 else
+    btype="Release"
     CMAKE_SET_D="CMAKE_BUILD_TYPE=Release"
 fi
 unset ARG_DEBUG
@@ -184,7 +186,7 @@ unset ARG_CMAKE_GENERATOR
 if [ "$ARG_CLEAN" = "true" ];
 then
     # Notice that this will not remove .cproject or .project
-    for dir in ${bldpath}/include ${bldpath}/lib ${bldpath}/localrun ${bldpath}/bin
+    for dir in ${bldpath}/include/${projectname} ${bldpath}/${projectname}
     do
         echo "Removing the contents of $dir if it exists"
         rm -rf ${dir}/* > /dev/null 2>& 1
@@ -232,7 +234,6 @@ do
     echo +
     echo + cmake -G"\"${CMAKE_SET_G}\"" \\
     echo +       -D"\"${CMAKE_SET_D}\"" \\
-    echo +       -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \\
     echo +       -DCMAKE_SKIP_RPATH=ON \\
     echo +       -DCMAKE_INSTALL_PREFIX:PATH="\"${bldpath}\"" \\
     echo +       -DSampleRoot_DIR:PATH="\"${SampleRoot_DIR}\"" \\
@@ -241,6 +242,10 @@ do
     echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
     #####################################################
+    # This is unneccessary - it's set in tools.cmake.
+    #
+    #     -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+    #
     # These two options are currently set for development.  
     # In production, real paths need to be set instead.
     #
@@ -250,7 +255,6 @@ do
 
     cmake -G"${CMAKE_SET_G}" \
           -D"${CMAKE_SET_D}" \
-          -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
           -DCMAKE_SKIP_RPATH=ON \
           -DCMAKE_SKIP_INSTALL_RPATH=ON \
           -DCMAKE_INSTALL_PREFIX:PATH="${bldpath}" \
@@ -293,24 +297,6 @@ do
             echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             exit 1
         fi
-
-        echo
-        echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        echo + At ${bld}: cmake --build . --target install --config $btype
-        echo +
-        echo + NOTE: YOU MAY GET INSTALL ERRORS IF THERE IS NOTHING TO INSTALL IN THIS PROJECT.
-        echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-        cmake --build . --target install --config $btype
-        ret=$?
-        if [ $ret -ne 0 ]
-        then
-            echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-            echo + At ${bld}: ERROR:    Install Error
-            echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        fi
-        echo "Set LD_LIBRARY_PATH to where the all .so files are, as well as . and export it..." \
-             > ${bldpath}/localrun/REMEMBER_TO_SET_LD_LIBRARY_PATH.txt
     fi
 done
 
