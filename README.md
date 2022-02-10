@@ -1,8 +1,14 @@
 # Samples
 
+# Welcome.  Please Note:
+
+This is work in progress -- I'm uploading my own sources to the repository while ensuring that the code is tested and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to clone and download code (to which you are welcome as per the LICENSE) but am not yet welcoming collaborators. Right now I only have some base libraries that don't really do much.  As soon as I introduce code that does something useful, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.
+
+Thank you.
+
 ## A collection of C++ objects in one or more libraries, and some main programs that utilize those objects.
 
-The sources are organized in a source tree which is built using cmake (minimum version 3.10). 
+The sources are organized in a source tree which is built using cmake (minimum version 3.10). There are (will be) additional README files in the subdirectories going into more detail of how to use the build environment.  
 
 New work is checked into the **dev** branch. The **main** branch is stable. 
 
