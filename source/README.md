@@ -2,13 +2,9 @@
 
 ## The Sources and How To Build Them
 
-A collection of C++ objects in one or more libraries, and some main programs that utilize those objects.
-
-The sources are organized in a source tree which is built using cmake (minimum version 3.10). There are additional README files in the subdirectories (of which this README is one) going into more detail of how to use the build environment.  
-
-New work is checked into the **dev** branch. The **main** branch is stable. 
-
 This directory (**source/**) is where all the sources, build script(s) and CMake rlated source files are. (CMake runtime files are created mostly elsewhere - see the **../build/** directory mentioned below).
+
+**SEE ALSO:** The **README.md** file in the parent folder (**../README.md**).
 
 The script **base-linux-build.bash** in this (**source/**) directory builds **everything linux**. 
 After running it, the **../build/** directory is created (if it does not exist) as a peer to this (**source**)
@@ -18,7 +14,7 @@ directories.  I haven't found (nor looked for, actualy) a way to get it to put t
 they are handled by the **../.gitignore** configuration file, and are safely ignored by git.  I believe that if
 any of these **build/** directories get destroyed by mistake, Eclipse will remake them without complaining.
 
-Again, this is an "out of source" build environment.  The **../build** directory (as well as any of the 
+Again, this is an "out of source" build environment.  The **../build/** directory (as well as any of the 
 various **build/** directories found under this directory) can always be removed 
 without affecting any source files.  
 
@@ -26,11 +22,16 @@ To clean everything, simply rerun the **base-linux-build.bash** script, which fi
 directory and its contents before (re)building everything.  
 
 A word about **eclipse**... it does not handle changes to any of its configuration files (CMakeLists.txt, 
-\*.cmake**, etc) very well.  If you have to modify them (as you do when running any of the ...build.bash files),
+\*.cmake, etc) while it is running very well.  If you have to modify these type of files 
+(as you do when running any of the ...build.bash scripts,
 you might want to do it from the command line without Eclipse running,
-as it will get confused and ask you quite a few questions (about refreshing its files), and then try to recreate
+as it may get confused and ask you quite a few questions (about refreshing its files), and then try to recreate
 its environment (which at least at this time it does not do very well). If this happens, simply close all editor windows
 within eclipse, and shut it down.  Then rerun the **base-linux-build.bash** script again (and don't do it again...)
+
+The other thing about **eclipse**, is that when it comes up, it takes a while for the indexing to do its work.  This means, 
+for example, that when you hover with the mouse over an object name in the source, it may tell you that it does not recognize it
+even though 5 minutes later, it will.  It's just the way it is (for now).
 
 The various other directories that are base directories for the various projects included under **source**, each has its own **linux-build.bash** script which builds that particular project.  
 
@@ -67,12 +68,6 @@ not having a Windows machine).
 
 **../build/include** contains all the .h\* files that are needed when building from an external build environment. 
 
-
-
-
-
-
-
-
+Make sure that in linux, you have the LD_LIBRARY_PATH variable include either **".:"** or **"../lib:"** in order for the runtime environment to find shared libraries that have to be loaded to run any of the executables.  
 
 
