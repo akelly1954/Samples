@@ -2,6 +2,32 @@
 
 scriptname="linux-build.bash"
 
+# Build 3rdpartyLoggerCpp if needed
+
+loggercppdir="3rdparty/LoggerCpp"
+here="$PWD"
+
+cd "$here/$loggercppdir"
+if [ $? -ne 0 ]
+then
+    echo "Could not change directory to $here/$loggercppdir for localbuild.sh"
+    exit 1
+fi
+
+bash localbuild.sh
+if [ $? -ne 0 ]
+then
+    echo "ERROR: build of $loggercppdir failed.  Aborting..."
+    exit 1
+fi
+
+cd "$here"
+if [ $? -ne 0 ]
+then
+    echo "Could not change directory to $here"
+    exit 1
+fi
+
 dlist=""
 lslist="*"
 for dir in $lslist
