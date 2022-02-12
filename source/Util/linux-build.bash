@@ -8,6 +8,12 @@ bldpath="../../build"
 rootsrc="`realpath ..`"
 projectname=`basename "$PWD"`
 
+if [ ! -n "${LoggerCppSource_DIR}" -o ! -d "${LoggerCppSource_DIR}" ]
+then
+    echo ERROR: "LoggerCppSource_DIR is zero length or is not a directory. Aborting..."
+    exit 1
+fi
+
 # Make sure the directories are there, or realpath will fail.
 mkdir -p $bldpath
 bldpath="`realpath $bldpath`"
@@ -235,6 +241,7 @@ do
     echo + cmake -G"\"${CMAKE_SET_G}\"" \\
     echo +       -D"\"${CMAKE_SET_D}\"" \\
     echo +       -DCMAKE_SKIP_RPATH=ON \\
+    echo +       -DLoggerCppSource_DIR:PATH="\"${LoggerCppSource_DIR}\"" \\
     echo +       -DCMAKE_INSTALL_PREFIX:PATH="\"${bldpath}\"" \\
     echo +       -DSampleRoot_DIR:PATH="\"${SampleRoot_DIR}\"" \\
     echo +       -DCMAKE_ECLIPSE_VERSION="\"${CMAKE_ECLIPSE_VERSION}\"" \\
@@ -257,6 +264,7 @@ do
           -D"${CMAKE_SET_D}" \
           -DCMAKE_SKIP_RPATH=ON \
           -DCMAKE_SKIP_INSTALL_RPATH=ON \
+          -DLoggerCppSource_DIR:PATH="${LoggerCppSource_DIR}" \
           -DCMAKE_INSTALL_PREFIX:PATH="${bldpath}" \
           -DSampleRoot_DIR:PATH="${SampleRoot_DIR}" \
           -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" \

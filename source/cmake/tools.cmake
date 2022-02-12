@@ -1,6 +1,8 @@
 ﻿#
 # Need CMAKE 3.10 and above to use --std=c++17
-# On entry, relies on ${SampleRoot_DIR} to be set to the path for the repository root.
+# On entry, relies on ${SampleRoot_DIR} to be set to the path for the repository root
+# and ${LoggerCppSource_DIR} to be set to the LoggerCpp "src/" directory path (where include/ 
+# can be found).
 #
 cmake_minimum_required(VERSION 3.10)
 
@@ -12,6 +14,7 @@ if (NOT WIN32)
     set (DBG "")
     set( LINKOPTIONS "stdc++fs" )
 
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${LoggerCppSource_DIR}/include")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/lib/gcc/x86_64-linux-gnu/10/include")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/include/x86_64-linux-gnu")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/include/c++/10")
@@ -33,4 +36,10 @@ else()
 endif()
 
 set( TOOLS_INCLUDED:BOOL ON )
+
+set( LoggerCpp_HEADERS "${LoggerCppSource_DIR}/include" )
+
+set( LoggerCpp_BASE "${SampleRoot_DIR}/source/3rdparty/LoggerCpp" )
+set( LoggerCpp_LIB "${LoggerCpp_BASE}/build/libLoggerCpp.a")
+set( LoggerCpp_LIBTYPE "STATIC")
 

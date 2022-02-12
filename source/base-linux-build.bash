@@ -4,7 +4,17 @@ scriptname="linux-build.bash"
 
 # Build 3rdpartyLoggerCpp if needed
 
+# TODO: have to push this down to the various linux-build.bash scripts
 loggercppdir="3rdparty/LoggerCpp"
+loggercppsrcdir="SRombauts-LoggerCpp-a0868a8"
+export LoggerCppSource_DIR="`realpath $loggercppdir/$loggercppsrcdir`"
+
+if [ ! -d "${LoggerCppSource_DIR}" ]
+then
+    echo "ERROR: Could not find directory ${LoggerCppSource_DIR}"
+    exit 1
+fi
+
 here="$PWD"
 
 cd "$here/$loggercppdir"
@@ -89,6 +99,7 @@ do
     fi
 
     echo + at: `pwd`
+    echo + "LoggerCppSource_DIR = ${LoggerCppSource_DIR}"
     echo + Running bash "$scriptname" -c -d ${gflag} eclipsemake
     bash "$scriptname" -c -d ${gflag} eclipsemake
     if [ $? -ne 0 ]
@@ -114,6 +125,7 @@ echo +
 echo + NOTE: YOU MAY GET INSTALL ERRORS IF THERE IS NOTHING TO INSTALL IN THIS PROJECT.
 echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+echo + "LoggerCppSource_DIR = ${LoggerCppSource_DIR}"
 cmake --build . --target install --config $buildtype
 ret=$?
 if [ $ret -ne 0 ]
