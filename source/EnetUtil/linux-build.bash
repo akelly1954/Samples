@@ -1,8 +1,20 @@
 #!/bin/bash
 
-SampleRoot_DIR="`realpath ../..`"
+export basepath="`realpath ../..`"
+envpath="$basepath/source/shell_env/bash_env.sh"
+if [ ! -s "$envpath" ]
+then
+    echo + "ERROR: Cannot find $envpath. Aborting..."
+    exit 1
+fi
 
-CMAKE_ECLIPSE_VERSION="4.21"
+. "$envpath"
+
+if [ ! -n "${LoggerCppSource_DIR}" -o ! -d "${LoggerCppSource_DIR}" ]
+then
+    echo "ERROR: Could not find directory ${LoggerCppSource_DIR}"
+    exit 1
+fi
 
 bldpath="../../build"
 rootsrc="`realpath ..`"

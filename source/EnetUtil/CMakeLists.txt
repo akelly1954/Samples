@@ -5,7 +5,7 @@ project (EnetUtil)
 include (${SampleRoot_DIR}/source/cmake/EnetUtil.cmake)
 
 file(GLOB SOURCEFILES "src/*.cpp")
-file(GLOB HEADERS "include/*.h*")
+file(GLOB HEADERS "include/*.h*" "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} )
 
 set ( LIBTYPE "${Enet_LIBTYPE}" )
@@ -13,6 +13,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 
 include_directories( ${EnetUtil_HEADERS} 
                      ../Util/include
+                     ${LoggerCpp_HEADERS}
                    )
 
 add_library( ${EnetUtil} ${LIBTYPE} ${SOURCES} )
@@ -34,6 +35,7 @@ add_executable (main_enet_util src/main_programs/main_enet_util.cpp)
 target_link_libraries( main_enet_util 
                             ${EnetUtil_LIB}
                             ${Util_LIB}
+                            ${LoggerCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}
                      )

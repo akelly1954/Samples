@@ -7,7 +7,21 @@
 # Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
 # or copy at http://opensource.org/licenses/MIT)
 
-srcdir=SRombauts-LoggerCpp-a0868a8
+export basepath="`realpath ../../..`"
+envpath="$basepath/source/shell_env/bash_env.sh"
+if [ ! -s "$envpath" ]
+then
+    echo + "ERROR: Cannot find shell environment file $envpath. Aborting..."
+    exit 1
+fi
+
+. "$envpath"
+
+if [ ! -d "${LoggerCppSource_DIR}" ]
+then
+    echo "ERROR: Could not find directory ${LoggerCppSource_DIR}"
+    exit 1
+fi
 
 # this prevents doxygen from running every time for some reason...
 export TRAVIS=1
@@ -15,10 +29,10 @@ export TRAVIS=1
 mkdir -p build
 cd build
 
-cmake ../${srcdir}
+cmake ../${loggercppsrcdirname}
 if [ $? -ne 0 ]
 then
-    echo "ERROR: cmake ../${srcdir} failed.  Aborting..."
+    echo "ERROR: cmake ../${loggercppsrcdirname} failed.  Aborting..."
     exit 1
 fi
 
@@ -26,7 +40,6 @@ cmake --build .
 if [ $? -ne 0 ]
 then
     echo "ERROR: cmake --build failed.  Aborting..."
-    "Could not change directory to $here/$loggercppdir for localbuild.sh"
     exit 1
 fi
 

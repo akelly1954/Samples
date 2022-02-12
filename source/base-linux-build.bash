@@ -1,13 +1,14 @@
 #!/bin/bash
 
-scriptname="linux-build.bash"
+export basepath=`realpath "$PWD/.."`
+envpath="$basepath/source/shell_env/bash_env.sh"
+if [ ! -s "$envpath" ]
+then
+    echo + "ERROR: Cannot find $envpath. Aborting..."
+    exit 1
+fi
 
-# Build 3rdpartyLoggerCpp if needed
-
-# TODO: have to push this down to the various linux-build.bash scripts
-loggercppdir="3rdparty/LoggerCpp"
-loggercppsrcdir="SRombauts-LoggerCpp-a0868a8"
-export LoggerCppSource_DIR="`realpath $loggercppdir/$loggercppsrcdir`"
+. "$envpath"
 
 if [ ! -d "${LoggerCppSource_DIR}" ]
 then
@@ -17,10 +18,10 @@ fi
 
 here="$PWD"
 
-cd "$here/$loggercppdir"
+cd "$loggercppdir"
 if [ $? -ne 0 ]
 then
-    echo "Could not change directory to $here/$loggercppdir for localbuild.sh"
+    echo "Could not change directory to $loggercppdir for localbuild.sh"
     exit 1
 fi
 
@@ -53,7 +54,7 @@ do
     fi
 done
 
-basepath="`pwd`"
+srcbasepath="$PWD"
 
 # All but the "build" have to exist, so this is ok
 bldpath=`realpath ../build`
@@ -82,7 +83,7 @@ fi
 
 for line in $dlist
 do
-    fullpath="${basepath}/${line}"
+    fullpath="${srcbasepath}/${line}"
     dirname="$fullpath"
 
     if [ ! -r "$fullpath/$scriptname" ]
@@ -98,7 +99,7 @@ do
         exit 1
     fi
 
-    echo + at: `pwd`
+    echo + at: $PWD
     echo + "LoggerCppSource_DIR = ${LoggerCppSource_DIR}"
     echo + Running bash "$scriptname" -c -d ${gflag} eclipsemake
     bash "$scriptname" -c -d ${gflag} eclipsemake
@@ -120,7 +121,7 @@ fi
 
 echo
 echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-echo + At `pwd`: cmake --build . --target install --config $buildtype
+echo + At $PWD: cmake --build . --target install --config $buildtype
 echo +
 echo + NOTE: YOU MAY GET INSTALL ERRORS IF THERE IS NOTHING TO INSTALL IN THIS PROJECT.
 echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -131,7 +132,7 @@ ret=$?
 if [ $ret -ne 0 ]
 then
     echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    echo + At `pwd`: ERROR:    Install Error
+    echo + At $PWD: ERROR:    Install Error
     echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     exit 1
 fi
