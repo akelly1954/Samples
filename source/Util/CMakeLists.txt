@@ -36,6 +36,19 @@ target_link_libraries( main_circular_buffer
 install(TARGETS main_circular_buffer DESTINATION localrun)
 
 #
+# main_LoggerCpp_main_example - LoggerCpp main from Main.cpp example
+#
+set (main_LoggerCpp_main_example "main_LoggerCpp_main_example${DBG}")
+add_executable (main_LoggerCpp_main_example src/main_programs/main_LoggerCpp_main_example.cpp)
+target_link_libraries( main_LoggerCpp_main_example 
+                            ${Util_LIB}
+                            ${LoggerCpp_LIB}
+                            ${CMAKE_THREAD_LIBS_INIT} 
+                            ${LINKOPTIONS}
+                     )
+install(TARGETS main_LoggerCpp_main_example DESTINATION localrun)
+
+#
 # Command line main
 #
 set (main_commandline "main_commandline${DBG}")
@@ -63,5 +76,6 @@ install(TARGETS main_condition_data DESTINATION localrun)
 
 # Dependencies
 add_dependencies (main_circular_buffer ${Util})
+add_dependencies (main_LoggerCpp_main_example ${Util})
 add_dependencies (main_commandline ${Util})
 add_dependencies (main_condition_data ${Util})
