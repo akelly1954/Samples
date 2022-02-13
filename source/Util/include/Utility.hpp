@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <LoggerCpp/LoggerCpp.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -42,6 +43,8 @@ namespace Util {
 		Utility &operator=(Utility &&) = delete;
 
 	public:
+
+        static void initializeLogManager(Log::Config::Vector& configList, Log::Log::Level loglevel, const std::string& logfilename = "log.txt");
 		static long get_UTC_time_as_long();
 		static std::string get_UTC_time_as_string(const char *format = "%Y-%m-%dT%XZ");
 

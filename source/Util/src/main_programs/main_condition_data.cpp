@@ -118,30 +118,6 @@ void initializeSleeptimes(int numthreads, std::vector<int>& sleeptimes)
 	}
 }
 
-// Runs from the main thread
-void initializeLogManager(Log::Config::Vector& configList)
-{
-	Log::Manager::setDefaultLevel(Log::Log::eNotice);
-
-    // Configure the Output objects
-
-	// NO CONSOLE OUTPUT FOR THIS PROGRAM
-	// Log::Config::addOutput(configList, "OutputConsole");
-
-	Log::Config::addOutput(configList, "OutputFile");
-    Log::Config::setOption(configList, "filename",          "main_condition_data_log.txt");
-
-    // NO ROTATION OF LOG FILES FOR THIS PROGRAM
-    // Log::Config::setOption(configList, "filename_old",      "main_condition_data_log.old.txt");
-
-    Log::Config::setOption(configList, "max_startup_size",  "0");
-    Log::Config::setOption(configList, "max_size",          "1000000");
-#ifdef WIN32
-    Log::Config::addOutput(configList, "OutputDebug");
-#endif
-
-}
-
 int main(int argc, const char *argv[])
 {
 	using namespace Util;
@@ -150,7 +126,7 @@ int main(int argc, const char *argv[])
     // DEBUG   std::cerr << "Parse returned: " << numthreads << std::endl;
 
     Log::Config::Vector configList;
-    initializeLogManager(configList);
+    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "main_condition_data_log.txt");
 
     // Create a Logger object, using a "main_condition_data_log" Channel
     Log::Logger logger("main_condition_data_log");
