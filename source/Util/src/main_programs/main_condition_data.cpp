@@ -12,8 +12,9 @@
 #include <iostream>
 #include <chrono>
 #include <stdlib.h>
-#include "condition_data.hpp"
-#include "Utility.hpp"
+#include <condition_data.hpp>
+#include <Utility.hpp>
+#include <LoggerCpp/LoggerCpp.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -39,6 +40,9 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+// TODO: Fix this comment on usage after the LoggerCpp object and use have
+//		 been introduced to the code.
+//
 // To run this program use:
 //
 // 		main_condition_data [num_threads]
@@ -89,6 +93,35 @@ int parse(int argc, const char *argv[])
 	return strtol(argv[1], NULL, 10);
 }
 
+// The unit of data passed around for each thread
+// using the condition_variable.
+typedef std::pair<int, std::string> threadData;
+
+void initializeSleeptimes(int numthreads, std::vector<int>& sleeptimes)
+{
+	for (int i = 0; i < numthreads; i++)
+	{
+		sleeptimes.push_back(Util::Utility::get_rand(300));
+	}
+}
+
+// Runs from the main thread
+void initializeLogManager(Log::Config::Vector& configList)
+{
+	Log::Manager::setDefaultLevel(Log::Log::eNotice);
+
+    // Configure the Output objects
+    Log::Config::addOutput(configList, "OutputConsole");
+    Log::Config::addOutput(configList, "OutputFile");
+    Log::Config::setOption(configList, "filename",          "main_condition_data_log.txt");
+    Log::Config::setOption(configList, "filename_old",      "main_condition_data_log.old.txt");
+    Log::Config::setOption(configList, "max_startup_size",  "0");
+    Log::Config::setOption(configList, "max_size",          "100000");
+#ifdef WIN32
+    Log::Config::addOutput(configList, "OutputDebug");
+#endif
+
+}
 
 int main(int argc, const char *argv[])
 {
@@ -96,6 +129,32 @@ int main(int argc, const char *argv[])
 
     int numthreads = parse(argc, argv);
     // DEBUG   std::cerr << "Parse returned: " << numthreads << std::endl;
+
+    Log::Config::Vector configList;
+    initializeLogManager(configList);
+
+    // Create a Logger object, using a "main_condition_data_log" Channel
+    Log::Logger logger("main_condition_data_log");
+
+    try
+    {
+        // Configure the Log Manager (create the Output objects)
+        Log::Manager::configure(configList);
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what();
+    }
+
+    // Static global data on the heap.
+    // This is the single condition_data object ruling the various running threads
+    Util::condition_data<threadData> condvar(threadData(0, std::string("Initial - this is not from a thread")));
+
+    // random sleep milliseconds for each thread
+    std::vector<int> sleeptimes;
+
+    // vector container stores threads
+    std::vector<std::thread> workers;
 
     if (numthreads == -1)
     {
@@ -109,62 +168,52 @@ int main(int argc, const char *argv[])
 
     std::cerr << "Number of threads chosen: " << numthreads << std::endl;
 
-	// Used to lock the vector of threadData pair<> results below
-	std::mutex m_ready_mutex;
-
-	// The unit of data accumulated in each thread
-    typedef std::pair<int, std::string> threadData;
-
-    // accumulation of result pairs protexted by m_ready_mutex
-    std::vector<threadData> resultPairsVector;
-
-    std::vector<int> sleeptimes;
-    condition_data<threadData> condvar(threadData(0, std::string("Initial - this is not from a thread")));
-
-    for (int i = 0; i < numthreads; i++)
-    {
-        sleeptimes.push_back(Utility::get_rand(300));
-    }
-
-    // vector container stores threads
-    std::vector<std::thread> workers;
+    initializeSleeptimes(numthreads, sleeptimes);
 
     // First create all the threads, enter them, and then wait
-    // for the go signal from the main program.
-    for (int i = 1; i <= numthreads; i++) {
-    			    workers.push_back( std::thread([i,sleeptimes,&condvar, &m_ready_mutex, &resultPairsVector]()
-					{
-						int slp = sleeptimes[i-1];
+    // for the go signal from the main program. The runThread function
+    // does all the work for each thread.
+    for (int i = 1; i <= numthreads; i++)
+    {
+        // Create a Logger object, using a "main_condition_data_log" Channel
+    	// This is still running in the main thread - just before the new
+    	// thread is created
+    	Log::Logger logger("main_condition_data_log");
 
-						// The point behind this sleep is for all threads to be started
-						// and initialized before continuing
-						std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+    	workers.push_back( std::thread([i, &logger, &sleeptimes, &condvar]()
+    	{
+    		int threadno = i-1;
+    		int slp = sleeptimes[threadno];
 
-						// After sleeping for various times, all threads wait for the main()
-						// function to see if they should start. The condition variable allowing
-						// them to continue is set by the main() function once, after all threads have
-						// been initialized.
-						condvar.wait_for_ready();
+    		// The point behind this sleep is for all threads to be started
+    		// and initialized before continuing
+    		std::this_thread::sleep_for(std::chrono::milliseconds(slp));
 
-						// It's ready - get the data and reset it to a new value
-						threadData oldvalue = condvar.get_data();
+    		// After sleeping for various times, all threads wait for the main()
+    		// function to see if they should start. The condition variable allowing
+    		// them to continue is set by the main() function once, after all threads have
+    		// been initialized.
+    		condvar.wait_for_ready();
 
-						//using this so that each thread output comes out on a single line
-						std::ostringstream lostr;
-						lostr << "thread " << i << " slept " << slp <<
-								 " msec -- from thread " <<
-								 oldvalue.first << " = \"" << oldvalue.second.substr(0, 74) << "...";
-						threadData newvalue = threadData(i, lostr.str());
+    		// It's ready - get the data and reset it to a new value
+    		threadData oldvalue = condvar.get_data();
 
-						{ // scope braces for the lock
-							std::lock_guard<std::mutex> lock(m_ready_mutex);
-							resultPairsVector.push_back(newvalue);
-						}
+    		std::ostringstream lostr;
+    		lostr << "thread " << threadno << " slept " << slp <<
+    				 " msec -- from thread " <<
+    				 oldvalue.first << " = \"" << oldvalue.second.substr(0, 74) << "...";
 
-						// And set it free
-						condvar.send_ready(newvalue);
-					}));
+    		std::string result = lostr.str();
+    		threadData newvalue = threadData(threadno, result);
+
+    		// Log it
+    		logger.notice() << result;
+
+    		// And set it free
+    		condvar.send_ready(newvalue);
+    	}));
     }
+
     std::cerr << "main thread: Sending ready message to all threads\n";
 
     // All threads have been initialized.  Set the condition variable loose....
@@ -175,11 +224,8 @@ int main(int argc, const char *argv[])
     condvar.wait_for_ready();
     std::cerr << "Last condition thread done" << std::endl;
 
-    for (auto & element: resultPairsVector)
-    {
-		std::lock_guard<std::mutex> lock(m_ready_mutex);
-    	std::cout << "Thread " << element.first << ": \"" << element.second << "\"" << std::endl;
-    }
+    // Terminate the Log Manager (destroy the Output objects)
+    Log::Manager::terminate();
 
     std::for_each(workers.begin(), workers.end(), [](std::thread &t)
     {
