@@ -167,7 +167,7 @@ int main(int argc, const char *argv[])
 
     // Static global data on the heap.
     // This is the single condition_data object ruling the various running threads
-    Util::condition_data<threadData> condvar(threadData(0, std::string("Initial - this is not from a thread")));
+    Util::condition_data<threadData> condvar(threadData(-1, std::string("Initial - this is not from a thread")));
 
     // random sleep milliseconds for each thread
     std::vector<int> sleeptimes;
@@ -263,10 +263,10 @@ int main(int argc, const char *argv[])
 # 		sort -k6 -n main_condition_data_log.txt
 #
 # To sort the output in main_condition_data_log.txt by the milliseconds' delay:
-# 		sort -k11 -n main_condition_data_log.txt
+# 		sort -k8 -n main_condition_data_log.txt
 #
 # To sort the output in main_condition_data_log.txt by the previous thread number from the condition variable:
-# 		sort -k16 -n main_condition_data_log.txt
+# 		sort -k13 -n main_condition_data_log.txt
 #
 # SAMPLE RUN:
 $
