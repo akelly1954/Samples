@@ -40,31 +40,44 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Fix this comment on usage after the LoggerCpp object and use have
-//		 been introduced to the code.
+// This program runs N (default is 20) concurrent threads, where N is the single command
+// line parameter.  All threads are synchronized by a single condition_variable, which
+// is also used to communicate a data object (std::pair<int,string>) to the next
+// thread which will be allowed to run. Each thread logs the data it receives from
+// within the thread.  (See also NOTE FROM THE AUTHOR below).
+//
+// Before each thread is started, a logger object is instantiated for it, using the
+// main logger object instantiated in main().  The end result is that what is logged
+// from within the thread is appended to the one log file created by the run.
+//
+// Console output is disabled - if 10,000 threads are each appending output to
+// the output, it messes up the output stream and loses data (which makes sense).
+// This would also slow things so much as to invalidate the purpose of the program.
+//
+// Also disabled is the rotation of log files.  Each run recreates the single log
+// file.
 //
 // To run this program use:
 //
 // 		main_condition_data [num_threads]
 //
+// The main output is placed in the file "main_condition_data_log.txt" (and a few lines
+// containing information are displayed to stdout on the console as the program runs).
+//
 // If num_threads is specified, it has to be numerical and greater than 0. If not, it
 // defaults to 20.
 //
-// For example:
-// $
-// $ cd /path/to/build/localrun
-// $
-// $ LD_LIBRARY_PATH=".:" ./main_condition_data 60
-//
-// By default, the output is sorted chronologically (when each thread finishes its work).
-// To sort the output by the thread number, pipe the output:                   | sort -k2 -n
-// To sort the output by the milliseconds' delay, pipe the output:             | sort -k6 -n
-// To sort the output by the previous thread number from the condition variable, pipe the output:
-//                                                                             | sort -k11 -n
+// FOR A SAMPLE RUN SHOWING THE RESULTS SEE THE #ifdef'ed SECTION AT THE VERY END OF THIS FILE
 //
 // NOTE FROM THE AUTHOR:  I got the program to fail on a std::bad_alloc at somewhere between
-// 30,000 and 40,000 threads running (succeeded at 30,000, failed on 40,000).  Very specific
-// to the system that was used of course (8 core i7 cpu, 32Gb mem, Debian 11 linux).  YMMV.
+// 30,000 and 40,000 threads running at the same time (succeeded at 30,000, failed on 40,000).
+// There was NO data loss at all at 30,000 (no broken lines in the log file, all content
+// in each line was present).
+//
+// This result is very specific to the system that was used of course (8 core i7 cpu, 32Gb mem,
+// Debian 11 linux).
+//
+// YMMV.
 //
 
 void Usage(std::ostream& strm, std::string command)
@@ -111,12 +124,18 @@ void initializeLogManager(Log::Config::Vector& configList)
 	Log::Manager::setDefaultLevel(Log::Log::eNotice);
 
     // Configure the Output objects
-    Log::Config::addOutput(configList, "OutputConsole");
-    Log::Config::addOutput(configList, "OutputFile");
+
+	// NO CONSOLE OUTPUT FOR THIS PROGRAM
+	// Log::Config::addOutput(configList, "OutputConsole");
+
+	Log::Config::addOutput(configList, "OutputFile");
     Log::Config::setOption(configList, "filename",          "main_condition_data_log.txt");
-    Log::Config::setOption(configList, "filename_old",      "main_condition_data_log.old.txt");
+
+    // NO ROTATION OF LOG FILES FOR THIS PROGRAM
+    // Log::Config::setOption(configList, "filename_old",      "main_condition_data_log.old.txt");
+
     Log::Config::setOption(configList, "max_startup_size",  "0");
-    Log::Config::setOption(configList, "max_size",          "100000");
+    Log::Config::setOption(configList, "max_size",          "1000000");
 #ifdef WIN32
     Log::Config::addOutput(configList, "OutputDebug");
 #endif
@@ -234,3 +253,47 @@ int main(int argc, const char *argv[])
 
     return 0;
 }
+
+#ifdef SAMPLE_RUN
+/*
+#
+# By default, the output is sorted chronologically (when each thread finishes its work).
+#
+# To sort the output in main_condition_data_log.txt by the thread number:
+# 		sort -k6 -n main_condition_data_log.txt
+#
+# To sort the output in main_condition_data_log.txt by the milliseconds' delay:
+# 		sort -k11 -n main_condition_data_log.txt
+#
+# To sort the output in main_condition_data_log.txt by the previous thread number from the condition variable:
+# 		sort -k16 -n main_condition_data_log.txt
+#
+# SAMPLE RUN:
+$
+$ cd /path/to/build/localrun
+$
+$ LD_LIBRARY_PATH=".:" ./main_condition_data 10
+Number of threads chosen: 10
+main thread: Sending ready message to all threads
+Last condition thread done
+
+
+$ cat main_condition_data_log.txt
+2022-02-13 07:51:03.982  main_condition_data_log NOTE thread 1 slept 56 msec -- from thread 0 = "Initial - this is not from a thread...
+2022-02-13 07:51:03.996  main_condition_data_log NOTE thread 9 slept 70 msec -- from thread 1 = "thread 1 slept 56 msec -- from thread 0 = "Initial - this is not from a th...
+2022-02-13 07:51:03.997  main_condition_data_log NOTE thread 4 slept 71 msec -- from thread 9 = "thread 9 slept 70 msec -- from thread 1 = "thread 1 slept 56 msec -- from ...
+2022-02-13 07:51:04.030  main_condition_data_log NOTE thread 6 slept 104 msec -- from thread 4 = "thread 4 slept 71 msec -- from thread 9 = "thread 9 slept 70 msec -- from ...
+2022-02-13 07:51:04.141  main_condition_data_log NOTE thread 2 slept 216 msec -- from thread 6 = "thread 6 slept 104 msec -- from thread 4 = "thread 4 slept 71 msec -- from...
+2022-02-13 07:51:04.160  main_condition_data_log NOTE thread 3 slept 235 msec -- from thread 2 = "thread 2 slept 216 msec -- from thread 6 = "thread 6 slept 104 msec -- fro...
+2022-02-13 07:51:04.168  main_condition_data_log NOTE thread 7 slept 242 msec -- from thread 3 = "thread 3 slept 235 msec -- from thread 2 = "thread 2 slept 216 msec -- fro...
+2022-02-13 07:51:04.173  main_condition_data_log NOTE thread 0 slept 248 msec -- from thread 7 = "thread 7 slept 242 msec -- from thread 3 = "thread 3 slept 235 msec -- fro...
+2022-02-13 07:51:04.194  main_condition_data_log NOTE thread 5 slept 268 msec -- from thread 0 = "thread 0 slept 248 msec -- from thread 7 = "thread 7 slept 242 msec -- fro...
+2022-02-13 07:51:04.200  main_condition_data_log NOTE thread 8 slept 274 msec -- from thread 5 = "thread 5 slept 268 msec -- from thread 0 = "thread 0 slept 248 msec -- fro...
+
+$
+*/
+
+#endif //  SAMPLE_RUN
+
+
+

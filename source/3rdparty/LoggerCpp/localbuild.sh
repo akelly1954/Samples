@@ -7,6 +7,8 @@
 # Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
 # or copy at http://opensource.org/licenses/MIT)
 
+CmakeGenerator='Eclipse CDT4 - Unix Makefiles'
+
 export basepath="`realpath ../../..`"
 envpath="$basepath/source/shell_env/bash_env.sh"
 if [ ! -s "$envpath" ]
@@ -29,14 +31,14 @@ export TRAVIS=1
 mkdir -p build
 cd build
 
-cmake ../${loggercppsrcdirname}
+cmake -G"$CmakeGenerator" ../${loggercppsrcdirname}
 if [ $? -ne 0 ]
 then
-    echo "ERROR: cmake ../${loggercppsrcdirname} failed.  Aborting..."
+    echo "ERROR: cmake -G"$CmakeGenerator" ../${loggercppsrcdirname} failed.  Aborting..."
     exit 1
 fi
 
-cmake --build .
+cmake -G"$CmakeGenerator" --build .
 if [ $? -ne 0 ]
 then
     echo "ERROR: cmake --build failed.  Aborting..."
