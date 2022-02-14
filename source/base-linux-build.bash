@@ -10,6 +10,13 @@ fi
 
 . "$envpath"
 
+
+if [ "$1" = "-h" -o "$1" = "--help" ]
+then
+    base_linux_build_Usage
+    exit 0
+fi
+
 if [ ! -d "${LoggerCppSource_DIR}" ]
 then
     echo "ERROR: Could not find directory ${LoggerCppSource_DIR}"
