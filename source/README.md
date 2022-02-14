@@ -53,7 +53,7 @@ If you use a different IDE or a different compiler (tool chain) - feel free chan
 and the various **cmake** source files.  As this is not for the faint of heart, I am available for some level of support 
 (including moral support) if you are brave enough to do that (**andrew@akelly.com**).
 
-### Current deficiencies:###
+### Current deficiencies: ###
 
 Currently the Windows' WIN32 configuration has not been built and tested yet. 
 This may be added in the future.  My higher priority is to first get everything
