@@ -17,6 +17,12 @@ then
     exit 0
 fi
 
+nobuild=""
+if [ "$1" = "-n" -o "$1" = "--nobuild" ]
+then
+    nobuild="--nobuild"
+fi
+
 if [ ! -d "${LoggerCppSource_DIR}" ]
 then
     echo "ERROR: Could not find directory ${LoggerCppSource_DIR}"
@@ -24,6 +30,7 @@ then
 fi
 
 here="$PWD"
+echo + At: $PWD
 
 cd "$loggercppdir"
 if [ $? -ne 0 ]
@@ -32,6 +39,9 @@ then
     exit 1
 fi
 
+# 3rdparty gets build regardless of whether --nobuild was invoked.
+echo "Building 3rdparty objects"
+#
 bash localbuild.sh
 if [ $? -ne 0 ]
 then
@@ -52,7 +62,7 @@ for dir in $lslist
 do
     if [ -d $dir ]
     then
-        if [ $dir = "build" -o $dir = "cmake" ]
+        if [ $dir = "build" -o $dir = "cmake" -o $dir = "shell_env" -o $dir = "3rdparty" ]
         then
             continue
         fi
@@ -76,47 +86,74 @@ then
 fi
 
 echo +++++++++++++++++++++++++++++++++++++++++++ 
-echo Directory Project List: $dlist
+echo Directory List: $dlist
 echo +++++++++++++++++++++++++++++++++++++++++++ 
 
-buildtype="Debug"
+gflag="-g eclipsemake"
 
+buildtype="Debug"
+dflag=""
 if [ "$buildtype" = "Debug" ]
 then
-    gflag="-g"
+    dflag="-d"
 else
-    gflag=""
+    dflag=""
 fi
 
-for line in $dlist
+# In phase generate, only --nobuild option is built.
+# Phase "build builds and installs everything.
+for phase in "generate" "build"
 do
-    fullpath="${srcbasepath}/${line}"
-    dirname="$fullpath"
-
-    if [ ! -r "$fullpath/$scriptname" ]
+    if [ "$phase" = "generate" -a "$nobuild" = "" ]
     then
-        echo Skipping project build script $line
+        continue
+    elif [ "$phase" = "build" -a "$nobuild" = "--nobuild" ]
+    then
         continue
     fi
 
-    cd "$dirname"
-    if [ $? -ne 0 ]
-    then
-        echo "Could not change directory to $dirname for $line"
-        exit 1
-    fi
+    for line in $dlist
+    do
+        fullpath="${srcbasepath}/${line}"
+        dirname="$fullpath"
 
-    echo + at: $PWD
-    echo + "LoggerCppSource_DIR = ${LoggerCppSource_DIR}"
-    echo + Running bash "$scriptname" -c -d ${gflag} eclipsemake
-    bash "$scriptname" -c -d ${gflag} eclipsemake
-    if [ $? -ne 0 ]
-    then
-        echo BUILD FAILED
-        exit 1
-    fi
+        if [ ! -r "$fullpath/$scriptname" ]
+        then
+            echo Skipping project directory \"$line\" 
+            continue
+        fi
+
+        cd "$dirname"
+        if [ $? -ne 0 ]
+        then
+            echo "Could not change directory to $dirname for $line"
+            exit 1
+        fi
+
+        echo + at: $PWD
+        echo + "LoggerCppSource_DIR = ${LoggerCppSource_DIR}"
+        echo + Running bash "$scriptname" -c $dflag gflag $nobuild 
+        bash "$scriptname" -c $dflag $gflag $nobuild 
+        if [ $? -ne 0 ]
+        then
+            echo BUILD FAILED
+            exit 1
+        fi
+        echo
+    done    # end of dlist for loop
+done    # end of phase for loop
+
+if [ "$nobuild" = "--nobuild" ]
+then
     echo
-done
+    echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    echo + 
+    echo + All CMake artifacts have been set up.  No-build option was specifed.
+    echo + Exiting.
+    echo + 
+    echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    exit 0
+fi
 
 # Install for all projects
 cd "$bldpath"
