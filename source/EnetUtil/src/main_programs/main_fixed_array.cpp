@@ -33,6 +33,33 @@
 
 using namespace EnetUtil;
 
+void initialize(Log::Logger& logger, uint8_t val, const std::array<uint8_t,5>* array)
+{
+	std::array<uint8_t,5> *data = const_cast<std::array<uint8_t,5> *>(array);
+
+	uint8_t ui8 = val+1;
+	for (auto it = data->begin(); it != data->end(); ++it)
+	{
+		*it = ui8;
+	}
+}
+
+void print(Log::Logger& logger, std::string label, std::shared_ptr<fixed_size_array<uint8_t,5>> sp)
+{
+	logger.notice() << " ";	// Empty line
+	// Decreasing the use_count by 1, to account for the share_ptr parameter to this function
+	logger.notice() << label << " use count = " << std::to_string(sp.use_count()-1) << "  ------------------------";
+	logger.notice() << " ";	// Empty line
+
+	std::array<uint8_t,5>* array = const_cast<std::array<uint8_t,5> *>(sp->data());
+	uint8_t i = 0;
+	for (auto it = array->begin(); it != array->end(); ++it, i++)
+	{
+		logger.notice() << "array[" << std::to_string(i) << "] = " << std::to_string(*it + i);
+	}
+}
+
+
 int main(int argc, char *argv[])
 {
 
@@ -53,28 +80,63 @@ int main(int argc, char *argv[])
         std::cerr << e.what();
     }
 
-	std::shared_ptr<fixed_size_array<uint8_t,20>> sp1 = fixed_size_array<uint8_t,20>::create();
-	logger.notice() << "----------------- First:";
-	logger.notice() << "sp1 use count = " << sp1.use_count();
+    try
+    {
+        std::shared_ptr<fixed_size_array<uint8_t,5>> sp1 = fixed_size_array<uint8_t,5>::create();
+        initialize(logger, 1, const_cast<std::array<uint8_t,5> *>(sp1->data()));
+        print(logger, "Object sp1 created with ::create()", sp1);
 
-	std::shared_ptr<fixed_size_array<uint8_t,20>> sp11 = sp1->get_shared_ptr();
-	logger.notice() << "----------------- Second:";
-	logger.notice() << "sp1 use count = " << sp1.use_count();
-	logger.notice() << "sp11 use count = " << sp11.use_count();
+        std::shared_ptr<fixed_size_array<uint8_t,5>> sp11 = sp1->get_shared_ptr();
+        initialize(logger, 11, const_cast<std::array<uint8_t,5> *>(sp11->data()));
 
-	std::shared_ptr<fixed_size_array<uint8_t,20>> sp2 = fixed_size_array<uint8_t,20>::create(*sp1);
-	logger.notice() << "----------------- Third:";
-	logger.notice() << "sp1 use count = " << sp1.use_count();
-	logger.notice() << "sp11 use count = " << sp11.use_count();
-	logger.notice() << "sp2 use count = " << sp2.use_count();
+        print(logger, "Object sp2 after getting shared_ptr from sp1", sp11);
+        print(logger, "Checking sp1", sp1);
+        logger.notice() << "\n-----------------------------------------------------------------------\n";
 
-	std::shared_ptr<fixed_size_array<uint8_t,20>> sp21 = sp2->get_shared_ptr();
-	logger.notice() << "----------------- Fourth:";
-	logger.notice() << "sp1 use count = " << sp1.use_count();
-	logger.notice() << "sp11 use count = " << sp11.use_count();
-	logger.notice() << "sp2 use count = " << sp2.use_count();
-	logger.notice() << "sp21 use count = " << sp21.use_count();
+        std::shared_ptr<fixed_size_array<uint8_t,5>> sp2 = fixed_size_array<uint8_t,5>::create(*sp1);
+        initialize(logger, 2, const_cast<std::array<uint8_t,5> *>(sp2->data()));
+        print(logger, "Object sp2 after creation using create with copy constructor", sp2);
 
+        std::shared_ptr<fixed_size_array<uint8_t,5>> sp21 = sp2->get_shared_ptr();
+        initialize(logger, 21, const_cast<std::array<uint8_t,5> *>(sp21->data()));
+        print(logger, "Object sp21 after getting shared_ptr from sp2", sp21);
+        print(logger, "Checking sp2", sp2);
+        logger.notice() << "\n-----------------------------------------------------------------------\n";
+
+        std::shared_ptr<fixed_size_array<uint8_t,5>> sp30 = fixed_size_array<uint8_t,5>::create(*sp1);
+        initialize(logger, 30, const_cast<std::array<uint8_t,5> *>(sp30->data()));
+        print(logger, "Object sp30 before assignment from sp1", sp30);
+
+        *(sp30) = *(sp1);
+
+        // TODO: There HAS to be a better way to get to an array element... do it.
+
+    	std::array<uint8_t,5>* array = const_cast<std::array<uint8_t,5> *>(sp30->data());
+    	(*array)[2] = 100;
+
+        // Change a single array element in sp30.  It should not show in sp1
+        print(logger, "Object sp30 after assignment from sp1, with a single element change", sp30);
+        print(logger, "Checking sp1. Element 2 should be unchanged", sp1);
+
+        /////////////////////////////////////////////
+        // Intentional Errors
+        /////////////////////////////////////////////
+
+        // This will produce a compile error as intended (should use ::create() instead.
+        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
+        //                                                                           is private within this context
+        //////		fixed_size_array<uint8_t,5> errorObject;
+
+        // This will produce a compile error as intended (should use ::create() instead.
+        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
+        //                                                                           is private within this context
+        //
+        /////		std::shared_ptr<fixed_size_array<uint8_t,5>> sp1_error = std::make_shared<fixed_size_array<uint8_t,5>>();
+    }
+    catch (std::exception& e)
+    {
+        logger.debug() << e.what();
+    }
 	return 0;
 }
 

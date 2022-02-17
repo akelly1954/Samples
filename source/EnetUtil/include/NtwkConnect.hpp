@@ -47,6 +47,7 @@ namespace EnetUtil {
 		{
 	private:
 	    size_t m_num_elements = N;
+
 	public:
 	    size_t numElements(void) const 				{ return m_num_elements; }
 	    const std::array<T,N> *data(void) const		{ return p_fixed_array; }
@@ -106,7 +107,7 @@ namespace EnetUtil {
 	    // Use this version of ::create() for an array which has a specific number of elements (1234)
 	    // in place of a constructor like so:
 	    //
-	    //		 std::shared_ptr<fixed_size_array<T,N> spFSArray = fixed_size_array<T,N>::create(1234);
+	    //		 std::shared_ptr<fixed_size_array<T,1234> spFSArray = fixed_size_array<T,N>::create();
 	    //
 	    [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(void)
 	    {
@@ -114,9 +115,8 @@ namespace EnetUtil {
 	    }
 
 	    // Use this version of ::create() to get a new shared_ptr<> managing a brand new T object which
-	    // is a copy of the data managed by the parameter object being copied. Like a copy constructor,
-	    // except that the new T object is managed by a new shared_ptr<>, with no connection to the
-	    // copied object.
+	    // is a copy of the data managed by the parameter object being copied. A new shared_ptr<> is 
+        // created to manage the copy.  
 	    //
 	    //		 std::shared_ptr<fixed_size_array<T,N>> spFSArray =
 	    //					fixed_size_array<T,N>::create(fixed_size_array<T,N> &obj);
@@ -134,13 +134,25 @@ namespace EnetUtil {
 	    	{
 	    		delete [] p_fixed_array;
 	    	}
+	    	p_fixed_array = NULL;
+            m_isvalid = false;
 	    }
 
-	    fixed_size_array<T,N>& operator=(fixed_size_array<T,N> const &obj)
+        // This is the equivalent of the copy constructor
+	    fixed_size_array<T,N>& operator=(fixed_size_array<T,N>& obj)
 	    {
-	    	m_isvalid = obj.isValid();
-	    	// this copies the parameter object's array object.
-	    	p_fixed_array = *(obj.data());
+	    	if (p_fixed_array)
+            {
+                delete [] p_fixed_array;
+            }
+
+            m_isvalid = false;
+            p_fixed_array = new std::array<T,N>;
+            if (obj.data())
+            {
+                m_isvalid = obj.isValid();
+                *p_fixed_array = *(obj.data());             // Copy the obj array<>
+            }
 	    	return *this;
 	    }
 
