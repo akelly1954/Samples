@@ -41,5 +41,20 @@ target_link_libraries( main_enet_util
                      )
 install(TARGETS main_enet_util DESTINATION localrun)
 
+#
+# main_fixed_array main
+#
+set (main_fixed_array "main_fixed_array${DBG}")
+add_executable (main_fixed_array src/main_programs/main_fixed_array.cpp)
+target_link_libraries( main_fixed_array 
+                            ${EnetUtil_LIB}
+                            ${Util_LIB}
+                            ${LoggerCpp_LIB}
+                            ${CMAKE_THREAD_LIBS_INIT} 
+                            ${LINKOPTIONS}
+                     )
+install(TARGETS main_fixed_array DESTINATION localrun)
+
 # Dependencies
 add_dependencies (main_enet_util ${EnetUtil} ${Util} )
+add_dependencies (main_fixed_array ${EnetUtil} ${Util} )

@@ -43,7 +43,7 @@ namespace Util {
 // data object (of type T), HAS to be copyable, and copy-constructable.
 /////////////////////////////////////////////////////////////////////////////////
 
-template<class T>
+template<typename T>
 class condition_data {
 private:
     // Not allowed:

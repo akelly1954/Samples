@@ -1,6 +1,5 @@
 #pragma once
 
-#include "circular_buffer.hpp"
 #include <LoggerCpp/LoggerCpp.h>
 #include <mutex>
 #include <sys/types.h>
@@ -36,14 +35,27 @@
 
 namespace EnetUtil {
 
-    // TODO: This function is a bit of a hack -- currently using a pipe from an
-    // "ip a" process to get its information.  Needs a bit of work, but still useful
-    // if used once initially at runtime. Requires the linux ip utility.
+	typedef std::array<uint8_t,10> FixedUint8Array;
+	typedef std::pair<size_t, FixedUint8Array> SizedUint8Array;
 
-    // Used to get a list of MAC addresses belonging to this system which are
-    // qualified as "link/ether" in the "ip a" output.
-    // Returns empty vector if not found or any errors occured
-    std::vector<std::string> get_all_self_mac_addresses();
+	// typedef std::shared_ptr<uint8_t> FixedUint8Array;
+	// typedef std::pair<size_t, FixedUint8Array> SizedUint8Array;
 
+	class NtwkUtil
+	{
+	public:
+		static int enetSend(Log::Logger& logger,
+								int fd,
+								SizedUint8Array sendbuf,
+								std::recursive_mutex& mutex = NtwkUtil::m_recursive_mutex,
+								int flag = MSG_NOSIGNAL);
+
+		static void enetReceive(Log::Logger& logger, int fd, SizedUint8Array recvbuf, size_t requestsize);
+
+		// NtwkUtilBufferSize - baked into the program - can't change (like a #define'd constant...)
+		static const size_t NtwkUtilBufferSize;
+		static std::recursive_mutex m_recursive_mutex;
+		static std::mutex m_mutex;
+	};
 } // namespace EnetUtil
 
