@@ -48,7 +48,7 @@ void print(Log::Logger& logger, std::string label, std::shared_ptr<fixed_size_ar
 {
 	logger.notice() << " ";	// Empty line
 	// Decreasing the use_count by 1, to account for the share_ptr parameter to this function
-	logger.notice() << label << " use count = " << std::to_string(sp.use_count()-1) << "  ------------------------";
+	logger.notice() << label << ", use count = " << std::to_string(sp.use_count()-1) << "  ------------------------";
 	logger.notice() << " ";	// Empty line
 
 	std::array<uint8_t,5>* array = const_cast<std::array<uint8_t,5> *>(sp->data());

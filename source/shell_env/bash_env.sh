@@ -57,16 +57,15 @@ function linux_build_Usage
     printf "    -g (or --generator):    Use a non-default cmake generator.  We use abbreviated names to avoid\n" >& 2
     printf "                            white space confusion. Current available generators are:\n\n" >& 2
     printf "                                  \"unixmake\" for -G \"Unix Makefiles\"\n\n" >& 2
-    printf "                                * \"eclipsemake\" (the default) for -G \"Eclipse CDT4 - Unix Makefiles\"\n\n" >& 2
+    printf "              *** default ***     \"eclipsemake\" for -G \"Eclipse CDT4 - Unix Makefiles\"\n\n" >& 2
     printf "                                  \"ninja\" for -G \"Ninja\"\n\n" >& 2
     printf "                                  \"eclipseninja\" for -G \"Eclipse CDT4 - Ninja\"\n\n" >& 2
     printf "                            This list can expand as needed.  See \"cmake --help\" for more details:\n" >& 2
     printf "\n\n" >& 2
-    printf "Below is the list of valid generators for your platform. Please\n" >& 2
-    printf "ignore the CMake default indication (*) shown below. Instead, see above for\n" >& 2
-    printf "the script default -g generator:\n" >& 2
+    printf "Below is the current list of valid generators for your platform:\n" >& 2
     printf "\n" >& 2
-    cmake --help | sed '1,/^The following generators are available on this platform/d' >& 2
+    cmake --help | sed -e '1,/^The following generators are available/d' | \
+                   sed -e 's,^\* ,  ,' >& 2
 }
 
 

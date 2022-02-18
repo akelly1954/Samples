@@ -44,7 +44,7 @@ namespace EnetUtil {
 
 	template<typename T, size_t N>
 	class fixed_size_array : public std::enable_shared_from_this<fixed_size_array<T,N>>
-		{
+	{
 	private:
 	    size_t m_num_elements = N;
 
