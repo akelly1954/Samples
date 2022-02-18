@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <assert.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -49,8 +50,29 @@ namespace EnetUtil {
 	    size_t m_num_elements = N;
 
 	public:
-	    size_t numElements(void) const 				{ return m_num_elements; }
+	    size_t num_elements(void) const 			{ return m_num_elements; }
 	    const std::array<T,N> *data(void) const		{ return p_fixed_array; }
+
+	    // Gets a pointer to the pos'th element of the array
+	    // returns NULL if out of bounds or the object is invalid
+	    T get_element(size_t pos) const
+	    {
+	    	// TODO: exception?
+	    	assert (isValid() && pos < N);
+
+	    	T val = (*p_fixed_array)[pos];
+	    	return val;
+	    }
+
+	    // Sets the pos'th element in the array to value
+	    // returns false if the object is invalid or pos is out of bounds
+	    // operator<T>=(T obj) has to be defined
+	    bool set_element(size_t pos, const T& value)
+	    {
+	    	if (! isValid() || pos >= N) return false;
+	    	(*p_fixed_array)[pos] = value;
+	    	return true;
+	    }
 
 	private:
 	    // Not allowed:
@@ -87,8 +109,6 @@ namespace EnetUtil {
 	    	{
 	    		return;
 	    	}
-
-	    	// TODO: Revisit copy-constructor logic after ::create() is done
 
 	    	p_fixed_array = new std::array<T,N>;
 	    	*p_fixed_array = *(obj.data()); 			// Copy the obj array<>
