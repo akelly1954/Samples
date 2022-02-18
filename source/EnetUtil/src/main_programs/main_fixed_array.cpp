@@ -59,26 +59,16 @@ void print(Log::Logger& logger, std::string label, std::shared_ptr<fixed_size_ar
 	}
 }
 
+// All threads, including main, output to this channel
+const char *logChannelName = "main_fixed_array";
 
 int main(int argc, char *argv[])
 {
 
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "");
-	Log::Config::addOutput(configList, "OutputConsole");
-
-    // Create a Logger object, using a "main_condition_data_log" Channel
-    Log::Logger logger("main_fixed_array_log");
-
-    try
-    {
-        // Configure the Log Manager (create the Output objects)
-        Log::Manager::configure(configList);
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << e.what();
-    }
+    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "", false, false);
+    Util::Utility::configureLogManager( configList, "main_fixed_array_log" );
+    Log::Logger logger(logChannelName);
 
     try
     {

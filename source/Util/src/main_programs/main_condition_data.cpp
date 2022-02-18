@@ -118,6 +118,9 @@ void initializeSleeptimes(int numthreads, std::vector<int>& sleeptimes)
 	}
 }
 
+// All threads, including main, output to this channel
+const char *logChannelName = "main_condition_data";
+
 int main(int argc, const char *argv[])
 {
 	using namespace Util;
@@ -126,20 +129,9 @@ int main(int argc, const char *argv[])
     // DEBUG   std::cerr << "Parse returned: " << numthreads << std::endl;
 
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "main_condition_data_log.txt");
-
-    // Create a Logger object, using a "main_condition_data_log" Channel
-    Log::Logger logger("main_condition_data_log");
-
-    try
-    {
-        // Configure the Log Manager (create the Output objects)
-        Log::Manager::configure(configList);
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << e.what();
-    }
+    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "main_condition_data_log.txt", false, true);
+    Util::Utility::configureLogManager( configList, logChannelName );
+    Log::Logger logger(logChannelName);
 
     // Static global data on the heap.
     // This is the single condition_data object ruling the various running threads
@@ -173,7 +165,7 @@ int main(int argc, const char *argv[])
         // Create a Logger object, using a "main_condition_data_log" Channel
     	// This is still running in the main thread - just before the new
     	// thread is created
-    	Log::Logger logger("main_condition_data_log");
+    	Log::Logger logger(logChannelName);
 
     	workers.push_back( std::thread([i, &logger, &sleeptimes, &condvar]()
     	{

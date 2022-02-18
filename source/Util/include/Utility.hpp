@@ -44,8 +44,13 @@ namespace Util {
 
 	public:
 
-        static void initializeLogManager(Log::Config::Vector& configList, Log::Log::Level loglevel, const std::string& logfilename = "log.txt");
-		static long get_UTC_time_as_long();
+        static void initializeLogManager(  Log::Config::Vector& configList,
+											Log::Log::Level loglevel,
+											const std::string& logfilename,
+											bool enableConsoleOutput,
+											bool enableFileOutput);
+        static void configureLogManager( Log::Config::Vector& configList, std::string channelName );
+        static long get_UTC_time_as_long();
 		static std::string get_UTC_time_as_string(const char *format = "%Y-%m-%dT%XZ");
 
 		// Get a random int from within a range starting at "low", and
