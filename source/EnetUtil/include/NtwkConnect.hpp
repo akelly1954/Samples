@@ -2,7 +2,6 @@
 
 #include <circular_buffer.hpp>
 #include <LoggerCpp/LoggerCpp.h>
-#include <NtwkUtil.hpp>
 #include <mutex>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,10 +46,10 @@ namespace EnetUtil {
 	class fixed_size_array : public std::enable_shared_from_this<fixed_size_array<T,N>>
 	{
 	private:
-	    size_t m_num_elements = N;
+	    static const size_t s_num_elements = N;
 
 	public:
-	    size_t num_elements(void) const 			{ return m_num_elements; }
+	    static const size_t num_elements(void)		{ return s_num_elements; }
 	    const std::array<T,N> *data(void) const		{ return p_fixed_array; }
 
 	    // Gets a pointer to the pos'th element of the array
@@ -87,7 +86,7 @@ namespace EnetUtil {
 	    	m_isvalid(false),
 			p_fixed_array(NULL)
 	    {
-		    if (m_num_elements < 1)
+		    if (num_elements() < 1)
 		    {
 		    	// valid stays false, and pointer to array is NULL.
 				return;
@@ -101,7 +100,6 @@ namespace EnetUtil {
 	    fixed_size_array(const fixed_size_array<T,N>& obj)		// Copy constructor
 		:
 			m_isvalid(false),
-			m_num_elements(N),
 			p_fixed_array(NULL)
 	    {
 	    	// valid stays false, and pointer to array is NULL.

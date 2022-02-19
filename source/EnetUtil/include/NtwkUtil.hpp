@@ -1,6 +1,7 @@
 #pragma once
 
 #include <LoggerCpp/LoggerCpp.h>
+#include <NtwkConnect.hpp>
 #include <mutex>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -8,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <stdint.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -35,25 +37,34 @@
 
 namespace EnetUtil {
 
-	typedef std::array<uint8_t,10> FixedUint8Array;
-	typedef std::pair<size_t, FixedUint8Array> SizedUint8Array;
+	// Options for NtwkUtilBufferSize
+	static const size_t NtwkUtilNanoBufferSize = 64;
+	static const size_t NtwkUtilMicroBufferSize = 128;
+	static const size_t NtwkUtilTinyBufferSize = 256;
+	static const size_t NtwkUtilSmallBufferSize = 1024;
+	static const size_t NtwkUtilRegularBufferSize = 4096;
+	static const size_t NtwkUtilLargeBufferSize = 8192;
 
-	// typedef std::shared_ptr<uint8_t> FixedUint8Array;
-	// typedef std::pair<size_t, FixedUint8Array> SizedUint8Array;
-
+	// NOTE: The fixed std::aray<> size is set in the first object defined in class NtwkUtil.
+	// 		 It can be changed right there - it will apply to all objects in NtwkUtil.*
 	class NtwkUtil
 	{
 	public:
+		// NtwkUtilBufferSize - The fixed size of the std::array<> - baked into the program -
+		// can't change (like a #define'd constant...)
+		static const size_t NtwkUtilBufferSize = EnetUtil::NtwkUtilRegularBufferSize;
+
 		static int enetSend(Log::Logger& logger,
 								int fd,
-								SizedUint8Array sendbuf,
+								std::array<uint8_t,NtwkUtil::NtwkUtilBufferSize>& array_element_buffer,
 								std::recursive_mutex& mutex = NtwkUtil::m_recursive_mutex,
 								int flag = MSG_NOSIGNAL);
 
-		static void enetReceive(Log::Logger& logger, int fd, SizedUint8Array recvbuf, size_t requestsize);
+		static int enetReceive(Log::Logger& logger,
+								int fd,
+								std::array<uint8_t,NtwkUtil::NtwkUtilBufferSize>& array_element_buffer,	// data and length
+								size_t requestsize);
 
-		// NtwkUtilBufferSize - baked into the program - can't change (like a #define'd constant...)
-		static const size_t NtwkUtilBufferSize;
 		static std::recursive_mutex m_recursive_mutex;
 		static std::mutex m_mutex;
 	};

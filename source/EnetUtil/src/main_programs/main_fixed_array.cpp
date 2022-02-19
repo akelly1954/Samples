@@ -110,16 +110,17 @@ int main(int argc, char *argv[])
         // Intentional Errors
         /////////////////////////////////////////////
 
-        // This will produce a compile error as intended (should use ::create() instead.
-        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
-        //                                                                           is private within this context
-        //////		fixed_size_array<uint8_t,5> errorObject;
-
-        // This will produce a compile error as intended (should use ::create() instead.
-        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
-        //                                                                           is private within this context
+        //////	fixed_size_array<uint8_t,5> errorObject;
         //
-        /////		std::shared_ptr<fixed_size_array<uint8_t,5>> sp1_error = std::make_shared<fixed_size_array<uint8_t,5>>();
+        // This will produce a compile error as intended (should use ::create() instead.
+        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
+        //                                                                           is private within this context
+
+        /////	std::shared_ptr<fixed_size_array<uint8_t,5>> sp1_error = std::make_shared<fixed_size_array<uint8_t,5>>();
+        //
+        // This will produce a compile error as intended (should use ::create() instead.
+        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
+        //                                                                           is private within this context
     }
     catch (std::exception& e)
     {
