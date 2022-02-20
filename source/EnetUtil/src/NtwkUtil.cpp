@@ -21,7 +21,7 @@ std::mutex NtwkUtil::m_mutex;
 
 int NtwkUtil::enetSend(Log::Logger& logger,
 						int fd,	                // file descriptor to socket
-						std::array<uint8_t,NtwkUtil::NtwkUtilBufferSize>& array_element_buffer,	// data and length
+						EnetUtil::arrayUint8 & array_element_buffer,	// data and length
 						std::recursive_mutex& mutex,
 						int flag)
 {
@@ -55,10 +55,6 @@ int NtwkUtil::enetSend(Log::Logger& logger,
         }
     }
 
-    // TODO: GET THIS OUT OF HERE
-	std::shared_ptr<fixed_size_array<uint8_t, NtwkUtilBufferSize>> sp1 = fixed_size_array<uint8_t,NtwkUtilBufferSize>::create();
-	logger.info() << "Created sp to fixed array with " << std::to_string(sp1->num_elements()) << " elements";
-
     return sockreturn;
 }
 
@@ -66,7 +62,7 @@ int NtwkUtil::enetSend(Log::Logger& logger,
 // recvbuf is assumed to have no data
 int NtwkUtil::enetReceive(	Log::Logger& logger,
 							int fd,
-							std::array<uint8_t,NtwkUtil::NtwkUtilBufferSize>& array_element_buffer,	// data and length
+							EnetUtil::arrayUint8 & array_element_buffer,	// data and length
 							size_t requestsize)
 {
     int bytesreceived = 0;
@@ -110,11 +106,13 @@ int NtwkUtil::enetReceive(	Log::Logger& logger,
             }
             else // num = 0
             {
-                logger.notice() << "NtwkUtil::enetReceive: got end of file/disconnect on socket read...";
+                // logger.notice() << "NtwkUtil::enetReceive: got end of file/disconnect on socket read...";
             	endOfFile = true;
             }
 
-        } while (!endOfFile && (bytesreceived < actual_requestsize));
+            if (endOfFile) break;
+
+        } while (bytesreceived < actual_requestsize);
 
     } catch (std::exception &exp)
     {

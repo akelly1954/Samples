@@ -37,7 +37,7 @@
 
 namespace EnetUtil {
 
-	// Options for NtwkUtilBufferSize
+	// Options for NtwkUtilBufferSize - do
 	static const size_t NtwkUtilNanoBufferSize = 64;
 	static const size_t NtwkUtilMicroBufferSize = 128;
 	static const size_t NtwkUtilTinyBufferSize = 256;
@@ -45,24 +45,39 @@ namespace EnetUtil {
 	static const size_t NtwkUtilRegularBufferSize = 4096;
 	static const size_t NtwkUtilLargeBufferSize = 8192;
 
-	// NOTE: The fixed std::aray<> size is set in the first object defined in class NtwkUtil.
-	// 		 It can be changed right there - it will apply to all objects in NtwkUtil.*
+	// NtwkUtilBufferSize - The fixed size of the std::array<> - baked into the program -
+	// can't change (like a #define'd constant...)
+	//
+	// NOTE: The fixed std::aray<> size is set here, and can/should be
+	// 		 changed right there - it will apply to all objects in NtwkUtil.*
+	static const size_t NtwkUtilBufferSize = EnetUtil::NtwkUtilNanoBufferSize;
+	// static const size_t NtwkUtilBufferSize = EnetUtil::NtwkUtilRegularBufferSize;
+
+	// Options for port numbers for listening and connecting to:
+	// Do not use directly.  See NtwkUtilBufferSize below.
+	static const int base_simple_server_port_number =  5831442;
+
+	// This is the real port number. Both connections and listening use this variable.
+	// Make sure to rebuild all clients when connecting to a server using this if it changes.
+	static const int simple_server_port_number = EnetUtil::base_simple_server_port_number+EnetUtil::NtwkUtilBufferSize;
+
+
+	class NtwkUtil;
+	typedef std::array<uint8_t,EnetUtil::NtwkUtilBufferSize> arrayUint8;
+
 	class NtwkUtil
 	{
 	public:
-		// NtwkUtilBufferSize - The fixed size of the std::array<> - baked into the program -
-		// can't change (like a #define'd constant...)
-		static const size_t NtwkUtilBufferSize = EnetUtil::NtwkUtilRegularBufferSize;
 
 		static int enetSend(Log::Logger& logger,
 								int fd,
-								std::array<uint8_t,NtwkUtil::NtwkUtilBufferSize>& array_element_buffer,
+								arrayUint8 & array_element_buffer,
 								std::recursive_mutex& mutex = NtwkUtil::m_recursive_mutex,
 								int flag = MSG_NOSIGNAL);
 
 		static int enetReceive(Log::Logger& logger,
 								int fd,
-								std::array<uint8_t,NtwkUtil::NtwkUtilBufferSize>& array_element_buffer,	// data and length
+								arrayUint8 & array_element_buffer,	// data and length
 								size_t requestsize);
 
 		static std::recursive_mutex m_recursive_mutex;
