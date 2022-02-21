@@ -1,6 +1,7 @@
 #pragma once
 
 #include <circular_buffer.hpp>
+#include <NtwkUtil.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <mutex>
 #include <sys/types.h>
@@ -36,6 +37,9 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 namespace EnetUtil {
+
+	template<typename T, size_t N> class fixed_size_array;   // forward declaration
+	typedef EnetUtil::fixed_size_array<uint8_t,NtwkUtilBufferSize> fixed_uint8_array_t;
 
 	// REFERENCES:
 	// 		https://en.cppreference.com/w/cpp/memory/enable_shared_from_this
