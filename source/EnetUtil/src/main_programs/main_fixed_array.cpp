@@ -32,9 +32,9 @@
 
 using namespace EnetUtil;
 
-void initialize(Log::Logger& logger, uint8_t val, std::shared_ptr<fixed_size_array<uint8_t,5>> sp)
+void initialize(Log::Logger& logger, uint8_t val, std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp)
 {
-	for (uint8_t i = 0; i < 5; i++)
+	for (uint8_t i = 0; i < NtwkUtilBufferSize; i++)
 	{
 		if (! sp->set_element(i, val+i) )
 		{
@@ -43,14 +43,14 @@ void initialize(Log::Logger& logger, uint8_t val, std::shared_ptr<fixed_size_arr
 	}
 }
 
-void print(Log::Logger& logger, std::string label, std::shared_ptr<fixed_size_array<uint8_t,5>> sp)
+void print(Log::Logger& logger, std::string label, std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp)
 {
 	logger.notice() << " ";	// Empty line
 	// Decreasing the use_count by 1, to account for the shared_ptr parameter to this function
 	logger.notice() << label << ", use count = " << std::to_string(sp.use_count()-1) << "  ------------------------";
 	logger.notice() << " ";	// Empty line
 
-	for (size_t i = 0; i < 5; i++)
+	for (size_t i = 0; i < NtwkUtilBufferSize; i++)
 	{
 		uint8_t val = sp->get_element(i);
 		logger.notice() << "array[" << std::to_string(i) << "] = " << std::to_string(val);
@@ -70,28 +70,28 @@ int main(int argc, char *argv[])
 
     try
     {
-        std::shared_ptr<fixed_size_array<uint8_t,5>> sp1 = fixed_size_array<uint8_t,5>::create();
+        std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp1 = fixed_size_array<uint8_t,NtwkUtilBufferSize>::create();
         initialize(logger, 1, sp1);
         print(logger, "Object sp1 created with ::create()", sp1);
 
-        std::shared_ptr<fixed_size_array<uint8_t,5>> sp11 = sp1->get_shared_ptr();
+        std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp11 = sp1->get_shared_ptr();
         initialize(logger, 11, sp11);
 
         print(logger, "Object sp11 after getting shared_ptr from sp1", sp11);
         print(logger, "Checking sp1", sp1);
         logger.notice() << "\n-----------------------------------------------------------------------\n";
 
-        std::shared_ptr<fixed_size_array<uint8_t,5>> sp2 = fixed_size_array<uint8_t,5>::create(*sp1);
+        std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp2 = fixed_size_array<uint8_t,NtwkUtilBufferSize>::create(*sp1);
         initialize(logger, 2, sp2);
         print(logger, "Object sp2 after creation using create with copy constructor", sp2);
 
-        std::shared_ptr<fixed_size_array<uint8_t,5>> sp21 = sp2->get_shared_ptr();
+        std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp21 = sp2->get_shared_ptr();
         initialize(logger, 21, sp21);
         print(logger, "Object sp21 after getting shared_ptr from sp2", sp21);
         print(logger, "Checking sp2", sp2);
         logger.notice() << "\n-----------------------------------------------------------------------\n";
 
-        std::shared_ptr<fixed_size_array<uint8_t,5>> sp30 = fixed_size_array<uint8_t,5>::create(*sp1);
+        std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp30 = fixed_size_array<uint8_t,NtwkUtilBufferSize>::create(*sp1);
         initialize(logger, 30, sp30);
         print(logger, "Object sp30 before assignment from sp1", sp30);
 
@@ -110,16 +110,16 @@ int main(int argc, char *argv[])
         // Intentional Errors
         /////////////////////////////////////////////
 
-        //////	fixed_size_array<uint8_t,5> errorObject;
+        //////	fixed_size_array<uint8_t,NtwkUtilBufferSize> errorObject;
         //
         // This will produce a compile error as intended (should use ::create() instead.
-        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
+        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = NtwkUtilBufferSize]’
         //                                                                           is private within this context
 
-        /////	std::shared_ptr<fixed_size_array<uint8_t,5>> sp1_error = std::make_shared<fixed_size_array<uint8_t,5>>();
+        /////	std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp1_error = std::make_shared<fixed_size_array<uint8_t,NtwkUtilBufferSize>>();
         //
         // This will produce a compile error as intended (should use ::create() instead.
-        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = 5]’
+        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = NtwkUtilBufferSize]’
         //                                                                           is private within this context
     }
     catch (std::exception& e)

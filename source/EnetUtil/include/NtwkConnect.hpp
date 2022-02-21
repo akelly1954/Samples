@@ -49,73 +49,37 @@ namespace EnetUtil {
 	template<typename T, size_t N>
 	class fixed_size_array : public std::enable_shared_from_this<fixed_size_array<T,N>>
 	{
-	private:
-	    static const size_t s_num_elements = N;
-
 	public:
-	    static const size_t num_elements(void)		{ return s_num_elements; }
-	    const std::array<T,N> *data(void) const		{ return p_fixed_array; }
+	    const size_t num_elements(void)						{ return m_array_pair.num_elements(); }
+	    const arrayUint8 *data(void) const					{ return m_array_pair.data(); }
+	    uint8_fixed_array_t& get_array_pair()               { return m_array_pair; }
+		bool is_empty() const								{ return num_elements() == 0; }
+		bool is_valid() const 								{ return data() != NULL; }
 
 	    // Gets a pointer to the pos'th element of the array
-	    // returns NULL if out of bounds or the object is invalid
-	    T get_element(size_t pos) const
-	    {
-	    	// TODO: exception?
-	    	assert (isValid() && pos < N);
-
-	    	T val = (*p_fixed_array)[pos];
-	    	return val;
-	    }
+	    T get_element(size_t pos) const 					{ return m_array_pair.get_element(pos); }
 
 	    // Sets the pos'th element in the array to value
 	    // returns false if the object is invalid or pos is out of bounds
 	    // operator<T>=(T obj) has to be defined
-	    bool set_element(size_t pos, const T& value)
-	    {
-	    	if (! isValid() || pos >= N) return false;
-	    	(*p_fixed_array)[pos] = value;
-	    	return true;
-	    }
+	    bool set_element(size_t pos, const T& value) { return m_array_pair.set_element(pos, value); }
 
 	private:
 	    // Not allowed:
 	    fixed_size_array(fixed_size_array<T,N> &&) = delete;			// Not movable
 	    fixed_size_array &operator=(fixed_size_array<T,N> &&) = delete;	// Not movable
 
-	private:
 	    // private in order to prevent make_shared<> from being called
 	    // (see static create() functions below)
-	    fixed_size_array(void)		// Creates empty array with num_elements T objects
-	    :
-	    	m_isvalid(false),
-			p_fixed_array(NULL)
-	    {
-		    if (num_elements() < 1)
-		    {
-		    	// valid stays false, and pointer to array is NULL.
-				return;
-		    }
-		    p_fixed_array = new std::array<T,N>();
-		    m_isvalid = true;
-	    }
+	    fixed_size_array(void) = default;	// Creates empty array with num_elements T objects
 
 	    // private in order to prevent make_shared<> from being called
 	    // (see static create() functions below)
-	    fixed_size_array(const fixed_size_array<T,N>& obj)		// Copy constructor
-		:
-			m_isvalid(false),
-			p_fixed_array(NULL)
-	    {
-	    	// valid stays false, and pointer to array is NULL.
-	    	if (!obj.isValid())
-	    	{
-	    		return;
-	    	}
+	    fixed_size_array(fixed_size_array<T,N>& obj)		// Copy constructor
+	    		: m_array_pair(obj.get_array_pair())  { }
 
-	    	p_fixed_array = new std::array<T,N>;
-	    	*p_fixed_array = *(obj.data()); 			// Copy the obj array<>
-		    m_isvalid = true;
-	    }
+	    // TODO:  Add constructor and ::create() call for
+	    //        (const arrayUint8 &objarray, size_t num_valid_array_elements)
 
 	public:
 	    // The first time this object is constructed in order to obtain a shared_ptr<> for a brand
@@ -143,42 +107,21 @@ namespace EnetUtil {
 	    //		 std::shared_ptr<fixed_size_array<T,N>> spFSArray =
 	    //					fixed_size_array<T,N>::create(fixed_size_array<T,N> &obj);
 	    //
-	    [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(const EnetUtil::fixed_size_array<T,N> &obj)
+	    [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(EnetUtil::fixed_size_array<T,N> &obj)
 	    {
 	            return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(obj));
 	    }
 
 	public:
 	    // Destructor
-	    virtual ~fixed_size_array(void)
-	    {
-	    	if (p_fixed_array)
-	    	{
-	    		delete [] p_fixed_array;
-	    	}
-	    	p_fixed_array = NULL;
-            m_isvalid = false;
-	    }
+	    virtual ~fixed_size_array(void) = default;
 
         // This is the equivalent of the copy constructor
 	    fixed_size_array<T,N>& operator=(fixed_size_array<T,N>& obj)
 	    {
-	    	if (p_fixed_array)
-            {
-                delete [] p_fixed_array;
-            }
-
-            m_isvalid = false;
-            p_fixed_array = new std::array<T,N>;
-            if (obj.data())
-            {
-                m_isvalid = obj.isValid();
-                *p_fixed_array = *(obj.data());             // Copy the obj array<>
-            }
+	    	m_array_pair = obj.get_array_pair();
 	    	return *this;
 	    }
-
-	    bool isValid(void) const 		{ return m_isvalid; }
 
 		// Returns a shared_ptr to this object
 	    std::shared_ptr<EnetUtil::fixed_size_array<T,N>> get_shared_ptr(void)
@@ -187,8 +130,7 @@ namespace EnetUtil {
 	    }
 
 	private:
-	    bool m_isvalid;
-	    std::array<T,N>* p_fixed_array;
+	    uint8_fixed_array_t m_array_pair;
 	};
 } // namespace EnetUtil
 

@@ -97,11 +97,7 @@ namespace EnetUtil {
 	    array_pair(const array_pair<T,N>& obj)		// Copy constructor
 	    {
 	    	std::lock_guard<std::mutex> lock(m_mutex);
-	    	if (m_data_pair.first)
-	    	{
-	    		delete [] m_data_pair.first;
-	    		m_data_pair.second = 0;
-	    	}
+
 	    	if (!obj.is_valid())
 	    	{
 	    		// Make sure we create a valid (empty) project
@@ -138,10 +134,32 @@ namespace EnetUtil {
     		m_data_pair.second = 0;
 	    }
 
-		size_t num_elements() const 				{ return m_data_pair.second; }
-		const arrayUint8 *data(void) const			{ return m_data_pair.first; }
-		bool is_empty() const						{ return num_elements() == 0; }
-		bool is_valid() const 						{ return data() != NULL; }
+	    array_pair &operator=(array_pair<T,N> &obj)
+	    {
+	    	std::lock_guard<std::mutex> lock(m_mutex);
+
+	    	if (m_data_pair.first)
+	    	{
+	    		delete [] m_data_pair.first;
+	    		m_data_pair.second = 0;
+	    	}
+	    	if (!obj.is_valid())
+	    	{
+	    		// Make sure we create a valid (empty) project
+	    		m_data_pair.first = new arrayUint8;
+		    	*m_data_pair.first = *(obj.data());
+			    m_data_pair.second = 0;
+	    		return *this;
+	    	}
+	    	*m_data_pair.first = *(obj.data());			// Copy the obj array<>
+		    m_data_pair.second = obj.num_elements();
+		    return *this;
+	    }
+
+		size_t num_elements() const                        	            { return m_data_pair.second; }
+		const arrayUint8 *data(void) const				                { return m_data_pair.first; }
+		bool is_empty() const							                { return num_elements() == 0; }
+		bool is_valid() const 							                { return data() != NULL; }
 
 	    // Gets a pointer to the pos'th element of the std::array<>
 	    // Returns NULL if out of bounds or the object is invalid
@@ -176,7 +194,7 @@ namespace EnetUtil {
 	private:
 	    mutable std::mutex m_mutex;
 		std::pair<arrayUint8 *, size_t> m_data_pair;
-	};
+	}; // end of class array_pair definition
 
 
 	class NtwkUtil
