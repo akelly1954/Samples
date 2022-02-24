@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 		)
     )
     {
-        Usage(argv[0]);
+        Usage(argv0);
         return 0;
     }
 

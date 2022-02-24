@@ -71,6 +71,8 @@ namespace EnetUtil {
 	// This is the actual type of the data being handled
 	typedef std::array<uint8_t,EnetUtil::NtwkUtilBufferSize> arrayUint8;
 
+#ifdef NOBUILD
+
 	///////////////////////////////////////////////////////////////////////////////
 	// The object below holds an std::pair<> which manages the std::array<>
 	// as well as a count of the number of valid bytes in the array.
@@ -81,7 +83,7 @@ namespace EnetUtil {
 	///////////////////////////////////////////////////////////////////////////////
 
 	template<typename T, size_t N> class array_pair;   // forward declaration
-	typedef EnetUtil::array_pair<uint8_t,NtwkUtilBufferSize> uint8_fixed_array_t;
+	typedef EnetUtil::array_pair<uint8_t,NtwkUtilBufferSize> uint8_array_pair_t;
 
 	template<typename T, size_t N>
 	class array_pair
@@ -196,6 +198,7 @@ namespace EnetUtil {
 		std::pair<arrayUint8 *, size_t> m_data_pair;
 	}; // end of class array_pair definition
 
+#endif // NOBUILD
 
 	class NtwkUtil
 	{

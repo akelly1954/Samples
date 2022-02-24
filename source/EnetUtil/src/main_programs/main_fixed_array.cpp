@@ -52,8 +52,11 @@ void print(Log::Logger& logger, std::string label, std::shared_ptr<fixed_size_ar
 
 	for (size_t i = 0; i < NtwkUtilBufferSize; i++)
 	{
-		uint8_t val = sp->get_element(i);
-		logger.notice() << "array[" << std::to_string(i) << "] = " << std::to_string(val);
+		uint8_t val;
+		if (sp->get_element(i, val))
+		{
+			logger.notice() << "array[" << std::to_string(i) << "] = " << std::to_string(val);
+		}
 	}
 }
 
@@ -65,7 +68,7 @@ int main(int argc, char *argv[])
 
     Log::Config::Vector configList;
     Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "", false, false);
-    Util::Utility::configureLogManager( configList, "main_fixed_array_log" );
+    Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
 
     try

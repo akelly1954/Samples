@@ -1,7 +1,13 @@
-#include <iostream>
-#include <errno.h>
 #include "Utility.hpp"
 #include "EnetUtil.hpp"
+#include <iostream>
+#include <errno.h>
+// #include <types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -27,8 +33,106 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-using namespace Util;
+// SOCKET UTILITIES
 
+// The ip address and port number are used to set the proper values
+// in the empty address structure for all the utilities used in EnetUtil.
+// If the listen address (e.g. "192.168.0.102") is NULL, the INADDR_ANY value (0)
+// will be used in the address structure.
+bool setup_listen_addr_in ( const char *listen_ip_address, 		// in
+							uint16_t socket_port_number, 		// in
+							struct sockaddr_in& empty_addr)  	// out
+{
+	const char *iaddr = (listen_ip_address == NULL? INADDR_ANY : listen_ip_address);
+
+	empty_addr.sin_family = AF_INET;
+	empty_addr.sin_addr.s_addr = inet_addr(iaddr);
+	empty_addr.sin_port = htons(socket_port_number);
+	return true;
+
+}
+
+// Returns socket file descriptor, or -1 on error.
+// We use the logger so that we can capture errno as early as possible
+// after a system call.
+int serverListen(Log::Logger& logger, struct sockaddr_in& address_struct, int backlog_size)
+{
+	int errnocopy = 0;			// Captures errno right after system call
+	int socket_fd = -1; 		// socket file descriptor
+
+	// For setsockopt(2), this parameter should be non-zero to enable a boolean option,
+	// or zero if the option is to be disabled
+	int optval = 1;
+
+	// signal(SIGPIPE, SIG_IGN);  // this will affect all running threads
+
+    // Creating socket file descriptor
+    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In serverListen(): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(optval)))
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In serverListen(): setsockopt() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    if (bind(socket_fd, (struct sockaddr *)&address_struct, sizeof(address_struct)) < 0)
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In serverListen(): bind() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    if (listen(socket_fd, backlog_size) < 0)
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In serverListen(): listen() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+    logger.notice() << "In serverListen(): Server created and accepting connection requests";
+    return socket_fd;
+}
+
+// Accepts a single connection request.  It is expected to be called
+// from within a loop.  For each loop cycle, the caller would
+// then start a thread to deal with the request right after this call,
+// if and only if the file descriptor is a valid positive file descriptor
+// from a successful accept() system call, and the sockaddr_in structure
+// is valid.
+int serverAccept(Log::Logger& logger, int listen_socket_fd, struct sockaddr_in& address_struct)
+{
+	int errnocopy = 0;			// Captures errno right after system call
+	int accept_socket_fd = -1;
+    int address_length = sizeof(address_struct);
+
+	if ((accept_socket_fd = accept(listen_socket_fd,
+			                       (struct sockaddr *) &address_struct,
+							       (socklen_t *) &address_length)) < 0)
+	{
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In serverAccept(): accept() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+	}
+
+	//////////// std::thread deviceListnerThread(DeviceServer::deviceSocketThreadHandler, accept_socket_fd, shared_from_this());
+	//////////// deviceListnerThread.detach();
+
+	return accept_socket_fd;
+}
+
+// END OF SOCKET UTILITIES
+
+/////////////////////////////////////////////////////////////////////////////////
 // On the assumption that the process self mac address does not change during its
 // lifetime...  This static is not visible outside the scope of this source file.
 // There usually is more than one mac address.  
@@ -41,6 +145,8 @@ static std::recursive_mutex mac_address_mutex;
 // Returns empty vector if not found
 std::vector<std::string> EnetUtil::get_all_self_mac_addresses()
 {
+	using namespace Util;
+
     if (static_self_mac_addresses.size() != 0)
     {
         // Once set, we don't allow the system's mac addresses to change for the lifetime of the process.

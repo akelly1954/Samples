@@ -24,7 +24,7 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-// Currently hard-coded to deal with the firs command line argument being
+// Currently hard-coded to deal with the first command line argument being
 // in the form of -xx.
 std::map<std::string,std::string> Util::getCLMap(int argc, char *argv[])
 {

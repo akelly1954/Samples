@@ -62,10 +62,11 @@ void Utility::initializeLogManager( Log::Config::Vector& configList,
     	Log::Config::addOutput(configList, "OutputConsole");
     }
 
-    if (enableFileOutput > 0)
+    if (enableFileOutput)
     {
         Log::Config::addOutput(configList, "OutputFile");
         Log::Config::setOption(configList, "filename",          logfilename.c_str());
+std::cerr << "Enabled file output to " << logfilename.c_str() << std::endl;
     }
 
     // NO ROTATION OF LOG FILES FOR THIS PROGRAM

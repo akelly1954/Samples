@@ -50,60 +50,36 @@ namespace EnetUtil {
 	class fixed_size_array : public std::enable_shared_from_this<fixed_size_array<T,N>>
 	{
 	public:
-	    const size_t num_elements(void)						{ return m_num_valid_elements; }
-	    const arrayUint8 data(void) const					{ return m_array_data; }
-		bool is_empty()										{ return num_elements() == 0; }
-		bool has_data()										{ return num_elements() > 0; }
+	    const size_t num_elements(void)						{ return m_array_pair.num_elements(); }
+	    const arrayUint8 *data(void) const					{ return m_array_pair.data(); }
+	    uint8_fixed_array_t& get_array_pair()               { return m_array_pair; }
+		bool is_empty() const								{ return num_elements() == 0; }
+		bool is_valid() const 								{ return data() != NULL; }
 
-	    // Gets the value of the pos'th element of the std::array<>
-	    // TODO: returns false if pos is out of bounds. This might
-		// have to throw and exception instead.
-	    bool get_element(size_t pos, T& target)
-	    {
-	    	std::lock_guard<std::mutex> lock(m_mutex);
-	    	if (pos >= N) return false;
-	    	target = m_array_data[pos];
-	    	return true;
-	    }
+	    // Gets a pointer to the pos'th element of the array
+	    T get_element(size_t pos) const 					{ return m_array_pair.get_element(pos); }
 
-	    // Sets the pos'th element in the array to value.
-	    // Returns false if pos is out of bounds.
-	    // TODO: Have to deal with pos being in bounds, but
-	    // outside of the current number of elements. Might
-	    // have to enforce in-bounds being up the num_valid_elements
-	    // position, and add another function that extends that limit -
-	    // perhaps an append() function.
-	    bool set_element(size_t pos, const T& value)
-	    {
-	    	std::lock_guard<std::mutex> lock(m_mutex);
-	    	if (pos >= N) return false;
-	    	m_array_data[pos] = value;
-			return true;
-	    }
+	    // Sets the pos'th element in the array to value
+	    // returns false if the object is invalid or pos is out of bounds
+	    // operator<T>=(T obj) has to be defined
+	    bool set_element(size_t pos, const T& value) { return m_array_pair.set_element(pos, value); }
 
 	private:
 	    // Not allowed:
 	    fixed_size_array(fixed_size_array<T,N> &&) = delete;			// Not movable
 	    fixed_size_array &operator=(fixed_size_array<T,N> &&) = delete;	// Not movable
 
-	private:
 	    // private in order to prevent make_shared<> from being called
 	    // (see static create() functions below)
-	    fixed_size_array(void)     	// Creates empty array with num_elements T objects
-				: m_num_valid_elements(0)
-		{
-	    	std::lock_guard<std::mutex> lock(m_mutex);
-			m_num_valid_elements = 0;
-		}
+	    fixed_size_array(void) = default;	// Creates empty array with num_elements T objects
 
 	    // private in order to prevent make_shared<> from being called
 	    // (see static create() functions below)
 	    fixed_size_array(fixed_size_array<T,N>& obj)		// Copy constructor
-	    {
-	    	std::lock_guard<std::mutex> lock(m_mutex);
-	    	m_array_data = obj.data();
-	    	m_num_valid_elements = obj.num_elements();
-	    }
+	    		: m_array_pair(obj.get_array_pair())  { }
+
+	    // TODO:  Add constructor and ::create() call for
+	    //        (const arrayUint8 &objarray, size_t num_valid_array_elements)
 
 	public:
 	    // The first time this object is constructed in order to obtain a shared_ptr<> for a brand
@@ -121,7 +97,7 @@ namespace EnetUtil {
 	    //
 	    [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(void)
 	    {
-	    	return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>());
+	            return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>());
 	    }
 
 	    // Use this version of ::create() to get a new shared_ptr<> managing a brand new T object which
@@ -133,7 +109,7 @@ namespace EnetUtil {
 	    //
 	    [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(EnetUtil::fixed_size_array<T,N> &obj)
 	    {
-            return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(obj));
+	            return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(obj));
 	    }
 
 	public:
@@ -143,23 +119,18 @@ namespace EnetUtil {
         // This is the equivalent of the copy constructor
 	    fixed_size_array<T,N>& operator=(fixed_size_array<T,N>& obj)
 	    {
-	    	std::lock_guard<std::mutex> lock(m_mutex);
-	    	m_array_data = obj.data();
-	    	m_num_valid_elements = obj.num_elements();
+	    	m_array_pair = obj.get_array_pair();
 	    	return *this;
 	    }
 
 		// Returns a shared_ptr to this object
 	    std::shared_ptr<EnetUtil::fixed_size_array<T,N>> get_shared_ptr(void)
 	    {
-	    	std::lock_guard<std::mutex> lock(m_mutex);
 	    	return this->shared_from_this();
 	    }
 
 	private:
-	    mutable std::mutex m_mutex;
-	    arrayUint8 m_array_data;
-	    size_t m_num_valid_elements;
+	    uint8_fixed_array_t m_array_pair;
 	};
 } // namespace EnetUtil
 

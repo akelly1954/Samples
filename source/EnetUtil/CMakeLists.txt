@@ -70,21 +70,23 @@ target_link_libraries( main_ntwk_util
 install(TARGETS main_ntwk_util DESTINATION localrun)
 
 #
-# main_simple_server main
+# main_NtwkBasicSockServer main
 #
-set ( "main_simple_server${DBG}")
-add_executable (main_simple_server src/main_programs/main_simple_server.cpp)
-target_link_libraries( main_simple_server
+set ( "main_NtwkBasicSockServer${DBG}")
+add_executable (main_NtwkBasicSockServer src/main_programs/main_NtwkBasicSockServer.cpp)
+target_link_libraries( main_NtwkBasicSockServer
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
-install(TARGETS main_simple_server DESTINATION localrun)
+install(TARGETS main_NtwkBasicSockServer DESTINATION localrun)
 
 # Dependencies
 add_dependencies (main_enet_util ${EnetUtil} ${Util} )
 add_dependencies (main_fixed_array ${EnetUtil} ${Util} )
 add_dependencies (main_ntwk_util ${EnetUtil} ${Util} )
-add_dependencies (main_simple_server ${EnetUtil} ${Util} )
+add_dependencies (main_NtwkBasicSockServer ${EnetUtil} ${Util} )
+
+

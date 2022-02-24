@@ -31,14 +31,14 @@ export TRAVIS=1
 mkdir -p build
 cd build
 
-cmake -G"$CmakeGenerator" ../${loggercppsrcdirname}
+cmake -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${loggercppsrcdirname}
 if [ $? -ne 0 ]
 then
-    echo "ERROR: cmake -G"$CmakeGenerator" ../${loggercppsrcdirname} failed.  Aborting..."
+    echo "ERROR: cmake -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${loggercppsrcdirname} failed.  Aborting..."
     exit 1
 fi
 
-cmake -G"$CmakeGenerator" --build .
+cmake --build .
 if [ $? -ne 0 ]
 then
     echo "ERROR: cmake --build failed.  Aborting..."
