@@ -138,9 +138,7 @@ int EnetUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::
         return -1;
 	}
 
-	//////////// std::thread deviceListnerThread(DeviceServer::deviceSocketThreadHandler, accept_socket_fd, shared_from_this());
-	//////////// deviceListnerThread.detach();
-
+ 
 	return accept_socket_fd;
 }
 
