@@ -2,11 +2,11 @@
 #include "EnetUtil.hpp"
 #include <iostream>
 #include <errno.h>
-// #include <types.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
-
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -39,15 +39,25 @@
 // in the empty address structure for all the utilities used in EnetUtil.
 // If the listen address (e.g. "192.168.0.102") is NULL, the INADDR_ANY value (0)
 // will be used in the address structure.
-bool setup_listen_addr_in ( const char *listen_ip_address, 		// in
-							uint16_t socket_port_number, 		// in
-							struct sockaddr_in& empty_addr)  	// out
+bool EnetUtil::setup_listen_addr_in(std::string listen_ip_address, 		// in
+									uint16_t socket_port_number, 		// in
+									struct ::sockaddr *addr)  			// out
 {
-	const char *iaddr = (listen_ip_address == NULL? INADDR_ANY : listen_ip_address);
+	struct ::sockaddr_in *empty_addr = (::sockaddr_in *) addr;
+	empty_addr->sin_family = AF_INET;
 
-	empty_addr.sin_family = AF_INET;
-	empty_addr.sin_addr.s_addr = inet_addr(iaddr);
-	empty_addr.sin_port = htons(socket_port_number);
+	::in_addr_t x;
+	if (listen_ip_address.empty() || listen_ip_address == "INADDR_ANY")
+	{
+		x = INADDR_ANY;
+	}
+	else
+	{
+		x = inet_addr(listen_ip_address.c_str());
+	}
+
+	empty_addr->sin_addr.s_addr = x;		//	INADDR_ANY;         // inet_addr(listen_ip_address == ""? INADDR_ANY : listen_ip_address.c_str());
+	empty_addr->sin_port = htons(socket_port_number);
 	return true;
 
 }
@@ -55,8 +65,10 @@ bool setup_listen_addr_in ( const char *listen_ip_address, 		// in
 // Returns socket file descriptor, or -1 on error.
 // We use the logger so that we can capture errno as early as possible
 // after a system call.
-int serverListen(Log::Logger& logger, struct sockaddr_in& address_struct, int backlog_size)
+int EnetUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int backlog_size)
 {
+	struct ::sockaddr_in *address_struct = (::sockaddr_in *) address;
+
 	int errnocopy = 0;			// Captures errno right after system call
 	int socket_fd = -1; 		// socket file descriptor
 
@@ -83,7 +95,7 @@ int serverListen(Log::Logger& logger, struct sockaddr_in& address_struct, int ba
         return -1;
     }
 
-    if (bind(socket_fd, (struct sockaddr *)&address_struct, sizeof(address_struct)) < 0)
+    if (bind(socket_fd, (struct sockaddr *)address_struct, sizeof(::sockaddr_in)) < 0)
     {
     	errnocopy = errno;
     	Util::Utility::get_errno_message(errnocopy);
@@ -106,16 +118,18 @@ int serverListen(Log::Logger& logger, struct sockaddr_in& address_struct, int ba
 // from within a loop.  For each loop cycle, the caller would
 // then start a thread to deal with the request right after this call,
 // if and only if the file descriptor is a valid positive file descriptor
-// from a successful accept() system call, and the sockaddr_in structure
+// from a successful accept() system call, and the ::sockaddr_in structure
 // is valid.
-int serverAccept(Log::Logger& logger, int listen_socket_fd, struct sockaddr_in& address_struct)
+int EnetUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::sockaddr *address)
 {
+	struct ::sockaddr_in *address_struct = (::sockaddr_in *) address;
+
 	int errnocopy = 0;			// Captures errno right after system call
 	int accept_socket_fd = -1;
-    int address_length = sizeof(address_struct);
+    int address_length = sizeof(::sockaddr_in);
 
 	if ((accept_socket_fd = accept(listen_socket_fd,
-			                       (struct sockaddr *) &address_struct,
+			                       (struct sockaddr *) address_struct,
 							       (socklen_t *) &address_length)) < 0)
 	{
     	errnocopy = errno;

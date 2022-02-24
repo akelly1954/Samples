@@ -61,11 +61,11 @@ namespace EnetUtil {
 
 	// Options for port numbers for listening and connecting to:
 	// Do not use directly.  See NtwkUtilBufferSize below.
-	static const int base_simple_server_port_number =  5831442;
+	static const uint16_t base_simple_server_port_number =  57314;
 
 	// This is the real port number. Both connections and listening use this variable.
 	// Make sure to rebuild all clients when connecting to a server using this if it changes.
-	static const int simple_server_port_number =
+	static const uint16_t simple_server_port_number =
 			EnetUtil::base_simple_server_port_number+EnetUtil::NtwkUtilBufferSize;
 
 	// This is the actual type of the data being handled

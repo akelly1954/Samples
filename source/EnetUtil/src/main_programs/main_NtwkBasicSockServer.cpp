@@ -12,6 +12,13 @@
 #include <vector>
 #include <algorithm>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -47,8 +54,8 @@ const char *logFileName = "main_basic_socket_server_log.txt";
 const char *default_server_listen_ip = "127.0.0.1";		// default listen ip address
 std::string server_listen_ip(default_server_listen_ip);	// can be modified from the command line
 
-const int default_server_listen_port_number = EnetUtil::simple_server_port_number;
-int server_listen_port_number = default_server_listen_port_number; // can be modified from the command line
+const uint16_t default_server_listen_port_number = EnetUtil::simple_server_port_number;
+uint16_t server_listen_port_number = default_server_listen_port_number; // can be modified from the command line
 
 const int default_server_listen_max_backlog = 50;		// Maximum number of connection requests queued
 int server_listen_max_backlog = 50;						// can be modified from the command line
@@ -79,31 +86,10 @@ bool parse(int argc, char *argv[])
 	specified["-pn"] = getArg(cmdmap, "-pn", server_listen_port_number);
     specified["-bl"] = getArg(cmdmap, "-bl", server_listen_max_backlog);
 
-#ifdef FOR_DEBUG
-	for (auto it = specified.begin(); it != specified.end(); ++it)
-	{
-		std::cout << it->first.c_str() << " = " << (it->second? "true" : "false") << std::endl;
-	}
-#endif // FOR_DEBUG
-
-    // If any of the parameters were specified, it's ok
-    bool ret = false;
+    bool ret = true;  // Currently all flags have default values, so it's always good.
     std::for_each(specified.begin(), specified.end(), [&ret](auto member) { if (member.second) { ret = true; }});
     return ret;
 }
-
-#ifdef FOR_DEBUG
-// random sleep milliseconds for each thread
-std::vector<int> sleeptimes;
-
-void initializeSleeptimes(int numthreads, std::vector<int>& sleeptimes)
-{
-	for (int i = 0; i < numthreads; i++)
-	{
-		sleeptimes.push_back(Util::Utility::get_rand(300));
-	}
-}
-#endif // FOR_DEBUG
 
 
 int main(int argc, char *argv[])
@@ -113,12 +99,11 @@ int main(int argc, char *argv[])
     std::string argv0 = const_cast<const char *>(argv[0]);
 
     // If no parameters were supplied, or help was requested:
-    if (argc <= 1 || (argc > 1 &&
+    if (argc > 1 &&
     		(std::string(const_cast<const char *>(argv[1])) == "--help" ||
   	    	 std::string(const_cast<const char *>(argv[1])) == "-h" ||
   	    	 std::string(const_cast<const char *>(argv[1])) == "help")
 		)
-    )
     {
         Usage(std::cerr, argv0);
         return 0;
@@ -137,20 +122,38 @@ int main(int argc, char *argv[])
     Log::Logger logger(logChannelName);
 
     logger.notice() << "======================================================================";
-    logger.notice() << "Attempting start of server:";
+    logger.notice() << "Starting the server:";
 
-    if (server_listen_ip.empty())
+    if (server_listen_ip.empty() || server_listen_ip == "INADDR_ANY")
     {
-    	logger.notice() << "	server listening on ip address: IADDR_ANY";
+    	server_listen_ip = "";
+    	logger.notice() << "	listening on ip address: INADDR_ANY";
     }
     else
     {
-    	logger.notice() << "	server listening on ip address: " << server_listen_ip;
+    	logger.notice() << "	listening on ip address: " << server_listen_ip;
     }
 
     logger.notice() << "    port number: " << server_listen_port_number;
 	logger.notice() << "	max backlog connection requests: " << server_listen_max_backlog;
     logger.notice() << "======================================================================";
+
+
+    struct ::sockaddr_in sin_addr;		// = { AF_INET, htons(server_listen_port_number) };
+    if(! setup_listen_addr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
+	{
+		logger.error() << "Error returned from setup_listen_addr_in(): Aborting...";
+		return 1;
+	}
+
+    if (server_listen(logger, (sockaddr *) &sin_addr, server_listen_max_backlog) < 0)
+    {
+		logger.error() << "Error returned from server_listen(): Aborting...";
+		return 1;
+    }
+
+
+
 
 
 

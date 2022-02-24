@@ -36,6 +36,7 @@ namespace Util {
 
 std::map<std::string,std::string> getCLMap(int argc, char *argv[]);
 
+bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var);
 bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var);
 bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var);
 bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var);

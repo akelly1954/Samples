@@ -8,7 +8,7 @@ loggercppsrcdirname="SRombauts-LoggerCpp-a0868a8"
 LoggerCppSource_DIR="$loggercppdir/$loggercppsrcdirname"
 SampleRoot_DIR="$basepath"
 
-CMAKE_ECLIPSE_VERSION="4.15"
+CMAKE_ECLIPSE_VERSION="4.22"
 
 function base_linux_build_Usage
 {

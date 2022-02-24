@@ -49,6 +49,18 @@ std::map<std::string,std::string> Util::getCLMap(int argc, char *argv[])
     return cmdmap;
 }
 
+bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var)
+{
+	bool ret = false;
+    auto it = cmdmap.find(flag);
+    if (it != cmdmap.end() && it->second.length() > 0)
+    {
+        var = static_cast<unsigned short>(strtoul(it->second.c_str(), NULL, 10) & 0xFFFF);
+        ret = true;
+    }
+    return ret;
+}
+
 bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var)
 {
 	bool ret = false;
