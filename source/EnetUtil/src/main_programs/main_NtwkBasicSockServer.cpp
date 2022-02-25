@@ -93,11 +93,13 @@ bool parse(int argc, char *argv[])
     return ret;
 }
 
-void thread_handler(int socketfd, int threadno)         ////////         , Log::Logger& logger)
+void thread_handler(int socketfd, int threadno, Log::Logger logger)
 {
-	std::cout << "thread_handler(): started thread for connection " << threadno << ", fd = " << socketfd << std::endl;
-	// logger.notice() << "thread_handler(): start thread for connection " << threadno << ", fd = " << socketfd;
-	;
+	// FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
+	//                        << threadno << ", fd = " << socketfd << std::endl;
+
+	logger.notice() << "thread_handler(): start thread for connection " << threadno << ", fd = " << socketfd;
+
 }
 
 void socket_connection_handler (int socket, int threadno)
@@ -109,7 +111,9 @@ void socket_connection_handler (int socket, int threadno)
 
 	try
 	{
-    	workers.push_back( std::thread( thread_handler, socket, threadno));             ////////    , logger));
+		// The logger is passed to the new thread because it has to be instantiated in
+		// the main thread (right here) before it is used from inside the new thread.
+    	workers.push_back( std::thread( thread_handler, socket, threadno, logger));
     }
     catch (std::exception &exp)
     {
