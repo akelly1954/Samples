@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     Log::Config::Vector configList;
     // Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "main_ntwk_util_log.txt", true, true);
     Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "", true, false);
-    Util::Utility::configureLogManager( configList, "main_ntwk_util" );
+    Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
 
     size_t nread = 0;

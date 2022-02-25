@@ -17,15 +17,13 @@ using namespace EnetUtil;
 
 // class NtwkUtil static objects:
 std::recursive_mutex NtwkUtil::m_recursive_mutex;
-std::mutex NtwkUtil::m_mutex;
 
 int NtwkUtil::enetSend(Log::Logger& logger,
 						int fd,	                // file descriptor to socket
 						EnetUtil::arrayUint8 & array_element_buffer,	// data and length
-						std::recursive_mutex& mutex,
 						int flag)
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex);
+    std::lock_guard<std::recursive_mutex> lock(NtwkUtil::m_recursive_mutex);
 
     const int sleepmsec = 3000;
     const int retries = 3;

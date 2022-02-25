@@ -78,7 +78,7 @@ namespace EnetUtil {
 		static int enetSend(Log::Logger& logger,
 								int fd,
 								EnetUtil::arrayUint8 & array_element_buffer,
-								std::recursive_mutex& mutex = NtwkUtil::m_recursive_mutex,
+								// std::recursive_mutex& mutex = NtwkUtil::m_recursive_mutex,
 								int flag = MSG_NOSIGNAL);
 
 		static int enetReceive(Log::Logger& logger,
@@ -87,7 +87,6 @@ namespace EnetUtil {
 								size_t requestsize);
 
 		static std::recursive_mutex m_recursive_mutex;
-		static std::mutex m_mutex;
 	};
 } // namespace EnetUtil
 
