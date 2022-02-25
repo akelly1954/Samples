@@ -63,6 +63,8 @@ int server_listen_max_backlog = 50;						// can be modified from the command lin
 // fixed size of the std::vector<> used for the data
 const int server_buffer_size = EnetUtil::NtwkUtilBufferSize;
 
+// vector container stores the threads that do the work for each connection
+std::vector<std::thread> workers;
 
 void Usage(std::ostream& strm, std::string command)
 {
@@ -89,6 +91,39 @@ bool parse(int argc, char *argv[])
     bool ret = true;  // Currently all flags have default values, so it's always good.
     std::for_each(specified.begin(), specified.end(), [&ret](auto member) { if (member.second) { ret = true; }});
     return ret;
+}
+
+void thread_handler(int socketfd, int threadno)         ////////         , Log::Logger& logger)
+{
+	std::cout << "thread_handler(): started thread for connection " << threadno << ", fd = " << socketfd << std::endl;
+	// logger.notice() << "thread_handler(): start thread for connection " << threadno << ", fd = " << socketfd;
+	;
+}
+
+void socket_connection_handler (int socket, int threadno)
+{
+        // This affects the whole process:  signal(SIGPIPE, SIG_IGN);
+
+   	Log::Logger logger(logChannelName);
+   	logger.notice() << "socket_connection_handler(): starting a connection handler thread";
+
+	try
+	{
+    	workers.push_back( std::thread( thread_handler, socket, threadno));             ////////    , logger));
+    }
+    catch (std::exception &exp)
+    {
+        logger.error() << "Got exception in socket_connection_handler() starting thread " <<
+        				  threadno << " for socket fd " << socket << ": " << exp.what();
+    }
+    catch (...)
+    {
+    	logger.error() << "General exception occurred in socket_connection_handler() starting thread " <<
+        				  threadno << " for socket fd " << socket;
+    }
+
+    logger.notice() << "socket_connection_handler(): started thread " <<
+        				  threadno << " for socket fd " << socket;
 }
 
 
@@ -139,66 +174,63 @@ int main(int argc, char *argv[])
     logger.notice() << "======================================================================";
 
 
-    struct ::sockaddr_in sin_addr;		// = { AF_INET, htons(server_listen_port_number) };
+    struct ::sockaddr_in sin_addr;
     if(! setup_listen_addr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
 	{
 		logger.error() << "Error returned from setup_listen_addr_in(): Aborting...";
 		return 1;
 	}
 
-    if (server_listen(logger, (sockaddr *) &sin_addr, server_listen_max_backlog) < 0)
+    int socket_fd = -1;
+    if ((socket_fd = server_listen(logger, (sockaddr *) &sin_addr, server_listen_max_backlog)) < 0)
     {
 		logger.error() << "Error returned from server_listen(): Aborting...";
 		return 1;
     }
 
+    // From this point on we loop on the accept() system call. starting a thread
+    // to handle each connection.
+    logger.notice() << "In main(): Server created and accepting connection requests";
 
+	int accept_socket_fd = -1;
+    bool aborted = false;
 
+    int i = 0;
+    for (i = 1; !aborted; i++)
+    {
+    	if ((accept_socket_fd = server_accept(logger, socket_fd, (sockaddr *) &sin_addr)) < 0)
+        {
+    		// Aborting
+    		aborted = true;
+    		continue;
+        }
 
+    	logger.notice() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
 
+    	// Start a thread to handle the connection
+    	socket_connection_handler(accept_socket_fd, i);
+    }
 
-    return 0;
+    int ret = (aborted? 1 : 0);
+
+    /////////////////
+    // Cleanup
+    /////////////////
+
+    // Terminate the Log Manager (destroy the Output objects)
+    Log::Manager::terminate();
+
+    std::for_each(workers.begin(), workers.end(), [](std::thread &t)
+    {
+    	if (t.joinable()) t.join();
+    });
+
+    return ret;
 }
 
 
 #ifdef SAMPLE_RUN
-/*
-#
-# By default, the output is sorted chronologically (when each thread finishes its work).
-#
-# To sort the output in main_condition_data_log.txt by the thread number:
-# 		sort -k6 -n main_condition_data_log.txt
-#
-# To sort the output in main_condition_data_log.txt by the milliseconds' delay:
-# 		sort -k8 -n main_condition_data_log.txt
-#
-# To sort the output in main_condition_data_log.txt by the previous thread number from the condition variable:
-# 		sort -k13 -n main_condition_data_log.txt
-#
-# SAMPLE RUN:
-$
-$ cd /path/to/build/localrun
-$
-$ LD_LIBRARY_PATH=".:" ./main_condition_data 10
-Number of threads chosen: 10
-main thread: Sending ready message to all threads
-Last condition thread done
 
-
-$ cat main_condition_data_log.txt
-2022-02-13 07:51:03.982  main_condition_data_log NOTE thread 1 slept 56 msec -- from thread 0 = "Initial - this is not from a thread...
-2022-02-13 07:51:03.996  main_condition_data_log NOTE thread 9 slept 70 msec -- from thread 1 = "thread 1 slept 56 msec -- from thread 0 = "Initial - this is not from a th...
-2022-02-13 07:51:03.997  main_condition_data_log NOTE thread 4 slept 71 msec -- from thread 9 = "thread 9 slept 70 msec -- from thread 1 = "thread 1 slept 56 msec -- from ...
-2022-02-13 07:51:04.030  main_condition_data_log NOTE thread 6 slept 104 msec -- from thread 4 = "thread 4 slept 71 msec -- from thread 9 = "thread 9 slept 70 msec -- from ...
-2022-02-13 07:51:04.141  main_condition_data_log NOTE thread 2 slept 216 msec -- from thread 6 = "thread 6 slept 104 msec -- from thread 4 = "thread 4 slept 71 msec -- from...
-2022-02-13 07:51:04.160  main_condition_data_log NOTE thread 3 slept 235 msec -- from thread 2 = "thread 2 slept 216 msec -- from thread 6 = "thread 6 slept 104 msec -- fro...
-2022-02-13 07:51:04.168  main_condition_data_log NOTE thread 7 slept 242 msec -- from thread 3 = "thread 3 slept 235 msec -- from thread 2 = "thread 2 slept 216 msec -- fro...
-2022-02-13 07:51:04.173  main_condition_data_log NOTE thread 0 slept 248 msec -- from thread 7 = "thread 7 slept 242 msec -- from thread 3 = "thread 3 slept 235 msec -- fro...
-2022-02-13 07:51:04.194  main_condition_data_log NOTE thread 5 slept 268 msec -- from thread 0 = "thread 0 slept 248 msec -- from thread 7 = "thread 7 slept 242 msec -- fro...
-2022-02-13 07:51:04.200  main_condition_data_log NOTE thread 8 slept 274 msec -- from thread 5 = "thread 5 slept 268 msec -- from thread 0 = "thread 0 slept 248 msec -- fro...
-
-$
-*/
 
 #endif //  SAMPLE_RUN
 

@@ -56,7 +56,7 @@ bool EnetUtil::setup_listen_addr_in(std::string listen_ip_address, 		// in
 		x = inet_addr(listen_ip_address.c_str());
 	}
 
-	empty_addr->sin_addr.s_addr = x;		//	INADDR_ANY;         // inet_addr(listen_ip_address == ""? INADDR_ANY : listen_ip_address.c_str());
+	empty_addr->sin_addr.s_addr = x;
 	empty_addr->sin_port = htons(socket_port_number);
 	return true;
 
@@ -83,7 +83,7 @@ int EnetUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
     {
     	errnocopy = errno;
     	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In serverListen(): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
@@ -91,7 +91,7 @@ int EnetUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
     {
     	errnocopy = errno;
     	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In serverListen(): setsockopt() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): setsockopt() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
@@ -99,7 +99,7 @@ int EnetUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
     {
     	errnocopy = errno;
     	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In serverListen(): bind() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): bind() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
@@ -107,10 +107,9 @@ int EnetUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
     {
     	errnocopy = errno;
     	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In serverListen(): listen() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): listen() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
-    logger.notice() << "In serverListen(): Server created and accepting connection requests";
     return socket_fd;
 }
 
@@ -120,7 +119,7 @@ int EnetUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
 // if and only if the file descriptor is a valid positive file descriptor
 // from a successful accept() system call, and the ::sockaddr_in structure
 // is valid.
-int EnetUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::sockaddr *address)
+int EnetUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::sockaddr *address, int retries)
 {
 	struct ::sockaddr_in *address_struct = (::sockaddr_in *) address;
 
@@ -128,18 +127,23 @@ int EnetUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::
 	int accept_socket_fd = -1;
     int address_length = sizeof(::sockaddr_in);
 
-	if ((accept_socket_fd = accept(listen_socket_fd,
-			                       (struct sockaddr *) address_struct,
-							       (socklen_t *) &address_length)) < 0)
-	{
-    	errnocopy = errno;
-    	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In serverAccept(): accept() failed: " << Util::Utility::get_errno_message(errnocopy);
-        return -1;
-	}
-
+    while (--retries >= 0)
+    {
+		if ((accept_socket_fd = accept(listen_socket_fd,
+									   (struct sockaddr *) address_struct,
+									   (socklen_t *) &address_length)) < 0)
+		{
+			errnocopy = errno;
+			Util::Utility::get_errno_message(errnocopy);
+			logger.error() << "In EnetUtil::serverAccept(): accept() failed on fd " <<
+					          listen_socket_fd << ": " << Util::Utility::get_errno_message(errnocopy);
+			continue;
+		}
+		return accept_socket_fd;
+    }
  
-	return accept_socket_fd;
+	logger.error() << "EnetUtil::server_accept(): No retries left.  Aborting...";
+	return -1;
 }
 
 // END OF SOCKET UTILITIES
