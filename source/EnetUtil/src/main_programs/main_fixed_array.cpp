@@ -1,5 +1,4 @@
 #include "Utility.hpp"
-#include "EnetUtil.hpp"
 #include "NtwkUtil.hpp"
 #include "NtwkConnect.hpp"
 #include <LoggerCpp/LoggerCpp.h>

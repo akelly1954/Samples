@@ -1,6 +1,5 @@
 #include "Utility.hpp"
 #include "commandline.hpp"
-#include "EnetUtil.hpp"
 #include "NtwkUtil.hpp"
 #include "NtwkConnect.hpp"
 #include <LoggerCpp/LoggerCpp.h>
@@ -179,14 +178,14 @@ int main(int argc, char *argv[])
 
 
     struct ::sockaddr_in sin_addr;
-    if(! setup_listen_addr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
+    if(! NtwkUtil::setup_listen_addr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
 	{
 		logger.error() << "Error returned from setup_listen_addr_in(): Aborting...";
 		return 1;
 	}
 
     int socket_fd = -1;
-    if ((socket_fd = server_listen(logger, (sockaddr *) &sin_addr, server_listen_max_backlog)) < 0)
+    if ((socket_fd = NtwkUtil::server_listen(logger, (sockaddr *) &sin_addr, server_listen_max_backlog)) < 0)
     {
 		logger.error() << "Error returned from server_listen(): Aborting...";
 		return 1;
@@ -202,7 +201,7 @@ int main(int argc, char *argv[])
     int i = 0;
     for (i = 1; !aborted; i++)
     {
-    	if ((accept_socket_fd = server_accept(logger, socket_fd, (sockaddr *) &sin_addr)) < 0)
+    	if ((accept_socket_fd = NtwkUtil::server_accept(logger, socket_fd, (sockaddr *) &sin_addr)) < 0)
         {
     		// Aborting
     		aborted = true;
@@ -235,6 +234,7 @@ int main(int argc, char *argv[])
 
 #ifdef SAMPLE_RUN
 
+Coming soon...  :-)
 
 #endif //  SAMPLE_RUN
 

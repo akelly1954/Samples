@@ -1,5 +1,4 @@
 #include "Utility.hpp"
-#include "EnetUtil.hpp"
 #include "NtwkUtil.hpp"
 #include "NtwkConnect.hpp"
 #include <LoggerCpp/LoggerCpp.h>
@@ -69,7 +68,7 @@ int main(int argc, char *argv[])
 	arrayUint8 ibuffer;
 	std::pair<int,arrayUint8> pairdata(0,ibuffer);
 
-	while ((nread = NtwkUtil::enetReceive(logger,0,ibuffer,ibuffer.size())) > 0)
+	while ((nread = NtwkUtil::enet_receive(logger,0,ibuffer,ibuffer.size())) > 0)
 	{
 		std::pair<int,arrayUint8> readypair(nread, ibuffer);
 		writeData(logger, readypair);

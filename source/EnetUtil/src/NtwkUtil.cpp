@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include <iostream>
 #include <string>
 #include <string.h>
@@ -15,10 +18,144 @@
 
 using namespace EnetUtil;
 
+
+
+
+
+
+
+
+
+// SOCKET UTILITIES
+
+// The ip address and port number are used to set the proper values
+// in the empty address structure for all the utilities used in EnetUtil.
+// If the listen address (e.g. "192.168.0.102") is NULL, the INADDR_ANY value (0)
+// will be used in the address structure.
+bool NtwkUtil::setup_listen_addr_in(std::string listen_ip_address, 		// in
+									uint16_t socket_port_number, 		// in
+									struct ::sockaddr *addr)  			// out
+{
+	struct ::sockaddr_in *empty_addr = (::sockaddr_in *) addr;
+	empty_addr->sin_family = AF_INET;
+
+	::in_addr_t x;
+	if (listen_ip_address.empty() || listen_ip_address == "INADDR_ANY")
+	{
+		x = INADDR_ANY;
+	}
+	else
+	{
+		x = inet_addr(listen_ip_address.c_str());
+	}
+
+	empty_addr->sin_addr.s_addr = x;
+	empty_addr->sin_port = htons(socket_port_number);
+	return true;
+
+}
+
+// Returns socket file descriptor, or -1 on error.
+// We use the logger so that we can capture errno as early as possible
+// after a system call.
+int NtwkUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int backlog_size)
+{
+	struct ::sockaddr_in *address_struct = (::sockaddr_in *) address;
+
+	int errnocopy = 0;			// Captures errno right after system call
+	int socket_fd = -1; 		// socket file descriptor
+
+	// For setsockopt(2), this parameter should be non-zero to enable a boolean option,
+	// or zero if the option is to be disabled
+	int optval = 1;
+
+	// signal(SIGPIPE, SIG_IGN);  // this will affect all running threads
+
+    // Creating socket file descriptor
+    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(optval)))
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): setsockopt() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    if (bind(socket_fd, (struct sockaddr *)address_struct, sizeof(::sockaddr_in)) < 0)
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): bind() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    if (listen(socket_fd, backlog_size) < 0)
+    {
+    	errnocopy = errno;
+    	Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In EnetUtil::serverListen(): listen() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+    return socket_fd;
+}
+
+// Accepts a single connection request.  It is expected to be called
+// from within a loop.  For each loop cycle, the caller would
+// then start a thread to deal with the request right after this call,
+// if and only if the file descriptor is a valid positive file descriptor
+// from a successful accept() system call, and the ::sockaddr_in structure
+// is valid.
+int NtwkUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::sockaddr *address, int retries)
+{
+	struct ::sockaddr_in *address_struct = (::sockaddr_in *) address;
+
+	int errnocopy = 0;			// Captures errno right after system call
+	int accept_socket_fd = -1;
+    int address_length = sizeof(::sockaddr_in);
+
+    while (--retries >= 0)
+    {
+		if ((accept_socket_fd = accept(listen_socket_fd,
+									   (struct sockaddr *) address_struct,
+									   (socklen_t *) &address_length)) < 0)
+		{
+			errnocopy = errno;
+			Util::Utility::get_errno_message(errnocopy);
+			logger.error() << "In EnetUtil::serverAccept(): accept() failed on fd " <<
+					          listen_socket_fd << ": " << Util::Utility::get_errno_message(errnocopy);
+			continue;
+		}
+		return accept_socket_fd;
+    }
+
+	logger.error() << "NtwkUtil::server_accept(): No retries left.  Aborting...";
+	return -1;
+}
+
+// END OF SOCKET UTILITIES
+
+
+
+
+
+
+
+
+
+
+
+
 // class NtwkUtil static objects:
 std::recursive_mutex NtwkUtil::m_recursive_mutex;
 
-int NtwkUtil::enetSend(Log::Logger& logger,
+int NtwkUtil::enet_send(Log::Logger& logger,
 						int fd,	                // file descriptor to socket
 						EnetUtil::arrayUint8 & array_element_buffer,	// data and length
 						int flag)
@@ -41,7 +178,7 @@ int NtwkUtil::enetSend(Log::Logger& logger,
         } else
         {
             // std::string errstr = Util::Utility::get_errno_message(errnocopy);
-            std::string lstr = "NtwkUtil::enetSend: Failed to write to socket: "
+            std::string lstr = "NtwkUtil::enet_send: Failed to write to socket: "
             				+ Util::Utility::get_errno_message(errnocopy)
                             + " socket fd = " + std::to_string(fd);
             logger.error() << lstr;
@@ -58,7 +195,7 @@ int NtwkUtil::enetSend(Log::Logger& logger,
 
 // The socket read may throw an exception
 // recvbuf is assumed to have no data
-int NtwkUtil::enetReceive(	Log::Logger& logger,
+int NtwkUtil::enet_receive(	Log::Logger& logger,
 							int fd,
 							EnetUtil::arrayUint8 & array_element_buffer,	// data and length
 							size_t requestsize)
@@ -73,19 +210,19 @@ int NtwkUtil::enetReceive(	Log::Logger& logger,
 
     	if (actual_requestsize < 1)
     	{
-    		logger.error() << "NtwkUtil::enetReceive: have room for less than 1 byte in empty buffer";
-    		throw std::out_of_range("NtwkUtil::enetReceive: have room for less than 1 byte");
+    		logger.error() << "NtwkUtil::enet_receive: have room for less than 1 byte in empty buffer";
+    		throw std::out_of_range("NtwkUtil::enet_receive: have room for less than 1 byte");
     		return -1;  // Shouldn't get here...
     	}
 
     	if (fd < 0)
     	{
-    		logger.error() << "NtwkUtil::enetReceive: got receive request with invalid socket file descriptor";
-    		throw std::runtime_error("NtwkUtil::enetReceive: got receive request with invalid socket file descriptor");
+    		logger.error() << "NtwkUtil::enet_receive: got receive request with invalid socket file descriptor";
+    		throw std::runtime_error("NtwkUtil::enet_receive: got receive request with invalid socket file descriptor");
     		return -1;  // Shouldn't get here...
     	}
 
-		signal(SIGPIPE, SIG_IGN);
+		// This affects all threads:  signal(SIGPIPE, SIG_IGN);
     	bool endOfFile = false;
         do
         {
@@ -98,13 +235,13 @@ int NtwkUtil::enetReceive(	Log::Logger& logger,
             }
             else if (num < 0)
             {
-                logger.error() << "NtwkUtil::enetReceive: socket read error: " << Util::Utility::get_errno_message(errnocopy);
+                logger.error() << "NtwkUtil::enet_receive: socket read error: " << Util::Utility::get_errno_message(errnocopy);
         		throw std::runtime_error(
-        				std::string("NtwkUtil::enetReceive: socket read error: ") + Util::Utility::get_errno_message(errnocopy));
+        				std::string("NtwkUtil::enet_receive: socket read error: ") + Util::Utility::get_errno_message(errnocopy));
             }
             else // num = 0
             {
-                // logger.notice() << "NtwkUtil::enetReceive: got end of file/disconnect on socket read...";
+                // logger.notice() << "NtwkUtil::enet_receive: got end of file/disconnect on socket read...";
             	endOfFile = true;
             }
 
@@ -114,10 +251,10 @@ int NtwkUtil::enetReceive(	Log::Logger& logger,
 
     } catch (std::exception &exp)
     {
-        logger.error() << "Got exception in NtwkUtil::enetReceive after read(s) from socket: " << exp.what();
+        logger.error() << "Got exception in NtwkUtil::enet_receive after read(s) from socket: " << exp.what();
     } catch (...)
     {
-    	logger.error() << "General exception occurred in NtwkUtil::enetReceive after read(s) from socket";
+    	logger.error() << "General exception occurred in NtwkUtil::enet_receive after read(s) from socket";
     }
     return bytesreceived;
 }
