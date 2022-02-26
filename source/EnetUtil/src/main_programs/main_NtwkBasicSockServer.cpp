@@ -3,7 +3,6 @@
 #include "NtwkUtil.hpp"
 #include "NtwkConnect.hpp"
 #include <LoggerCpp/LoggerCpp.h>
-#include <condition_data.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +15,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <thread>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -70,13 +70,6 @@ std::vector<std::thread> workers;
 // ready, and processes it.
 const int queuesize = 500;
 Util::circular_buffer<std::shared_ptr<fixed_uint8_array_t>> ringbuf(queuesize);
-
-// Create an empty object for condvar.
-std::shared_ptr<fixed_uint8_array_t> statictmpsp = fixed_uint8_array_t::create();
-
-// TODO: look at a better constructor for condition_data<> that doesn't require
-// an existing object.
-Util::condition_data<std::shared_ptr<fixed_uint8_array_t>> condvar(statictmpsp);
 
 static std::thread queue_thread;
 
@@ -145,9 +138,9 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
 			logger.notice() << "thread_handler(" << threadno << "): After setting number of elements to " <<
 					num_elements_received << " bytes on fd " << socketfd;
 
-			// Add the shared_ptr the queue, and signal ready.
-			// The shared_ptr then goes out of scope and is deleted.
-			condvar.send_ready(sp_data);
+			// Add the shared_ptr the queue.
+			// The shared_ptr then goes out of scope and is deleted (but ringbuf has a copy).
+			ringbuf.put(sp_data);
 		}
 	}
 	close(socketfd);
@@ -186,18 +179,26 @@ void queue_handler(Log::Logger logger)
 	// FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
 	//                        << threadno << ", fd = " << socketfd << std::endl;
 
-	logger.notice() << "queue_handler: thread running, waiting on the condition variable to peel off data buffers and process them";
+	logger.notice() << "queue_handler: thread running, waiting for the circular " <<
+			           "buffer queue to have buffers ready to be processed.";
 
 	bool finished = false;
 	while (!finished)
 	{
-		condvar.wait_for_ready();
+		// sleep but only if you have to
+		if (ringbuf.empty())
+		{
+			while (ringbuf.empty()) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
+		}
 
-		std::shared_ptr<fixed_uint8_array_t> data_sp = condvar.get_data();
+		if (!ringbuf.empty())
+		{
+			std::shared_ptr<fixed_uint8_array_t> data_sp = ringbuf.get();
 
-		logger.notice() << "queue_handler(): Queue ready:  Got object with " <<
-				data_sp->num_valid_elements() << " valid elements in an or of size " <<
-				data_sp->data().size();
+			logger.notice() << "queue_handler(): Queue ready:  Got object with " <<
+					data_sp->num_valid_elements() << " valid elements in a fixed array of size " <<
+					data_sp->data().size();
+		}
 	}
 }
 
