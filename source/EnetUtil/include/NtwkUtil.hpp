@@ -61,10 +61,11 @@ static const size_t NtwkUtilLargeBufferSize = 8192;
 // If you change a single std::array<> size in the .cpp sources for example, you are
 // guaranteed a few dozen build error, because... C++.  And you would deserve it. :-)
 
-static const size_t NtwkUtilBufferSize = NtwkUtilSmallBufferSize;
+static const size_t NtwkUtilBufferSize = NtwkUtilNanoBufferSize;
 ///////  Use:       static const size_t NtwkUtilBufferSize = NtwkUtilLargeBufferSize;
 //////   Or...      static const size_t NtwkUtilBufferSize = NtwkUtilRegularBufferSize;
 //////      or...   static const size_t NtwkUtilBufferSize = NtwkUtilNanoBufferSize;
+//////      or...   static const size_t NtwkUtilBufferSize = NtwkUtilSmallBufferSize;
 //////     or...
 
 // Options for port numbers for listening and connecting to:

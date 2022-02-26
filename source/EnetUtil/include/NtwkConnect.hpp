@@ -54,7 +54,7 @@ namespace EnetUtil {
 	{
 	public:
 	    const size_t num_valid_elements(void)				{ return m_num_valid_elements; }
-	    const arrayUint8 data(void) const					{ return m_array_data; }
+	    arrayUint8& data(void)								{ return m_array_data; }
 		bool is_empty()										{ return num_valid_elements() == 0; }
 		bool has_data()										{ return num_valid_elements() > 0; }
 
@@ -75,7 +75,7 @@ namespace EnetUtil {
 	    bool set_num_valid_elements(size_t num)
 	    {
 	    	std::lock_guard<std::mutex> lock(m_mutex);
-	    	if (num >= N) return false;
+	    	if (num > N) return false;
 	    	m_num_valid_elements = num;
 	    	return true;
 	    }

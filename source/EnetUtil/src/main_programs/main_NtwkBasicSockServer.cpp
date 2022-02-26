@@ -64,6 +64,22 @@ const int server_buffer_size = NtwkUtilBufferSize;
 // vector container stores the threads that do the work for each connection
 std::vector<std::thread> workers;
 
+// The circular buffer queue has each shared_ptr<> added to it.  Each shared_ptr
+// points to a fixed_array object which holds data from a single socket read()
+// call, when it's ready.  The queue_handler thread pops out each member when it's
+// ready, and processes it.
+const int queuesize = 500;
+Util::circular_buffer<std::shared_ptr<fixed_uint8_array_t>> ringbuf(queuesize);
+
+// Create an empty object for condvar.
+std::shared_ptr<fixed_uint8_array_t> statictmpsp = fixed_uint8_array_t::create();
+
+// TODO: look at a better constructor for condition_data<> that doesn't require
+// an existing object.
+Util::condition_data<std::shared_ptr<fixed_uint8_array_t>> condvar(statictmpsp);
+
+static std::thread queue_thread;
+
 void Usage(std::ostream& strm, std::string command)
 {
     strm << "Usage:    " << command << " --help (or -h or help)" << std::endl;
@@ -96,17 +112,43 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
 	// FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
 	//                        << threadno << ", fd = " << socketfd << std::endl;
 
-	logger.notice() << "thread_handler(): start thread for connection " << threadno << ", fd = " << socketfd;
+	logger.notice() << "thread_handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
 
-	arrayUint8 ibuffer;					  // input buffer
-	datapairUint8_t pairdata(0,ibuffer);  // pairdata.first will hold the valid number elements in the std::array<>
-
-	while ((pairdata.first = NtwkUtil::enet_receive(logger, socketfd, pairdata.second, pairdata.second.size())) > 0)
+	bool finished = false;
+	while (!finished)
 	{
-		logger.notice() << "thread_handler(" << threadno << "): Received " <<
-						   pairdata.first << " bytes on fd " << socketfd;
+		// This extra scope gets out of context at the end of file, which
+		// destructs the shared_ptr<>, so that a new one is created here:
+		{
+			std::shared_ptr<fixed_uint8_array_t> sp_data = fixed_uint8_array_t::create();
 
-		// writeData(logger, pairdata);
+			int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
+
+			logger.notice() << "thread_handler(" << threadno << "): Received " <<
+					num_elements_received << " bytes on fd " << socketfd;
+
+			if (num_elements_received == 0)  // EOF
+			{
+				close(socketfd);
+				return;  // The shared_ptr<> will be destructed
+			}
+			else
+			{
+				if (! sp_data->set_num_valid_elements(num_elements_received))
+				{
+					logger.error() << "thread_handler: Error in setting thread_handler(" << threadno <<
+							") num_valid_elements. Got  " << num_elements_received << " bytes on fd " << socketfd <<
+							". Aborting...";
+					finished = true;
+				}
+			}
+			logger.notice() << "thread_handler(" << threadno << "): After setting number of elements to " <<
+					num_elements_received << " bytes on fd " << socketfd;
+
+			// Add the shared_ptr the queue, and signal ready.
+			// The shared_ptr then goes out of scope and is deleted.
+			condvar.send_ready(sp_data);
+		}
 	}
 	close(socketfd);
 }
@@ -139,6 +181,50 @@ void socket_connection_handler (int socket, int threadno)
         				  threadno << " for socket fd " << socket;
 }
 
+void queue_handler(Log::Logger logger)
+{
+	// FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
+	//                        << threadno << ", fd = " << socketfd << std::endl;
+
+	logger.notice() << "queue_handler: thread running, waiting on the condition variable to peel off data buffers and process them";
+
+	bool finished = false;
+	while (!finished)
+	{
+		condvar.wait_for_ready();
+
+		std::shared_ptr<fixed_uint8_array_t> data_sp = condvar.get_data();
+
+		logger.notice() << "queue_handler(): Queue ready:  Got object with " <<
+				data_sp->num_valid_elements() << " valid elements in an or of size " <<
+				data_sp->data().size();
+	}
+}
+
+void start_queue_handler (void)
+{
+   	Log::Logger logger(logChannelName);
+   	logger.notice() << "start_queue_handler(): starting a circular buffer handler thread";
+
+	try
+	{
+		// The logger is passed to the new thread because it has to be instantiated in
+		// the main thread (right here) before it is used from inside the new thread.
+		queue_thread = std::thread( queue_handler, logger);
+    }
+    catch (std::exception &exp)
+    {
+        logger.error() << "Got exception in start_queue_handler() starting thread " <<
+        				  " for queue_handler(): " << exp.what();
+    }
+    catch (...)
+    {
+    	logger.error() << "General exception occurred in start_queue_handler() starting " <<
+        				  "thread for queue_handler().";
+    }
+
+    logger.notice() << "start_queue_handler(): started thread for queue_handler()";
+}
 
 int main(int argc, char *argv[])
 {
@@ -186,6 +272,9 @@ int main(int argc, char *argv[])
 	logger.notice() << "	max backlog connection requests: " << server_listen_max_backlog;
     logger.notice() << "======================================================================";
 
+    // Set up the thread that keeps the circular_buffer which handles all the data
+    // after it's been received from any accepted socket.
+    start_queue_handler();
 
     struct ::sockaddr_in sin_addr;
     if(! NtwkUtil::setup_sockaddr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
@@ -237,6 +326,7 @@ int main(int argc, char *argv[])
     {
     	if (t.joinable()) t.join();
     });
+    if (queue_thread.joinable()) queue_thread.join();
 
     return ret;
 }

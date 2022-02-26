@@ -227,7 +227,6 @@ int NtwkUtil::enet_receive(	Log::Logger& logger,
     	}
 
 		// This affects all threads:  signal(SIGPIPE, SIG_IGN);
-    	bool endOfFile = false;
         do
         {
         	int errnocopy = 0;
@@ -242,16 +241,16 @@ int NtwkUtil::enet_receive(	Log::Logger& logger,
                 logger.error() << "NtwkUtil::enet_receive: socket read error: " << Util::Utility::get_errno_message(errnocopy);
         		throw std::runtime_error(
         				std::string("NtwkUtil::enet_receive: socket read error: ") + Util::Utility::get_errno_message(errnocopy));
+        		return -1;  // Should never even get here....
             }
             else // num = 0
             {
                 // logger.notice() << "NtwkUtil::enet_receive: got end of file/disconnect on socket read...";
-            	endOfFile = true;
+            	return bytesreceived;
             }
-
-            if (endOfFile) break;
-
         } while (bytesreceived < actual_requestsize);
+
+        return bytesreceived;
 
     } catch (std::exception &exp)
     {
@@ -260,7 +259,7 @@ int NtwkUtil::enet_receive(	Log::Logger& logger,
     {
     	logger.error() << "General exception occurred in NtwkUtil::enet_receive after read(s) from socket";
     }
-    return bytesreceived;
+    return -1;
 }
 
 // END OF SOCKET UTILITIES
