@@ -38,6 +38,9 @@
 
 namespace EnetUtil {
 
+	// TODO:  There's no reason for this object to be tied down to size_t/uint8 for
+	// std::array<>.  This needs to be cleaned up and expanded to other types (including
+	// helper objects for managing things.
 	template<typename T, size_t N> class fixed_size_array;   // forward declaration
 	typedef EnetUtil::fixed_size_array<uint8_t,NtwkUtilBufferSize> fixed_uint8_array_t;
 
@@ -50,10 +53,10 @@ namespace EnetUtil {
 	class fixed_size_array : public std::enable_shared_from_this<fixed_size_array<T,N>>
 	{
 	public:
-	    const size_t num_elements(void)						{ return m_num_valid_elements; }
+	    const size_t num_valid_elements(void)				{ return m_num_valid_elements; }
 	    const arrayUint8 data(void) const					{ return m_array_data; }
-		bool is_empty()										{ return num_elements() == 0; }
-		bool has_data()										{ return num_elements() > 0; }
+		bool is_empty()										{ return num_valid_elements() == 0; }
+		bool has_data()										{ return num_valid_elements() > 0; }
 
 	    // Gets the value of the pos'th element of the std::array<>
 	    // TODO: returns false if pos is out of bounds. This might
@@ -66,13 +69,19 @@ namespace EnetUtil {
 	    	return true;
 	    }
 
+	    // The number of valid elements is managed by the external
+	    // using code - completely.  When this function is called,
+	    // it's because set_element() was called, for example.
+	    bool set_num_valid_elements(size_t num)
+	    {
+	    	std::lock_guard<std::mutex> lock(m_mutex);
+	    	if (num >= N) return false;
+	    	m_num_valid_elements = num;
+	    	return true;
+	    }
+
 	    // Sets the pos'th element in the array to value.
 	    // Returns false if pos is out of bounds.
-	    // TODO: Have to deal with pos being in bounds, but
-	    // outside of the current number of elements. Might
-	    // have to enforce in-bounds being up the num_valid_elements
-	    // position, and add another function that extends that limit -
-	    // perhaps an append() function.
 	    bool set_element(size_t pos, const T& value)
 	    {
 	    	std::lock_guard<std::mutex> lock(m_mutex);
@@ -89,7 +98,7 @@ namespace EnetUtil {
 	private:
 	    // private in order to prevent make_shared<> from being called
 	    // (see static create() functions below)
-	    fixed_size_array(void)     	// Creates empty array with num_elements T objects
+	    fixed_size_array(void)     	// Creates empty array with num_valid_elements T objects
 				: m_num_valid_elements(0)
 		{
 	    	std::lock_guard<std::mutex> lock(m_mutex);
@@ -102,7 +111,19 @@ namespace EnetUtil {
 	    {
 	    	std::lock_guard<std::mutex> lock(m_mutex);
 	    	m_array_data = obj.data();
-	    	m_num_valid_elements = obj.num_elements();
+	    	m_num_valid_elements = obj.num_valid_elements();
+	    }
+
+	    // private in order to prevent make_shared<> from being called
+	    // (see static create() functions below)
+	    fixed_size_array(datapairUint8_t& obj)
+	    {
+	    	std::lock_guard<std::mutex> lock(m_mutex);
+	    	m_num_valid_elements = (obj.first > m_array_data.size()? m_array_data.size() : obj.first);
+	    	for (size_t i = 0; i < m_num_valid_elements; i++)
+	    	{
+	    		m_array_data[i] = obj.second[i];
+	    	}
 	    }
 
 	public:
@@ -136,6 +157,18 @@ namespace EnetUtil {
             return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(obj));
 	    }
 
+	    // same story: this create call will call the equivalent fixed_array constructor.
+	    [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(datapairUint8_t& obj)
+	    {
+	    	return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(obj));
+	    }
+
+	    [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(arrayUint8& obj, size_t nvalid_elements)
+	    {
+	    	datapairUint8_t newpair(nvalid_elements, obj);
+	    	return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(newpair));
+	    }
+
 	public:
 	    // Destructor
 	    virtual ~fixed_size_array(void) = default;
@@ -145,7 +178,18 @@ namespace EnetUtil {
 	    {
 	    	std::lock_guard<std::mutex> lock(m_mutex);
 	    	m_array_data = obj.data();
-	    	m_num_valid_elements = obj.num_elements();
+	    	m_num_valid_elements = obj.num_valid_elements();
+	    	return *this;
+	    }
+
+	    fixed_size_array<T,N>& operator=(datapairUint8_t& obj)
+	    {
+	    	std::lock_guard<std::mutex> lock(m_mutex);
+	    	m_num_valid_elements = (obj.first > m_array_data.size()? m_array_data.size() : obj.first);
+	    	for (size_t i = 0; i < m_num_valid_elements; i++)
+	    	{
+	    		m_array_data[i] = obj.second[i];
+	    	}
 	    	return *this;
 	    }
 

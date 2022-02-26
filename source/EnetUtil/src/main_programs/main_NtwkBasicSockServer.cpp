@@ -7,13 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <iostream>
 #include <vector>
 #include <algorithm>
-
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -50,17 +49,17 @@ const char *logChannelName = "main_basic_socket_server";
 
 const char *logFileName = "main_basic_socket_server_log.txt";
 
-const char *default_server_listen_ip = "127.0.0.1";		// default listen ip address
+const char *default_server_listen_ip = "INADDR_ANY";	// default listen ip address type
 std::string server_listen_ip(default_server_listen_ip);	// can be modified from the command line
 
-const uint16_t default_server_listen_port_number = EnetUtil::simple_server_port_number;
+const uint16_t default_server_listen_port_number = simple_server_port_number;
 uint16_t server_listen_port_number = default_server_listen_port_number; // can be modified from the command line
 
 const int default_server_listen_max_backlog = 50;		// Maximum number of connection requests queued
 int server_listen_max_backlog = 50;						// can be modified from the command line
 
 // fixed size of the std::vector<> used for the data
-const int server_buffer_size = EnetUtil::NtwkUtilBufferSize;
+const int server_buffer_size = NtwkUtilBufferSize;
 
 // vector container stores the threads that do the work for each connection
 std::vector<std::thread> workers;
@@ -99,6 +98,17 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
 
 	logger.notice() << "thread_handler(): start thread for connection " << threadno << ", fd = " << socketfd;
 
+	arrayUint8 ibuffer;					  // input buffer
+	datapairUint8_t pairdata(0,ibuffer);  // pairdata.first will hold the valid number elements in the std::array<>
+
+	while ((pairdata.first = NtwkUtil::enet_receive(logger, socketfd, pairdata.second, pairdata.second.size())) > 0)
+	{
+		logger.notice() << "thread_handler(" << threadno << "): Received " <<
+						   pairdata.first << " bytes on fd " << socketfd;
+
+		// writeData(logger, pairdata);
+	}
+	close(socketfd);
 }
 
 void socket_connection_handler (int socket, int threadno)
@@ -178,9 +188,9 @@ int main(int argc, char *argv[])
 
 
     struct ::sockaddr_in sin_addr;
-    if(! NtwkUtil::setup_listen_addr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
+    if(! NtwkUtil::setup_sockaddr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
 	{
-		logger.error() << "Error returned from setup_listen_addr_in(): Aborting...";
+		logger.error() << "Error returned from setup_sockaddr_in(): Aborting...";
 		return 1;
 	}
 

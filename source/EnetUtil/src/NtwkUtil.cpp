@@ -18,23 +18,18 @@
 
 using namespace EnetUtil;
 
-
-
-
-
-
-
-
-
 // SOCKET UTILITIES
+
+// class NtwkUtil static objects:
+std::recursive_mutex NtwkUtil::m_recursive_mutex;
 
 // The ip address and port number are used to set the proper values
 // in the empty address structure for all the utilities used in EnetUtil.
 // If the listen address (e.g. "192.168.0.102") is NULL, the INADDR_ANY value (0)
 // will be used in the address structure.
-bool NtwkUtil::setup_listen_addr_in(std::string listen_ip_address, 		// in
-									uint16_t socket_port_number, 		// in
-									struct ::sockaddr *addr)  			// out
+bool NtwkUtil::setup_sockaddr_in(std::string listen_ip_address, 	// in
+								 uint16_t socket_port_number, 		// in
+								 struct ::sockaddr *addr)  			// out
 {
 	struct ::sockaddr_in *empty_addr = (::sockaddr_in *) addr;
 	empty_addr->sin_family = AF_INET;
@@ -55,9 +50,38 @@ bool NtwkUtil::setup_listen_addr_in(std::string listen_ip_address, 		// in
 
 }
 
+// For non-listening processes (setsockopt(), bind() etc are not needed).
 // Returns socket file descriptor, or -1 on error.
-// We use the logger so that we can capture errno as early as possible
-// after a system call.
+// We use the logger because we want to capture errno as early as possible
+// after an important system call(socket(), listen(), bind(), etc) and log it.
+int NtwkUtil::client_socket_connect(Log::Logger& logger, struct ::sockaddr *address)
+{
+	struct ::sockaddr_in *address_struct = (::sockaddr_in *) address;
+
+	int errnocopy = 0;			// Captures errno right after system call
+	int socket_fd;
+
+	// Creating socket file descriptor
+    if ((socket_fd = ::socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    {
+    	errnocopy = errno;
+		logger.error() << "In NtwkUtil::client_socket_connect: socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    if (::connect(socket_fd, (struct ::sockaddr *)& address_struct, sizeof(::sockaddr_in)) != 0)
+    {
+    	errnocopy = errno;
+		logger.error() << "In NtwkUtil::client_socket_connect): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+        return -1;
+    }
+
+    return socket_fd;
+}
+
+// Returns socket file descriptor, or -1 on error.
+// We use the logger because we want to capture errno as early as possible
+// after an important system call(socket(), listen(), bind(), etc) and log it.
 int NtwkUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int backlog_size)
 {
 	struct ::sockaddr_in *address_struct = (::sockaddr_in *) address;
@@ -75,32 +99,28 @@ int NtwkUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
     	errnocopy = errno;
-    	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In EnetUtil::serverListen(): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In NtwkUtil::server_listen(): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
     if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &optval, sizeof(optval)))
     {
     	errnocopy = errno;
-    	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In EnetUtil::serverListen(): setsockopt() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In NtwkUtil::server_listen(): setsockopt() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
     if (bind(socket_fd, (struct sockaddr *)address_struct, sizeof(::sockaddr_in)) < 0)
     {
     	errnocopy = errno;
-    	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In EnetUtil::serverListen(): bind() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In NtwkUtil::server_listen(): bind() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
     if (listen(socket_fd, backlog_size) < 0)
     {
     	errnocopy = errno;
-    	Util::Utility::get_errno_message(errnocopy);
-		logger.error() << "In EnetUtil::serverListen(): listen() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In NtwkUtil::serverListen(): listen() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
     return socket_fd;
@@ -128,7 +148,7 @@ int NtwkUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::
 		{
 			errnocopy = errno;
 			Util::Utility::get_errno_message(errnocopy);
-			logger.error() << "In EnetUtil::serverAccept(): accept() failed on fd " <<
+			logger.error() << "In server_accept(): accept() failed on fd " <<
 					          listen_socket_fd << ": " << Util::Utility::get_errno_message(errnocopy);
 			continue;
 		}
@@ -139,25 +159,9 @@ int NtwkUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::
 	return -1;
 }
 
-// END OF SOCKET UTILITIES
-
-
-
-
-
-
-
-
-
-
-
-
-// class NtwkUtil static objects:
-std::recursive_mutex NtwkUtil::m_recursive_mutex;
-
 int NtwkUtil::enet_send(Log::Logger& logger,
 						int fd,	                // file descriptor to socket
-						EnetUtil::arrayUint8 & array_element_buffer,	// data and length
+						arrayUint8 & array_element_buffer,	// data and length
 						int flag)
 {
     std::lock_guard<std::recursive_mutex> lock(NtwkUtil::m_recursive_mutex);
@@ -197,8 +201,8 @@ int NtwkUtil::enet_send(Log::Logger& logger,
 // recvbuf is assumed to have no data
 int NtwkUtil::enet_receive(	Log::Logger& logger,
 							int fd,
-							EnetUtil::arrayUint8 & array_element_buffer,	// data and length
-							size_t requestsize)
+							arrayUint8 & array_element_buffer,	// data and length
+							size_t requestsize)   // requestsize can be smaller than the array<>::size()
 {
     int bytesreceived = 0;
 
@@ -210,8 +214,8 @@ int NtwkUtil::enet_receive(	Log::Logger& logger,
 
     	if (actual_requestsize < 1)
     	{
-    		logger.error() << "NtwkUtil::enet_receive: have room for less than 1 byte in empty buffer";
-    		throw std::out_of_range("NtwkUtil::enet_receive: have room for less than 1 byte");
+    		logger.error() << "NtwkUtil::enet_receive: have no room left in the receive buffer";
+    		throw std::out_of_range("NtwkUtil::enet_receive: have no room left in the receive buffer");
     		return -1;  // Shouldn't get here...
     	}
 
@@ -258,4 +262,7 @@ int NtwkUtil::enet_receive(	Log::Logger& logger,
     }
     return bytesreceived;
 }
+
+// END OF SOCKET UTILITIES
+
 

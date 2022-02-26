@@ -34,22 +34,24 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+// This program is proof-of-concept and test for some of the array<> related objects
+// used in this project.  Reads from stdin, and writes to stdout (appearances to
+// the contrary).  Redirect stdin from a file, and redirect stdout to a new file.
+// Then run "cmp file1 file2" and you should see no differences.  $? should be 0.
+// Change the initialized value of NtwkUtilBufferSize in NtwkUtil.hpp, and rebuild.
+// Results should be the same.
+
 using namespace EnetUtil;
 
-void writeData(Log::Logger& logger, std::pair<int,arrayUint8>& readypair)
+void writeData(Log::Logger& logger, datapairUint8_t& readypair)
 {
-	int numread = 0;
-
-	numread = readypair.first;
-	arrayUint8& recdarray = readypair.second;
-
-	if (numread > 0)
+	if (readypair.first > 0)
 	{
-		char buffer[numread+1];
-		void *from = recdarray.data();
-		strncpy(buffer, static_cast<const char *>(from), numread);
-		buffer[numread] = '\0';
-		fwrite(buffer, numread, 1, stdout);
+		char buffer[readypair.first+1];
+		void *from = readypair.second.data();
+		strncpy(buffer, static_cast<const char *>(from), readypair.first);
+		buffer[readypair.first] = '\0';
+		fwrite(buffer, readypair.first, 1, stdout);
 	}
 }
 
@@ -58,20 +60,17 @@ const char *logChannelName = "main_ntwk_util";
 int main(int argc, char *argv[])
 {
     Log::Config::Vector configList;
-    // Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "main_ntwk_util_log.txt", true, true);
     Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "", true, false);
     Util::Utility::configureLogManager( configList, logChannelName );
+
     Log::Logger logger(logChannelName);
 
-    size_t nread = 0;
+	arrayUint8 ibuffer;					  // input buffer
+	datapairUint8_t pairdata(0,ibuffer);  // pairdata.first will hold the valid number elements in the std::array<>
 
-	arrayUint8 ibuffer;
-	std::pair<int,arrayUint8> pairdata(0,ibuffer);
-
-	while ((nread = NtwkUtil::enet_receive(logger,0,ibuffer,ibuffer.size())) > 0)
+	while ((pairdata.first = NtwkUtil::enet_receive(logger, 0, pairdata.second, pairdata.second.size())) > 0)
 	{
-		std::pair<int,arrayUint8> readypair(nread, ibuffer);
-		writeData(logger, readypair);
+		writeData(logger, pairdata);
 	}
 
 	// Terminate the Log Manager (destroy the Output objects)
