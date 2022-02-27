@@ -1,6 +1,6 @@
 #include "Utility.hpp"
 #include "NtwkUtil.hpp"
-#include "NtwkConnect.hpp"
+#include "NtwkFixedArray.hpp"
 #include <LoggerCpp/LoggerCpp.h>
 #include <condition_data.hpp>
 #include <stdio.h>
@@ -45,14 +45,14 @@ using namespace EnetUtil;
 
 void writeData(Log::Logger& logger, datapairUint8_t& readypair)
 {
-	if (readypair.first > 0)
-	{
-		char buffer[readypair.first+1];
-		void *from = readypair.second.data();
-		strncpy(buffer, static_cast<const char *>(from), readypair.first);
-		buffer[readypair.first] = '\0';
-		fwrite(buffer, readypair.first, 1, stdout);
-	}
+    if (readypair.first > 0)
+    {
+        char buffer[readypair.first+1];
+        void *from = readypair.second.data();
+        strncpy(buffer, static_cast<const char *>(from), readypair.first);
+        buffer[readypair.first] = '\0';
+        fwrite(buffer, readypair.first, 1, stdout);
+    }
 }
 
 const char *logChannelName = "main_ntwk_util";
@@ -65,15 +65,15 @@ int main(int argc, char *argv[])
 
     Log::Logger logger(logChannelName);
 
-	arrayUint8 ibuffer;					  // input buffer
-	datapairUint8_t pairdata(0,ibuffer);  // pairdata.first will hold the valid number elements in the std::array<>
+    arrayUint8 ibuffer;                      // input buffer
+    datapairUint8_t pairdata(0,ibuffer);  // pairdata.first will hold the valid number elements in the std::array<>
 
-	while ((pairdata.first = NtwkUtil::enet_receive(logger, 0, pairdata.second, pairdata.second.size())) > 0)
-	{
-		writeData(logger, pairdata);
-	}
+    while ((pairdata.first = NtwkUtil::enet_receive(logger, 0, pairdata.second, pairdata.second.size())) > 0)
+    {
+        writeData(logger, pairdata);
+    }
 
-	// Terminate the Log Manager (destroy the Output objects)
+    // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
 
     return 0;

@@ -42,18 +42,18 @@ target_link_libraries( main_enet_util
 install(TARGETS main_enet_util DESTINATION localrun)
 
 #
-# main_fixed_array main
+# main_ntwk_fixed_array main
 #
-set (main_fixed_array "main_fixed_array${DBG}")
-add_executable (main_fixed_array src/main_programs/main_fixed_array.cpp)
-target_link_libraries( main_fixed_array
+set (main_ntwk_fixed_array "main_ntwk_fixed_array${DBG}")
+add_executable (main_ntwk_fixed_array src/main_programs/main_ntwk_fixed_array.cpp)
+target_link_libraries( main_ntwk_fixed_array
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
-install(TARGETS main_fixed_array DESTINATION localrun)
+install(TARGETS main_ntwk_fixed_array DESTINATION localrun)
 
 #
 # main_ntwk_util main
@@ -70,23 +70,23 @@ target_link_libraries( main_ntwk_util
 install(TARGETS main_ntwk_util DESTINATION localrun)
 
 #
-# main_NtwkBasicSockServer main
+# main_ntwk_basic_sock_server main
 #
-set ( "main_NtwkBasicSockServer${DBG}")
-add_executable (main_NtwkBasicSockServer src/main_programs/main_NtwkBasicSockServer.cpp)
-target_link_libraries( main_NtwkBasicSockServer
+set ( "main_ntwk_basic_sock_server${DBG}")
+add_executable (main_ntwk_basic_sock_server src/main_programs/main_ntwk_basic_sock_server.cpp)
+target_link_libraries( main_ntwk_basic_sock_server
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
-install(TARGETS main_NtwkBasicSockServer DESTINATION localrun)
+install(TARGETS main_ntwk_basic_sock_server DESTINATION localrun)
 
 # Dependencies
 add_dependencies (main_enet_util ${EnetUtil} ${Util} )
-add_dependencies (main_fixed_array ${EnetUtil} ${Util} )
+add_dependencies (main_ntwk_fixed_array ${EnetUtil} ${Util} )
 add_dependencies (main_ntwk_util ${EnetUtil} ${Util} )
-add_dependencies (main_NtwkBasicSockServer ${EnetUtil} ${Util} )
+add_dependencies (main_ntwk_basic_sock_server ${EnetUtil} ${Util} )
 
 

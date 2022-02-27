@@ -1,6 +1,5 @@
 #pragma once
 
-#include <EnetUtil.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <mutex>
 #include <sys/types.h>
@@ -37,7 +36,8 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-using namespace EnetUtil;
+namespace EnetUtil
+{
 
 // Options for NtwkUtilBufferSize
 static const size_t NtwkUtilNanoBufferSize = 64;
@@ -56,7 +56,7 @@ static const size_t NtwkUtilLargeBufferSize = 8192;
 // compile time).
 
 // NOTE: The fixed std::aray<> size is set here, and can/should be
-// 		 changed only right here - it will apply to all objects in NtwkUtil.*
+//          changed only right here - it will apply to all objects in NtwkUtil.*
 //
 // If you change a single std::array<> size in the .cpp sources for example, you are
 // guaranteed a few dozen build error, because... C++.  And you would deserve it. :-)
@@ -75,7 +75,7 @@ static const uint16_t base_simple_server_port_number =  57314;
 // This is the real port number. Both connections and listening use this variable.
 // Make sure to rebuild all clients when connecting to a server using this if it changes.
 static const uint16_t simple_server_port_number =
-		base_simple_server_port_number+NtwkUtilBufferSize;
+        base_simple_server_port_number+NtwkUtilBufferSize;
 
 // This is the actual type of the data being handled
 typedef std::array<uint8_t,NtwkUtilBufferSize> arrayUint8;
@@ -88,51 +88,52 @@ class NtwkUtil
 {
 public:
 
-	static std::recursive_mutex m_recursive_mutex;
+    static std::recursive_mutex m_recursive_mutex;
 
-	// The ip address and port number are used to set the proper values
-	// in the empty address structure for all the utilities used in EnetUtil.
-	// If the listen address (e.g. "192.168.0.102") is NULL, the INADDR_ANY value (0)
-	// will be used in the address structure.
-	static bool setup_sockaddr_in ( std::string listen_ip_address, 	// in
-									uint16_t socket_port_number,	// in
-									struct ::sockaddr *empty_addr); // out
+    // The ip address and port number are used to set the proper values
+    // in the empty address structure for all the utilities used in EnetUtil.
+    // If the listen address (e.g. "192.168.0.102") is NULL, the INADDR_ANY value (0)
+    // will be used in the address structure.
+    static bool setup_sockaddr_in ( std::string listen_ip_address,     // in
+                                    uint16_t socket_port_number,    // in
+                                    struct ::sockaddr *empty_addr); // out
 
-	// For non-listening processes (setsockopt(), bind() etc are not needed).
-	// Returns socket file descriptor, or -1 on error.
-	// We use the logger because we want to capture errno as early as possible
-	// after an important system call(socket(), listen(), bind(), etc) and log it.
-	int client_socket_connect(Log::Logger& logger, struct ::sockaddr *address);
+    // For non-listening processes (setsockopt(), bind() etc are not needed).
+    // Returns socket file descriptor, or -1 on error.
+    // We use the logger because we want to capture errno as early as possible
+    // after an important system call(socket(), listen(), bind(), etc) and log it.
+    int client_socket_connect(Log::Logger& logger, struct ::sockaddr *address);
 
-	// Returns socket file descriptor, or -1 on error.
-	// We use the logger because we want to capture errno as early as possible
-	// after an important system call(socket(), listen(), bind(), etc) and log it.
-	static int server_listen(Log::Logger& logger,
-					  struct ::sockaddr *address_struct,
-					  int backlog_size);
+    // Returns socket file descriptor, or -1 on error.
+    // We use the logger because we want to capture errno as early as possible
+    // after an important system call(socket(), listen(), bind(), etc) and log it.
+    static int server_listen(Log::Logger& logger,
+                      struct ::sockaddr *address_struct,
+                      int backlog_size);
 
-	// Accepts a single connection request.  It is expected to be called
-	// from within a loop.  For each loop cycle, the caller would
-	// then start a thread to deal with the request right after this call,
-	// if and only if the file descriptor is a valid positive file descriptor
-	// from a successful accept() system call, and the sockaddr_in structure
-	// is valid.
-	static int server_accept(Log::Logger& logger,
-					  int listen_socket_fd,
-					  struct ::sockaddr *address_struct,
-					  int retries = 3);
+    // Accepts a single connection request.  It is expected to be called
+    // from within a loop.  For each loop cycle, the caller would
+    // then start a thread to deal with the request right after this call,
+    // if and only if the file descriptor is a valid positive file descriptor
+    // from a successful accept() system call, and the sockaddr_in structure
+    // is valid.
+    static int server_accept( Log::Logger& logger,
+                              int listen_socket_fd,
+                              struct ::sockaddr *address_struct,
+                              int retries = 3);
 
-	static int enet_send(Log::Logger& logger,
-						 int fd,
-						 arrayUint8 & array_element_buffer,
-						 int flag = MSG_NOSIGNAL);
+    static int enet_send (Log::Logger& logger,
+                             int fd,
+                             arrayUint8 & array_element_buffer,
+                             int flag = MSG_NOSIGNAL);
 
-	static int enet_receive(Log::Logger& logger,
-							int fd,
-							arrayUint8 & array_element_buffer,
-								// requestsize can be smaller than the array<>::size()
-							size_t requestsize);
+    static int enet_receive(Log::Logger& logger,
+                            int fd,
+                            arrayUint8 & array_element_buffer,
+                            // requestsize can be smaller than the array<>::size()
+                            size_t requestsize);
 };  // end of class NtwkUtil
 
-// END OF SOCKET UTILITIES
+}  // end of namespace EnetUtil
+
 
