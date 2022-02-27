@@ -1,8 +1,54 @@
 # Samples
 
-# Welcome.  Please Note:
+# Welcome.  
 
-This is work in progress -- I'm uploading my sources to the repository while ensuring that the code is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to clone and/or download the code (to which you are welcome as per the LICENSE) but am not yet welcoming collaborators. Right now I only have some basic libraries that are still skeletal in nature, and there are more objects coming.  As soon as I introduce code that does something more useful, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.
+If you are here to look at how to get things done (one way, anyways) or you are here to evaluate my skills for whatever purpose,
+you might want to start with either libraries of objects, or with some main programs that use them, and work your way out from there.
+
+## Intetesting main programs: 
+
+These programs are used to test objects, as well as to stress-test them.  They don't always have a useful purpose beyond that.
+
+**main_ntwk_basic_sock_server.cpp**   
+found in *...Samples/source/EnetUtil/src/main_programs/*   
+Currently, this is the program which uses most of the objects in these sources.  Threads, socket connections, condition variables, circular buffers (aka ring buffers or bounded buffers), and more.  This is a deeper dive into the code. Note: this object is still being modified and added to. Currently awaiting the basic client that exercises it.  
+
+**main_condition_data.cpp**   
+found in *...Samples/source/Util/src/main_programs*   
+Exercises the condition_data object extensively for use from multiple threads. 
+This program was used while testing the LoggerCpp library at the time when it was eveluated for use in these sources.
+
+**main_circular_buffer.cpp**   
+found in *...Samples/source/Util/src/main_programs*   
+Exercises the ring buffer and shows functionality.
+
+**Includes:** *...Samples/source/EnetUtil/include/* and *...Samples/source/Util/include/* show the definition of objects used in the above programs.
+
+**Shell scripts:**   
+base-linux-build.bash (in *...Samples/source/*)   
+linux-build.bash   (in *...Samples/source/EnetUtil/*)    
+linux-build.bash   (in *...Samples/source/Util/*)     
+bash_env.sh (in *...Samples/source/shell_env/*)   
+
+**CMake Files:**      
+cmake/EnetUtil.cmake   
+cmake/tools.cmake   
+cmake/Util.cmake   
+CMakeLists.txt   
+EnetUtil/CMakeLists.txt   
+Util/CMakeLists.txt   
+
+**The flow:**   
+The shell scripts create the file structure and shell environment for CMake to run.   
+The CMake files set up **cmake** to create an **Eclipse IDE** progject using **makefile** for building the code.   
+**Eclipse** does all the rest...   
+   
+   __________________   
+   
+    
+    
+# Please Note:
+This is work in progress -- I'm uploading my sources to the repository while ensuring that the code is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to clone and/or download the code (to which you are welcome as per the LICENSE) but am not yet welcoming collaborators. Right now I only have some basic libraries and main programs that use/exercise them and there are more objects coming.  As soon as I introduce code that does something more useful, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.
 
 Thank you.
 
@@ -12,7 +58,7 @@ Thank you.
 
 The sources are organized in a source tree which is built using cmake (minimum version 3.10). There are (will be) additional README files in the subdirectories going into more detail of how to use the build environment.  
 
-New work is checked into the **dev** branch. The **main** branch is stable. 
+New work is checked into the **dev** branch. The **main** branch is fairly stable. 
 
 See the **source/README.md** file for detail about the file/directory structure, build tools, and how to build the sources. 
 
