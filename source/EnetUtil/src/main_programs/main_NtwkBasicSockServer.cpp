@@ -105,7 +105,7 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
 	// FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
 	//                        << threadno << ", fd = " << socketfd << std::endl;
 
-	logger.notice() << "thread_handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
+	logger.debug() << "thread_handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
 
 	bool finished = false;
 	while (!finished)
@@ -117,7 +117,7 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
 
 			int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
 
-			logger.notice() << "thread_handler(" << threadno << "): Received " <<
+			logger.debug() << "thread_handler(" << threadno << "): Received " <<
 					num_elements_received << " bytes on fd " << socketfd;
 
 			if (num_elements_received == 0)  // EOF
@@ -135,7 +135,7 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
 					finished = true;
 				}
 			}
-			logger.notice() << "thread_handler(" << threadno << "): After setting number of elements to " <<
+			logger.debug() << "thread_handler(" << threadno << "): After setting number of elements to " <<
 					num_elements_received << " bytes on fd " << socketfd;
 
 			// Add the shared_ptr the queue.
@@ -151,7 +151,7 @@ void socket_connection_handler (int socket, int threadno)
         // This affects the whole process:  signal(SIGPIPE, SIG_IGN);
 
    	Log::Logger logger(logChannelName);
-   	logger.notice() << "socket_connection_handler(): starting a connection handler thread";
+   	logger.debug() << "socket_connection_handler(): starting a connection handler thread";
 
 	try
 	{
@@ -170,7 +170,7 @@ void socket_connection_handler (int socket, int threadno)
         				  threadno << " for socket fd " << socket;
     }
 
-    logger.notice() << "socket_connection_handler(): started thread " <<
+    logger.debug() << "socket_connection_handler(): started thread " <<
         				  threadno << " for socket fd " << socket;
 }
 
@@ -195,7 +195,7 @@ void queue_handler(Log::Logger logger)
 		{
 			std::shared_ptr<fixed_uint8_array_t> data_sp = ringbuf.get();
 
-			logger.notice() << "queue_handler(): Queue ready:  Got object with " <<
+			logger.debug() << "queue_handler(): Queue ready:  Got object with " <<
 					data_sp->num_valid_elements() << " valid elements in a fixed array of size " <<
 					data_sp->data().size();
 		}
@@ -252,7 +252,8 @@ int main(int argc, char *argv[])
     }
 
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, logFileName, false, true);
+    Util::Utility::initializeLogManager(configList, Log::Log::Level::eDebug, logFileName, false, true);
+    // Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, logFileName, false, true);
     Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
 
@@ -308,7 +309,7 @@ int main(int argc, char *argv[])
     		continue;
         }
 
-    	logger.notice() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
+    	logger.debug() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
 
     	// Start a thread to handle the connection
     	socket_connection_handler(accept_socket_fd, i);
