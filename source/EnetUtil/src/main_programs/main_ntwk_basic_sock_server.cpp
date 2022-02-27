@@ -71,6 +71,11 @@ std::vector<std::thread> workers;
 const int queuesize = 500;
 Util::circular_buffer<std::shared_ptr<fixed_uint8_array_t>> ringbuf(queuesize);
 
+// Adding a buffer to the queue with this condition variable as a second parameter
+// to ::put(), will allow the waiting queue thread to be suspended until there are
+// buffers waiting in the queue
+Util::condition_data<int>queue_condvar(0);
+
 static std::thread queue_thread;
 
 void Usage(std::ostream& strm, std::string command)
@@ -138,9 +143,9 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
             logger.debug() << "thread_handler(" << threadno << "): After setting number of elements to " <<
                     num_elements_received << " bytes on fd " << socketfd;
 
-            // Add the shared_ptr the queue.
+            // Add the shared_ptr the queue. The condition variable will signal ready to the thread.
             // The shared_ptr then goes out of scope and is deleted (but ringbuf has a copy).
-            ringbuf.put(sp_data);
+            ringbuf.put(sp_data, queue_condvar);
         }
     }
     close(socketfd);
@@ -185,13 +190,11 @@ void queue_handler(Log::Logger logger)
     bool finished = false;
     while (!finished)
     {
-        // sleep but only if you have to
-        if (ringbuf.empty())
-        {
-            while (ringbuf.empty()) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
-        }
+    	// TODO: might use queue_condvar.get_data() for potential info
+    	// provided when the item was put in the queue.
+    	queue_condvar.wait_for_ready();
 
-        if (!ringbuf.empty())
+        while (!ringbuf.empty())
         {
             std::shared_ptr<fixed_uint8_array_t> data_sp = ringbuf.get();
 

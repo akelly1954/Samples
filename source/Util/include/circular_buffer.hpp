@@ -19,6 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <condition_data.hpp>
 #include <cstdio>
 #include <iostream>
 #include <memory>
@@ -48,6 +49,13 @@ public:
         head_ = (head_ + 1) % max_size_;
 
         full_ = head_ == tail_;
+    }
+
+    // Call put() with a condition_data mechanism to
+    // notify a waiting thread that there is data ready.
+    void put(T item, condition_data<int>& condvar) {
+    	put(item);
+    	condvar.send_ready (size(), condition_data<int>::All);
     }
 
     T get() {
