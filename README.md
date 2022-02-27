@@ -22,6 +22,11 @@ This program was used while testing the LoggerCpp library at the time when it wa
 found in *...Samples/source/Util/src/main_programs*   
 Exercises the ring buffer and shows functionality.
 
+**NtwkFixedArray.hpp**     
+found in *...Samples/source/EnetUtil/include/*   
+This is a template based object which encapsulates an std::array<T,N> which is where the data is kept for most of the network based
+objects covered here. The current implementation uses an std::array<T,N> where **T** is **uint8_t** (for std::array<uint8_t,N>), and **N** is the size of the std::array<> (number of elements). In addition to other facets, it demonstrates a decent implementation of how to use the **shared_from_this()** mechanism properly.  By having **shared_ptr<>**'s holding fixed size buffers, a program (like **main_ntwk_basic_sock_server.cpp** in this case) can move the data around by moving the **shared_ptr<>**'s around instead of having to copy the data from one array buffer to the next.  Worth a look. (Who uses std::array<>'s anyways?) 
+
 **Includes:** *...Samples/source/EnetUtil/include/* and *...Samples/source/Util/include/* show the definition of objects used in the above programs.
 
 **Shell scripts:**   
