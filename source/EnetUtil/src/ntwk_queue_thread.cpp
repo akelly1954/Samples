@@ -12,14 +12,9 @@ using namespace EnetUtil;
 // class queue_thread statics
 
 const int queue_thread::s_queuesize = 1000;
-
 Util::circular_buffer<std::shared_ptr<fixed_uint8_array_t>> queue_thread::s_ringbuf(s_queuesize);
-
 Util::condition_data<int> queue_thread::s_queue_condvar(0);
-
 std::thread queue_thread::s_queue_thread;  // This gets set in ::start()
-
-
 
 void queue_thread::handler(Log::Logger logger)
 {

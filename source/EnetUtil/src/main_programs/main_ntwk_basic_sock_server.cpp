@@ -1,4 +1,5 @@
 #include <ntwk_basic_sock_server/ntwk_queue_thread.hpp>
+#include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
 #include <Utility.hpp>
 #include <commandline.hpp>
 #include <NtwkUtil.hpp>
@@ -62,27 +63,6 @@ int server_listen_max_backlog = 50;                        // can be modified fr
 // fixed size of the std::vector<> used for the data
 const int server_buffer_size = NtwkUtilBufferSize;
 
-// vector container stores the threads that do the work for each connection
-std::vector<std::thread> workers;
-
-#ifdef NOBUILD
-
-// The circular buffer queue has each shared_ptr<> added to it.  Each shared_ptr
-// points to a fixed_array object which holds data from a single socket read()
-// call, when it's ready.  The queue_handler thread pops out each member when it's
-// ready, and processes it.
-const int queuesize = 500;
-Util::circular_buffer<std::shared_ptr<fixed_uint8_array_t>> ringbuf(queuesize);
-
-// Adding a buffer to the queue with this condition variable as a second parameter
-// to ::put(), will allow the waiting queue thread to be suspended until there are
-// buffers waiting in the queue
-Util::condition_data<int>queue_condvar(0);
-
-static std::thread queue_thread;
-
-#endif // NOBUILD
-
 
 void Usage(std::ostream& strm, std::string command)
 {
@@ -110,134 +90,6 @@ bool parse(int argc, char *argv[])
     std::for_each(specified.begin(), specified.end(), [&ret](auto member) { if (member.second) { ret = true; }});
     return ret;
 }
-
-void thread_handler(int socketfd, int threadno, Log::Logger logger)
-{
-    // FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
-    //                        << threadno << ", fd = " << socketfd << std::endl;
-
-    logger.debug() << "thread_handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
-
-    bool finished = false;
-    while (!finished)
-    {
-        // This extra scope gets out of context at the end of file, which
-        // destructs the shared_ptr<>, so that a new one is created here:
-        {
-            std::shared_ptr<fixed_uint8_array_t> sp_data = fixed_uint8_array_t::create();
-
-            int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
-
-            logger.debug() << "thread_handler(" << threadno << "): Received " <<
-                    num_elements_received << " bytes on fd " << socketfd;
-
-            if (num_elements_received == 0)  // EOF
-            {
-                close(socketfd);
-                return;  // The shared_ptr<> will be destructed
-            }
-            else
-            {
-                if (! sp_data->set_num_valid_elements(num_elements_received))
-                {
-                    logger.error() << "thread_handler: Error in setting thread_handler(" << threadno <<
-                            ") num_valid_elements. Got  " << num_elements_received << " bytes on fd " << socketfd <<
-                            ". Aborting...";
-                    finished = true;
-                }
-            }
-            logger.debug() << "thread_handler(" << threadno << "): After setting number of elements to " <<
-                    num_elements_received << " bytes on fd " << socketfd;
-
-            // Add the shared_ptr the queue. The condition variable will signal ready to the thread.
-            // The shared_ptr then goes out of scope and is deleted (but ringbuf has a copy).
-            queue_thread::s_ringbuf.put(sp_data, queue_thread::s_queue_condvar);
-        }
-    }
-    close(socketfd);
-}
-
-void socket_connection_handler (int socket, int threadno)
-{
-        // This affects the whole process:  signal(SIGPIPE, SIG_IGN);
-
-       Log::Logger logger(logChannelName);
-       logger.debug() << "socket_connection_handler(): starting a connection handler thread";
-
-    try
-    {
-        // The logger is passed to the new thread because it has to be instantiated in
-        // the main thread (right here) before it is used from inside the new thread.
-        workers.push_back( std::thread( thread_handler, socket, threadno, logger));
-    }
-    catch (std::exception &exp)
-    {
-        logger.error() << "Got exception in socket_connection_handler() starting thread " <<
-                          threadno << " for socket fd " << socket << ": " << exp.what();
-    }
-    catch (...)
-    {
-        logger.error() << "General exception occurred in socket_connection_handler() starting thread " <<
-                          threadno << " for socket fd " << socket;
-    }
-
-    logger.debug() << "socket_connection_handler(): started thread " <<
-                          threadno << " for socket fd " << socket;
-}
-
-#ifdef NOBUILD
-void queue_handler(Log::Logger logger)
-{
-    // FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
-    //                        << threadno << ", fd = " << socketfd << std::endl;
-
-    logger.notice() << "queue_handler: thread running, waiting for the circular " <<
-                       "buffer queue to have buffers ready to be processed.";
-
-    bool finished = false;
-    while (!finished)
-    {
-    	// TODO: might use queue_condvar.get_data() for potential info
-    	// provided when the item was put in the queue.
-    	queue_condvar.wait_for_ready();
-
-        while (!ringbuf.empty())
-        {
-            std::shared_ptr<fixed_uint8_array_t> data_sp = ringbuf.get();
-
-            logger.debug() << "queue_handler(): Queue ready:  Got object with " <<
-                    data_sp->num_valid_elements() << " valid elements in a fixed array of size " <<
-                    data_sp->data().size();
-        }
-    }
-}
-
-void start_queue_handler (void)
-{
-       Log::Logger logger(logChannelName);
-       logger.notice() << "start_queue_handler(): starting a circular buffer handler thread";
-
-    try
-    {
-        // The logger is passed to the new thread because it has to be instantiated in
-        // the main thread (right here) before it is used from inside the new thread.
-        queue_thread = std::thread( queue_handler, logger);
-    }
-    catch (std::exception &exp)
-    {
-        logger.error() << "Got exception in start_queue_handler() starting thread " <<
-                          " for queue_handler(): " << exp.what();
-    }
-    catch (...)
-    {
-        logger.error() << "General exception occurred in start_queue_handler() starting " <<
-                          "thread for queue_handler().";
-    }
-
-    logger.notice() << "start_queue_handler(): started thread for queue_handler()";
-}
-#endif // NOBUILD
-
 
 int main(int argc, char *argv[])
 {
@@ -304,9 +156,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    logger.notice() << "In main(): Server created and accepting connection requests";
+
+
+    //////////////////////////////////////////////////////////////////////////////////////
+    // MAIN SERVER LOOP:  All connections have been set up.
     // From this point on we loop on the accept() system call. starting a thread
     // to handle each connection.
-    logger.notice() << "In main(): Server created and accepting connection requests";
+    //////////////////////////////////////////////////////////////////////////////////////
 
     int accept_socket_fd = -1;
     bool aborted = false;
@@ -324,7 +181,7 @@ int main(int argc, char *argv[])
         logger.debug() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
 
         // Start a thread to handle the connection
-        socket_connection_handler(accept_socket_fd, i);
+        socket_connection_thread::start (accept_socket_fd, i, logChannelName);
     }
 
     int ret = (aborted? 1 : 0);
@@ -335,11 +192,7 @@ int main(int argc, char *argv[])
 
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
-
-    std::for_each(workers.begin(), workers.end(), [](std::thread &t)
-    {
-        if (t.joinable()) t.join();
-    });
+    socket_connection_thread::terminate_all_threads();
     if (queue_thread::s_queue_thread.joinable()) queue_thread::s_queue_thread.join();
 
     return ret;

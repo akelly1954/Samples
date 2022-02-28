@@ -1,12 +1,29 @@
-
 #pragma once
 
+#include <ntwk_basic_sock_server/ntwk_queue_thread.hpp>
 #include <Utility.hpp>
-#include <circular_buffer.hpp>
+#include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
-#include <memory>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#ifdef NOBUILD
+
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
 #include <thread>
+
+#endif // NOBUILD
+
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -34,28 +51,27 @@
 
 namespace EnetUtil {
 
-	class queue_thread
+	class socket_connection_thread
 	{
 	public:
+		static void handler (int socket, int threadno, Log::Logger logger);
+		static void start (int socket, int threadno,
+				const char *logChannelName = "socket_connection_thread");
 
-		static void handler(Log::Logger logger);
+		static void terminate_all_threads()
+		{
+			std::for_each(s_workers.begin(), s_workers.end(), [](std::thread &t)
+			{
+				if (t.joinable()) t.join();
+			});
+		}
 
-		static void start (const char *logChannelName = "queue_thread");
+	    static std::vector<std::thread> s_workers;
 
-		// The circular buffer queue has each shared_ptr<> added to it.  Each shared_ptr
-		// points to a fixed_array object which holds data from a single socket read()
-		// call, when it's ready.  The queue_handler thread pops out each member when it's
-		// ready, and processes it.
-		static const int s_queuesize;
-		static Util::circular_buffer<std::shared_ptr<fixed_uint8_array_t>> s_ringbuf;
-
-		// Adding a buffer to the queue with this condition variable as a second parameter
-		// to ::put(), will allow the waiting queue thread to be suspended until there are
-		// buffers waiting in the queue
-		static Util::condition_data<int> s_queue_condvar;
-
-		static std::thread s_queue_thread;
-	};  // end of class queue_thread
+	};  // end of class socket_connection_thread
 
 } // end of namespace EnetUtil
+
+
+
 
