@@ -5,8 +5,9 @@ project (Util)
 include (${SampleRoot_DIR}/source/cmake/Util.cmake)
 
 file(GLOB SOURCEFILES "src/*.cpp")
-file(GLOB HEADERS "include/*.h*" "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
-set( SOURCES ${SOURCEFILES} ${HEADERS} )
+file(GLOB HEADERS "include/*.h*")
+file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
+set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}")
 
 set ( LIBTYPE "${Util_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
@@ -21,6 +22,7 @@ target_link_libraries( ${Util}
 install(TARGETS ${Util} DESTINATION lib)
 install(TARGETS ${Util} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/Util)
+install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
 
 #
 # Circular buffer main
@@ -52,7 +54,7 @@ install(TARGETS main_LoggerCpp_main_example DESTINATION localrun)
 # Command line main
 #
 set (main_commandline "main_commandline${DBG}")
-add_executable (main_commandline src/main_programs/main_commandline.cpp ${Util_HEADERS})
+add_executable (main_commandline src/main_programs/main_commandline.cpp)
 target_link_libraries( main_commandline 
                             ${Util_LIB}
                             ${LoggerCpp_LIB}

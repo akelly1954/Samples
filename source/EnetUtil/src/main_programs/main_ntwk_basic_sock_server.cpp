@@ -1,7 +1,8 @@
-#include "Utility.hpp"
-#include "commandline.hpp"
-#include "NtwkUtil.hpp"
-#include "NtwkFixedArray.hpp"
+#include <ntwk_basic_sock_server/ntwk_queue_thread.hpp>
+#include <Utility.hpp>
+#include <commandline.hpp>
+#include <NtwkUtil.hpp>
+#include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +65,8 @@ const int server_buffer_size = NtwkUtilBufferSize;
 // vector container stores the threads that do the work for each connection
 std::vector<std::thread> workers;
 
+#ifdef NOBUILD
+
 // The circular buffer queue has each shared_ptr<> added to it.  Each shared_ptr
 // points to a fixed_array object which holds data from a single socket read()
 // call, when it's ready.  The queue_handler thread pops out each member when it's
@@ -77,6 +80,9 @@ Util::circular_buffer<std::shared_ptr<fixed_uint8_array_t>> ringbuf(queuesize);
 Util::condition_data<int>queue_condvar(0);
 
 static std::thread queue_thread;
+
+#endif // NOBUILD
+
 
 void Usage(std::ostream& strm, std::string command)
 {
@@ -145,7 +151,7 @@ void thread_handler(int socketfd, int threadno, Log::Logger logger)
 
             // Add the shared_ptr the queue. The condition variable will signal ready to the thread.
             // The shared_ptr then goes out of scope and is deleted (but ringbuf has a copy).
-            ringbuf.put(sp_data, queue_condvar);
+            queue_thread::s_ringbuf.put(sp_data, queue_thread::s_queue_condvar);
         }
     }
     close(socketfd);
@@ -179,6 +185,7 @@ void socket_connection_handler (int socket, int threadno)
                           threadno << " for socket fd " << socket;
 }
 
+#ifdef NOBUILD
 void queue_handler(Log::Logger logger)
 {
     // FOR DEBUG    std::cout << "thread_handler(): started thread for connection "
@@ -229,6 +236,8 @@ void start_queue_handler (void)
 
     logger.notice() << "start_queue_handler(): started thread for queue_handler()";
 }
+#endif // NOBUILD
+
 
 int main(int argc, char *argv[])
 {
@@ -279,7 +288,7 @@ int main(int argc, char *argv[])
 
     // Set up the thread that keeps the circular_buffer which handles all the data
     // after it's been received from any accepted socket.
-    start_queue_handler();
+    queue_thread::start (logChannelName);
 
     struct ::sockaddr_in sin_addr;
     if(! NtwkUtil::setup_sockaddr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
@@ -331,7 +340,7 @@ int main(int argc, char *argv[])
     {
         if (t.joinable()) t.join();
     });
-    if (queue_thread.joinable()) queue_thread.join();
+    if (queue_thread::s_queue_thread.joinable()) queue_thread::s_queue_thread.join();
 
     return ret;
 }

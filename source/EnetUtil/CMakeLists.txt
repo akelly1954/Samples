@@ -4,14 +4,18 @@ project (EnetUtil)
 
 include (${SampleRoot_DIR}/source/cmake/EnetUtil.cmake)
 
+file(GLOB MAIN_HEADERS "src/main_programs/include/ntwk_basic_sock_server/*.hpp")
+file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
 file(GLOB SOURCEFILES "src/*.cpp")
-file(GLOB HEADERS "include/*.h*" "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
-set( SOURCES ${SOURCEFILES} ${HEADERS} )
+file(GLOB HEADERS   "include/*.h*") 
+    
+set( SOURCES ${SOURCEFILES} ${MAIN_HEADERS} ${HEADERS} ${LOGGER_HEADERS} )
 
 set ( LIBTYPE "${Enet_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 
 include_directories( ${EnetUtil_HEADERS}
+                     src/main_programs/include
                      ../Util/include
                      ${LoggerCpp_HEADERS}
                    )
@@ -24,6 +28,8 @@ target_link_libraries( ${EnetUtil}
 install(TARGETS ${EnetUtil} DESTINATION lib)
 install(TARGETS ${EnetUtil} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/EnetUtil)
+install(FILES ${MAIN_HEADERS} DESTINATION include/EnetUtil/ntwk_basic_sock_server)
+install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
 
 set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
 
