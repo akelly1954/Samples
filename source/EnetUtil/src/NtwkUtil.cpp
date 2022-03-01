@@ -16,6 +16,30 @@
 #include <thread>
 #include <stdexcept>
 
+/////////////////////////////////////////////////////////////////////////////////
+// MIT License
+//
+// Copyright (c) 2022 Andrew Kelly
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+/////////////////////////////////////////////////////////////////////////////////
+
 using namespace EnetUtil;
 
 // SOCKET UTILITIES
@@ -27,7 +51,7 @@ std::recursive_mutex NtwkUtil::m_recursive_mutex;
 // in the empty address structure for all the utilities used in EnetUtil.
 // If the listen address (e.g. "192.168.0.102") is NULL, the INADDR_ANY value (0)
 // will be used in the address structure.
-bool NtwkUtil::setup_sockaddr_in(std::string listen_ip_address, 	// in
+bool NtwkUtil::setup_sockaddr_in(std::string ip_address, 	// in
 								 uint16_t socket_port_number, 		// in
 								 struct ::sockaddr *addr)  			// out
 {
@@ -35,13 +59,13 @@ bool NtwkUtil::setup_sockaddr_in(std::string listen_ip_address, 	// in
 	empty_addr->sin_family = AF_INET;
 
 	::in_addr_t x;
-	if (listen_ip_address.empty() || listen_ip_address == "INADDR_ANY")
+	if (ip_address.empty() || ip_address == "INADDR_ANY")
 	{
 		x = INADDR_ANY;
 	}
 	else
 	{
-		x = inet_addr(listen_ip_address.c_str());
+		x = inet_addr(ip_address.c_str());
 	}
 
 	empty_addr->sin_addr.s_addr = x;
@@ -62,17 +86,17 @@ int NtwkUtil::client_socket_connect(Log::Logger& logger, struct ::sockaddr *addr
 	int socket_fd;
 
 	// Creating socket file descriptor
-    if ((socket_fd = ::socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    if ((socket_fd = ::socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
     	errnocopy = errno;
 		logger.error() << "In NtwkUtil::client_socket_connect: socket() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
-    if (::connect(socket_fd, (struct ::sockaddr *)& address_struct, sizeof(::sockaddr_in)) != 0)
+    if (::connect(socket_fd, (struct ::sockaddr *) address_struct, sizeof(::sockaddr_in)) != 0)
     {
     	errnocopy = errno;
-		logger.error() << "In NtwkUtil::client_socket_connect): socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+		logger.error() << "In NtwkUtil::client_socket_connect): socket connect() failed: " << Util::Utility::get_errno_message(errnocopy);
         return -1;
     }
 
@@ -96,7 +120,7 @@ int NtwkUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
 	// signal(SIGPIPE, SIG_IGN);  // this will affect all running threads
 
     // Creating socket file descriptor
-    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
     	errnocopy = errno;
 		logger.error() << "In NtwkUtil::server_listen(): socket() failed: " << Util::Utility::get_errno_message(errnocopy);

@@ -102,7 +102,7 @@ public:
     // Returns socket file descriptor, or -1 on error.
     // We use the logger because we want to capture errno as early as possible
     // after an important system call(socket(), listen(), bind(), etc) and log it.
-    int client_socket_connect(Log::Logger& logger, struct ::sockaddr *address);
+    static int client_socket_connect(Log::Logger& logger, struct ::sockaddr *address);
 
     // Returns socket file descriptor, or -1 on error.
     // We use the logger because we want to capture errno as early as possible

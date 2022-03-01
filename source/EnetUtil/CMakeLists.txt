@@ -89,10 +89,25 @@ target_link_libraries( main_ntwk_basic_sock_server
                      )
 install(TARGETS main_ntwk_basic_sock_server DESTINATION localrun)
 
+#
+# main_client_for_basic_server main
+#
+set ( "main_client_for_basic_server${DBG}")
+add_executable (main_client_for_basic_server src/main_programs/main_client_for_basic_server.cpp)
+target_link_libraries( main_client_for_basic_server
+                            ${EnetUtil_LIB}
+                            ${Util_LIB}
+                            ${LoggerCpp_LIB}
+                            ${CMAKE_THREAD_LIBS_INIT}
+                            ${LINKOPTIONS}
+                     )
+install(TARGETS main_client_for_basic_server DESTINATION localrun)
+
 # Dependencies
 add_dependencies (main_enet_util ${EnetUtil} ${Util} )
 add_dependencies (main_ntwk_fixed_array ${EnetUtil} ${Util} )
 add_dependencies (main_ntwk_util ${EnetUtil} ${Util} )
 add_dependencies (main_ntwk_basic_sock_server ${EnetUtil} ${Util} )
+add_dependencies (main_client_for_basic_server ${EnetUtil} ${Util} )
 
 
