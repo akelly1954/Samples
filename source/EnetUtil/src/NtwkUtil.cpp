@@ -185,40 +185,30 @@ int NtwkUtil::server_accept(Log::Logger& logger, int listen_socket_fd, struct ::
 
 int NtwkUtil::enet_send(Log::Logger& logger,
 						int fd,	                // file descriptor to socket
-						arrayUint8 & array_element_buffer,	// data and length
+						arrayUint8& array_element_buffer,	// data and length of buffer
+						size_t actual_size,
 						int flag)
 {
     std::lock_guard<std::recursive_mutex> lock(NtwkUtil::m_recursive_mutex);
 
-    const int sleepmsec = 3000;
-    const int retries = 3;
-
     int sockreturn = -1;
     int errnocopy = 0;
-    for (int i = 1; i <= retries; i++)
-    {
-    	//             fd          data buffer              num bytes
-        sockreturn = send(fd, array_element_buffer.data(), array_element_buffer.size(), MSG_NOSIGNAL);
-        errnocopy = errno;
-        if (sockreturn >= 0)
-        {
-            break;
-        } else
-        {
-            // std::string errstr = Util::Utility::get_errno_message(errnocopy);
-            std::string lstr = "NtwkUtil::enet_send: Failed to write to socket: "
-            				+ Util::Utility::get_errno_message(errnocopy)
-                            + " socket fd = " + std::to_string(fd);
-            logger.error() << lstr;
-			if (i < retries)
-			{
-            	logger.notice() << "After write error, retrying in " + (sleepmsec / 1000) << " second(s)...";
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(sleepmsec));
-        }
-    }
 
-    return sockreturn;
+    //                fd       data buffer              num bytes      flag
+	sockreturn = send(fd, array_element_buffer.data(), actual_size, MSG_NOSIGNAL);
+	errnocopy = errno;
+
+	if (sockreturn >= 0)
+	{
+		// logger.debug() << "NtwkUtil::enet_send: sent " << sockreturn << " bytes on socket fd = " << fd;
+	}
+	else
+	{
+		logger.error() << "NtwkUtil::enet_send: Failed to write to socket: " <<
+						  Util::Utility::get_errno_message(errnocopy) <<
+						  ", socket fd = " << fd;
+	}
+	return sockreturn;
 }
 
 // The socket read may throw an exception

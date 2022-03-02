@@ -42,6 +42,12 @@ namespace EnetUtil {
 
 		static void start (const char *logChannelName = "queue_thread");
 
+		static bool write_to_file(  Log::Logger& logger,
+									std::shared_ptr<fixed_uint8_array_t> data_sp,
+									std::string output_file);
+
+		static std::string get_seq_num_string(long num);	// utility function
+
 		// The circular buffer queue has each shared_ptr<> added to it.  Each shared_ptr
 		// points to a fixed_array object which holds data from a single socket read()
 		// call, when it's ready.  The queue_handler thread pops out each member when it's

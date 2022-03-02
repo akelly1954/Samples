@@ -79,9 +79,12 @@ void socket_connection_thread::handler(int socketfd, int threadno, Log::Logger l
                             ". Aborting...";
                     finished = true;
                 }
+                else
+                {
+                    logger.debug() << "socket_connection_thread::handler(" << threadno << "): After setting number of elements to " <<
+                            num_elements_received << " bytes on fd " << socketfd;
+                }
             }
-            logger.debug() << "socket_connection_thread::handler(" << threadno << "): After setting number of elements to " <<
-                    num_elements_received << " bytes on fd " << socketfd;
 
             // Add the shared_ptr the queue. The condition variable will signal ready to the thread.
             // The shared_ptr then goes out of scope and is deleted (but ringbuf has a copy).

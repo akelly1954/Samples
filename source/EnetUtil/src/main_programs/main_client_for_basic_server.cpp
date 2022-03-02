@@ -6,6 +6,7 @@
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -47,16 +48,16 @@ using namespace EnetUtil;
 
 // Defaults and other constants
 
-// All threads, including main, output to this channel
 const char *logChannelName = "main_client_for_basic_server";
-
 const char *logFileName = "main_client_for_basic_server_log.txt";
 
-const char *default_connection_ip = "127.0.0.1";		// default address to connect to
-std::string connection_ip(default_connection_ip);    // can be modified from the command line
+const char *default_connection_ip = "127.0.0.1";	// default address to connect to
+std::string connection_ip(default_connection_ip);	// can be modified from the command line
 
 const uint16_t default_connection_port_number = simple_server_port_number;
 uint16_t connection_port_number = default_connection_port_number; // can be modified from the command line
+
+std::string input_filename = "";					// This has to be specified on the command line
 
 // fixed size of the std::array<> used for the data
 const int server_buffer_size = NtwkUtilBufferSize;
@@ -65,9 +66,9 @@ void Usage(std::ostream& strm, std::string command)
 {
     strm << "Usage:    " << command << " --help (or -h or help)" << std::endl;
     strm << "Or:       " << command << "\n"
-                 "                  -ip server ip address (default is 127.0.0.1) \n" <<
-                 "                  -pn port number to connect to\n" <<
-                 "\n" <<
+                 "                  [ -ip server-ip-address ] (default is 127.0.0.1)\n" <<
+                 "                  [ -pn port-number ]       (port num to connect to, default is " << connection_port_number << ")\n" <<
+				 "                  [ -fn file-name           (holding the data to be transmitted, has to exist - default is \"stdin\")\n" <<
                  std::endl;
 }
 
@@ -79,6 +80,7 @@ bool parse(int argc, char *argv[])
 
     specified["-ip"] = getArg(cmdmap, "-ip", connection_ip);
     specified["-pn"] = getArg(cmdmap, "-pn", connection_port_number);
+    specified["-fn"] = getArg(cmdmap, "-fn", input_filename);
 
     bool ret = true;  // Currently all flags have default values, so it's always good.
     std::for_each(specified.begin(), specified.end(), [&ret](auto member) { if (member.second) { ret = true; }});
@@ -88,6 +90,10 @@ bool parse(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     using namespace Util;
+
+    /////////////////
+    // Parse command line
+    /////////////////
 
     std::string argv0 = const_cast<const char *>(argv[0]);
 
@@ -109,11 +115,46 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    /////////////////
+    // Open input file
+    /////////////////
+
+    int errnocopy = 0;
+    FILE *input_stream = NULL;
+    bool fclose_after = false;		// This prevents fclose(stdin) from being called.
+    if (input_filename.empty())
+    {
+    	fclose_after = false;
+    	input_stream = ::stdin;
+    	std::cout << "Using standard input..." << std::endl;
+    }
+    else if ((input_stream = ::fopen (input_filename.c_str(), "r")) == NULL)
+	{
+		errnocopy = errno;
+		std::cerr << "\nCannot open input file \"" << input_filename << "\": " <<
+					 Util::Utility::get_errno_message(errnocopy) << "\n" << std::endl;
+		Usage(std::cerr , argv0);
+		return 1;
+	}
+	else
+	{
+		fclose_after = true;		// This allows fclose(input_stream) to be called
+		std::cout << "Using " << input_filename << " for input..." << std::endl;
+	}
+
+    /////////////////
+    // Set up logger
+    /////////////////
+
     Log::Config::Vector configList;
     Util::Utility::initializeLogManager(configList, Log::Log::Level::eDebug, logFileName, true, false);
     // Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, logFileName, false, true);
     Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
+
+    /////////////////
+    // Set up connection to server
+    /////////////////
 
     if (connection_ip.empty() || connection_ip == "INADDR_ANY")
     {
@@ -130,6 +171,7 @@ int main(int argc, char *argv[])
     {
         logger.error() << "Error returned from setup_sockaddr_in(): Setup connection for " <<
         				  connection_ip << ":" << connection_port_number << " failed. Aborting...";
+    	if (fclose_after && input_stream != NULL) ::fclose(input_stream);
         return 1;
     }
 
@@ -138,52 +180,59 @@ int main(int argc, char *argv[])
     {
         logger.error() << "Error returned from client_socket_connect(): Connection to " <<
         				  connection_ip << ":" << connection_port_number << " failed. Aborting...";
+    	if (fclose_after && input_stream != NULL) ::fclose(input_stream);
         return 1;
     }
 
     logger.notice() << "Client connected to " << connection_ip << ":" << connection_port_number << " Successfully.";
 
-#ifdef NOBUILD
-    //////////////////////////////////////////////////////////////////////////////////////
-    // MAIN SERVER LOOP:  All connections have been set up.
-    // From this point on we loop on the accept() system call. starting a thread
-    // to handle each connection.
-    //////////////////////////////////////////////////////////////////////////////////////
+    /////////////////
+    // And work: loop data from file to network
+    /////////////////
 
-    int accept_socket_fd = -1;
-    bool aborted = false;
-
-    int i = 0;
-    for (i = 1; !aborted; i++)
+	arrayUint8 array_element_buffer;
+    int ret = 0;
+    while (!std::feof(input_stream))
     {
-        if ((accept_socket_fd = NtwkUtil::server_accept(logger, socket_fd, (sockaddr *) &sin_addr)) < 0)
-        {
-            // Aborting
-            aborted = true;
-            continue;
-        }
+    	// fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+    	size_t numread = 0;
+    	numread = std::fread(array_element_buffer.data(), sizeof(uint8_t), array_element_buffer.size(), input_stream);
 
-        logger.debug() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
+    	if (::ferror(input_stream))
+    	{
+    		logger.error() << argv0 << ": Error in reading " << input_filename;
+    		ret = 1;
+    		break;
+    	}
 
-        // Start a thread to handle the connection
-        socket_connection_thread::start (accept_socket_fd, i, logChannelName);
+    	if (numread > 0)
+    	{
+			ret = NtwkUtil::enet_send(logger, socket_fd, array_element_buffer, numread, MSG_NOSIGNAL);
+			if (ret < 0) break;  // error message logged from inside enet_send()
+			else if (ret == 0)
+			{
+				logger.debug() << argv0 << ": No data was sent to " << connection_ip << ":" << connection_port_number << ", size requested: " << array_element_buffer.size();
+				ret = 1;
+				break;		// make sure this goes through cleanup below
+			}
+			else
+			{
+				logger.debug() << argv0 << ": Successfully sent " << ret << " bytes to " << connection_ip << ":" << connection_port_number;
+			}
+    	}
     }
-
-    int ret = (aborted? 1 : 0);
 
     /////////////////
     // Cleanup
     /////////////////
 
-    // Terminate the Log Manager (destroy the Output objects)
+	if (fclose_after && input_stream != NULL) ::fclose(input_stream);
+	if (socket_fd >= 0) ::close(socket_fd);
+
+	// Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
-    socket_connection_thread::terminate_all_threads();
-    if (queue_thread::s_queue_thread.joinable()) queue_thread::s_queue_thread.join();
 
     return ret;
-}
-#endif // NOBUILD
-	return 0;
 }
 
 #ifdef SAMPLE_RUN
