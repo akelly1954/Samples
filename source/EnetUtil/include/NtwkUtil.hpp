@@ -58,10 +58,14 @@ static const size_t NtwkUtilLargeBufferSize = 8192;
 // NOTE: The fixed std::aray<> size is set here, and can/should be
 //          changed only right here - it will apply to all objects in NtwkUtil.*
 //
-// If you change a single std::array<> size in the .cpp sources for example, you are
-// guaranteed a few dozen build error, because... C++.  And you would deserve it. :-)
+// If you change a single std::array<> size associated with the various fixed array objects
+// in the .cpp sources for example, you are guaranteed a few dozen build error, because... C++.
+// And you would deserve it. :-)
 
-static const size_t NtwkUtilBufferSize = NtwkUtilNanoBufferSize;
+// TODO: Note: The fixed_array and related objects are currently specialized to the data
+// object being a single byte size.  This needs to be worked in the code to generalize it.
+
+static const size_t NtwkUtilBufferSize = NtwkUtilSmallBufferSize;
 ///////  Use:       static const size_t NtwkUtilBufferSize = NtwkUtilLargeBufferSize;
 //////   Or...      static const size_t NtwkUtilBufferSize = NtwkUtilRegularBufferSize;
 //////      or...   static const size_t NtwkUtilBufferSize = NtwkUtilNanoBufferSize;

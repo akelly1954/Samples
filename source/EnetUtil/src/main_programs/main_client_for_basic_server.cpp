@@ -1,5 +1,4 @@
-// #include <ntwk_basic_sock_server/ntwk_queue_thread.hpp>
-// #include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
+#include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
 #include <Utility.hpp>
 #include <commandline.hpp>
 #include <NtwkUtil.hpp>
@@ -119,6 +118,8 @@ int main(int argc, char *argv[])
     // Open input file
     /////////////////
 
+    // This section is here (early) because if there's an error in it, we don't
+    // want to set up the logger, or open up a network connection before exiting.
     int errnocopy = 0;
     FILE *input_stream = NULL;
     bool fclose_after = false;		// This prevents fclose(stdin) from being called.
@@ -138,7 +139,8 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		fclose_after = true;		// This allows fclose(input_stream) to be called
+		// When input_stream is NOT stdin, this allows fclose(input_stream) to be called
+		fclose_after = true;
 		std::cout << "Using " << input_filename << " for input..." << std::endl;
 	}
 

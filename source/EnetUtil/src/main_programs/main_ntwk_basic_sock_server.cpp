@@ -1,4 +1,3 @@
-#include <ntwk_basic_sock_server/ntwk_queue_thread.hpp>
 #include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
 #include <Utility.hpp>
 #include <commandline.hpp>
@@ -52,13 +51,13 @@ const char *logChannelName = "main_basic_socket_server";
 const char *logFileName = "main_basic_socket_server_log.txt";
 
 const char *default_server_listen_ip = "INADDR_ANY";    // default listen ip address type
-std::string server_listen_ip(default_server_listen_ip);    // can be modified from the command line
+std::string server_listen_ip(default_server_listen_ip); // can be modified from the command line
 
 const uint16_t default_server_listen_port_number = simple_server_port_number;
 uint16_t server_listen_port_number = default_server_listen_port_number; // can be modified from the command line
 
-const int default_server_listen_max_backlog = 50;        // Maximum number of connection requests queued
-int server_listen_max_backlog = 50;                        // can be modified from the command line
+const int default_server_listen_max_backlog = 50;       // Maximum number of connection requests queued
+int server_listen_max_backlog = 50;                     // can be modified from the command line
 
 // fixed size of the std::vector<> used for the data
 const int server_buffer_size = NtwkUtilBufferSize;
@@ -97,6 +96,10 @@ int main(int argc, char *argv[])
 
     std::string argv0 = const_cast<const char *>(argv[0]);
 
+    /////////////////
+    // Parse command line
+    /////////////////
+
     // If no parameters were supplied, or help was requested:
     if (argc > 1 &&
             (std::string(const_cast<const char *>(argv[1])) == "--help" ||
@@ -114,6 +117,10 @@ int main(int argc, char *argv[])
         Usage(std::cerr, argv0);
         return 1;
     }
+
+    /////////////////
+    // Set up logger
+    /////////////////
 
     Log::Config::Vector configList;
     Util::Utility::initializeLogManager(configList, Log::Log::Level::eDebug, logFileName, false, true);
@@ -138,9 +145,9 @@ int main(int argc, char *argv[])
     logger.notice() << "    max backlog connection requests: " << server_listen_max_backlog;
     logger.notice() << "======================================================================";
 
-    // Set up the thread that keeps the circular_buffer which handles all the data
-    // after it's been received from any accepted socket.
-    queue_thread::start (logChannelName);
+    /////////////////
+    // Set up and bind the listener socket on which client connection requests are made
+    /////////////////
 
     struct ::sockaddr_in sin_addr;
     if(! NtwkUtil::setup_sockaddr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
@@ -157,7 +164,6 @@ int main(int argc, char *argv[])
     }
 
     logger.notice() << "In main(): Server created and accepting connection requests";
-
 
     //////////////////////////////////////////////////////////////////////////////////////
     // MAIN SERVER LOOP:  All connections have been set up.
@@ -180,7 +186,9 @@ int main(int argc, char *argv[])
 
         logger.debug() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
 
-        // Start a thread to handle the connection
+        // Start a thread to handle the connection. Each one of these threads, once
+        // they're started (in sequence), gets all the data from the connection and
+        // writes it out to a file.
         socket_connection_thread::start (accept_socket_fd, i, logChannelName);
     }
 
@@ -193,7 +201,6 @@ int main(int argc, char *argv[])
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
     socket_connection_thread::terminate_all_threads();
-    if (queue_thread::s_queue_thread.joinable()) queue_thread::s_queue_thread.join();
 
     return ret;
 }

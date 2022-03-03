@@ -1,4 +1,3 @@
-#include <ntwk_basic_sock_server/ntwk_queue_thread.hpp>
 #include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
@@ -42,17 +41,26 @@
 using namespace EnetUtil;
 
 // class socket_connection_thread statics
+std::vector<std::thread> socket_connection_thread::s_connection_workers;
 
-std::vector<std::thread> socket_connection_thread::s_workers;
 
 void socket_connection_thread::handler(int socketfd, int threadno, Log::Logger logger)
 {
     // FOR DEBUG    std::cout << "socket_connection_thread::handler(): started thread for connection "
     //                        << threadno << ", fd = " << socketfd << std::endl;
 
-    logger.debug() << "socket_connection_thread::handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
+	logger.debug() << "socket_connection_thread::handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
 
-    bool finished = false;
+    /////////////////
+    // Loop through all enet_receive()'s for this connection and write
+	// the data to a unique file name (associated with thread number)
+    /////////////////
+
+	std::string output_filename = std::string("data_") +
+								  get_seq_num_string(threadno) +
+								  ".txt";
+	FILE *output_stream = NULL;
+	bool finished = false;
     while (!finished)
     {
         // This extra scope gets out of context at the end of file, which
@@ -67,28 +75,42 @@ void socket_connection_thread::handler(int socketfd, int threadno, Log::Logger l
 
             if (num_elements_received == 0)  // EOF
             {
-                close(socketfd);
-                return;  // The shared_ptr<> will be destructed
+                finished = true;
+                continue;  // The shared_ptr<> will be destructed
             }
             else
             {
-                if (! sp_data->set_num_valid_elements(num_elements_received))
+            	if (! sp_data->set_num_valid_elements(num_elements_received))
                 {
                     logger.error() << "socket_connection_thread::handler: Error in setting socket_connection_thread::handler(" << threadno <<
-                            ") num_valid_elements. Got  " << num_elements_received << " bytes on fd " << socketfd <<
+                            ") num_valid_elements. Got  " << num_elements_received << " elements on fd " << socketfd <<
                             ". Aborting...";
                     finished = true;
+                    continue;
                 }
                 else
                 {
-                    logger.debug() << "socket_connection_thread::handler(" << threadno << "): After setting number of elements to " <<
+                    logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
+                    		"Set number of valid elements to " <<
                             num_elements_received << " bytes on fd " << socketfd;
+
+                    // Create the output file as late as possible in order to get rid
+                    // of earlier errors, where we return without needing to write out any data.
+                	if (output_stream == NULL)
+                	{
+                   	    logger.debug() << "socket_connection_thread::handler(): Creating file " << output_filename;
+                   	    output_stream = (FILE *) 0x1234;  //////////////////// fopen()
+                	}
+
+                    if (! write_to_file(logger, sp_data, output_filename))
+                    {
+                        logger.error() << "socket_connection_thread::handler: Error writing to file for thread " << threadno << ". Closing this connection...";
+                        finished = true;
+                        continue;
+                    }
+
                 }
             }
-
-            // Add the shared_ptr the queue. The condition variable will signal ready to the thread.
-            // The shared_ptr then goes out of scope and is deleted (but ringbuf has a copy).
-            queue_thread::s_ringbuf.put(sp_data, queue_thread::s_queue_condvar);
         }
     }
     close(socketfd);
@@ -107,7 +129,9 @@ void socket_connection_thread::start (int accpt_socket, int threadno, const char
     {
         // The logger is passed to the new thread because it has to be instantiated in
         // the main thread (right here) before it is used from inside the new thread.
-    	socket_connection_thread::s_workers.push_back( std::thread( socket_connection_thread::handler, accpt_socket, threadno, logger));
+    	socket_connection_thread::s_connection_workers.push_back(
+    				std::thread( socket_connection_thread::handler, accpt_socket, threadno, logger)
+				);
     }
     catch (std::exception &exp)
     {
@@ -124,5 +148,39 @@ void socket_connection_thread::start (int accpt_socket, int threadno, const char
                           threadno << " for socket fd " << accpt_socket;
 }
 
+std::string socket_connection_thread::get_seq_num_string(long num)
+{
+	std::ostringstream lstr;
+	lstr << std::setfill('0') << std::setw(6) << num;
+	return lstr.str();
+}
 
+bool socket_connection_thread::write_to_file(Log::Logger& logger,
+								 std::shared_ptr<fixed_uint8_array_t> sp_data,
+								 std::string output_filename)
+{
+
+	if (sp_data->num_valid_elements() == 0)
+	{
+        logger.error() << "socket_connection_thread::write_to_file: Got an empty buffer to write to " << output_filename;
+        return false;
+	}
+
+	logger.debug() << "socket_connection_thread::write_to_file(): Writing buffer with " <<
+					  sp_data->num_valid_elements() << " in " << output_filename;
+//////////// fwrite()
+
+
+
+/*
+		if (readypair.first > 0)
+    {
+        char buffer[readypair.first+1];
+        void *from = readypair.second.data();
+        strncpy(buffer, static_cast<const char *>(from), readypair.first);
+        buffer[readypair.first] = '\0';
+        fwrite(buffer, readypair.first, 1, stdout);
+    } */
+	return true;
+}
 

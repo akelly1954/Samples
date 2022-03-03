@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ntwk_basic_sock_server/ntwk_queue_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -54,19 +53,29 @@ namespace EnetUtil {
 	class socket_connection_thread
 	{
 	public:
+		// This member function (static) runs in its own thread
 		static void handler (int socket, int threadno, Log::Logger logger);
-		static void start (int socket, int threadno,
-				const char *logChannelName = "socket_connection_thread");
+
+		static bool write_to_file(  Log::Logger& logger,
+									std::shared_ptr<fixed_uint8_array_t> data_sp,
+									std::string output_filename);
+
+		static std::string get_seq_num_string(long num);	// utility function
+
+		// This member function (static) runs in the main thread.
+		static void start (int socket, int threadno, const char *logChannelName = "socket_connection_thread");
 
 		static void terminate_all_threads()
 		{
-			std::for_each(s_workers.begin(), s_workers.end(), [](std::thread &t)
+			std::for_each(s_connection_workers.begin(), s_connection_workers.end(), [](std::thread &t)
 			{
 				if (t.joinable()) t.join();
 			});
 		}
 
-	    static std::vector<std::thread> s_workers;
+		// vector of std::thread objects, each handling its own connection
+		// (see handler() function).
+		static std::vector<std::thread> s_connection_workers;
 
 	};  // end of class socket_connection_thread
 

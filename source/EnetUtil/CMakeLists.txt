@@ -8,6 +8,7 @@ file(GLOB MAIN_HEADERS "src/main_programs/include/ntwk_basic_sock_server/*.hpp")
 file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
 file(GLOB SOURCEFILES "src/*.cpp")
 file(GLOB HEADERS   "include/*.h*") 
+file(GLOB TEST_SCRIPTS "src/main_programs/*.bash")
     
 set( SOURCES ${SOURCEFILES} ${MAIN_HEADERS} ${HEADERS} ${LOGGER_HEADERS} )
 
@@ -30,6 +31,12 @@ install(TARGETS ${EnetUtil} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/EnetUtil)
 install(FILES ${MAIN_HEADERS} DESTINATION include/EnetUtil/ntwk_basic_sock_server)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
+
+install(FILES ${TEST_SCRIPTS} 
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+                    GROUP_EXECUTE GROUP_WRITE GROUP_READ
+                    WORLD_EXECUTE WORLD_READ
+        DESTINATION localrun/tests)
 
 set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
 
