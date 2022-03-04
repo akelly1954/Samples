@@ -53,13 +53,6 @@ namespace EnetUtil {
 	class socket_connection_thread
 	{
 	public:
-		// This member function (static) runs in its own thread
-		static void handler (int socket, int threadno, Log::Logger logger);
-
-		static bool write_to_file(  Log::Logger& logger,
-									std::shared_ptr<fixed_uint8_array_t> data_sp,
-									std::string output_filename);
-
 		static std::string get_seq_num_string(long num);	// utility function
 
 		// This member function (static) runs in the main thread.
@@ -67,14 +60,18 @@ namespace EnetUtil {
 
 		static void terminate_all_threads()
 		{
+			std::lock_guard<std::mutex> lock(s_vector_mutex);
+
 			std::for_each(s_connection_workers.begin(), s_connection_workers.end(), [](std::thread &t)
 			{
 				if (t.joinable()) t.join();
 			});
 		}
 
+        // protects the vector below
+        static std::mutex s_vector_mutex;
+
 		// vector of std::thread objects, each handling its own connection
-		// (see handler() function).
 		static std::vector<std::thread> s_connection_workers;
 
 	};  // end of class socket_connection_thread
