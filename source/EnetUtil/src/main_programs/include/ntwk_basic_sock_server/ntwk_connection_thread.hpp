@@ -50,31 +50,31 @@
 
 namespace EnetUtil {
 
-	class socket_connection_thread
-	{
-	public:
-		static std::string get_seq_num_string(long num);	// utility function
+    class socket_connection_thread
+    {
+    public:
+        static std::string get_seq_num_string(long num);    // utility function
 
-		// This member function (static) runs in the main thread.
-		static void start (int socket, int threadno, const char *logChannelName = "socket_connection_thread");
+        // This member function (static) runs in the main thread.
+        static void start (int socket, int threadno, const char *logChannelName = "socket_connection_thread");
 
-		static void terminate_all_threads()
-		{
-			std::lock_guard<std::mutex> lock(s_vector_mutex);
+        static void terminate_all_threads()
+        {
+            std::lock_guard<std::mutex> lock(s_vector_mutex);
 
-			std::for_each(s_connection_workers.begin(), s_connection_workers.end(), [](std::thread &t)
-			{
-				if (t.joinable()) t.join();
-			});
-		}
+            std::for_each(s_connection_workers.begin(), s_connection_workers.end(), [](std::thread &t)
+            {
+                if (t.joinable()) t.join();
+            });
+        }
 
         // protects the vector below
         static std::mutex s_vector_mutex;
 
-		// vector of std::thread objects, each handling its own connection
-		static std::vector<std::thread> s_connection_workers;
+        // vector of std::thread objects, each handling its own connection
+        static std::vector<std::thread> s_connection_workers;
 
-	};  // end of class socket_connection_thread
+    };  // end of class socket_connection_thread
 
 } // end of namespace EnetUtil
 

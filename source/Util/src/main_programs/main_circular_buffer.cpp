@@ -30,17 +30,17 @@
 // message can be null
 void printdivider(const char *message)
 {
-	if (message)
-	{
-		std::cout << "\n====================== " << message << "\n" << std::endl;
-	} else {
-		std::cout << "\n=====================================\n" << std::endl;
-	}
+    if (message)
+    {
+        std::cout << "\n====================== " << message << "\n" << std::endl;
+    } else {
+        std::cout << "\n=====================================\n" << std::endl;
+    }
 }
 
 int main(void)
 {
-	using namespace Util;
+    using namespace Util;
 
     circular_buffer<uint32_t> ringbuf(10);
 

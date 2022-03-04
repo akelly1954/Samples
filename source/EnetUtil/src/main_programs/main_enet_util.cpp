@@ -30,19 +30,19 @@
 
 int main(int argc, char *argv[])
 {
-	std::vector<std::string> macvector = EnetUtil::get_all_self_mac_addresses();
+    std::vector<std::string> macvector = EnetUtil::get_all_self_mac_addresses();
 
-	if (macvector.size() == 0)
-	{
-		std::cout << "MAC address vector is empty." << std::endl;
-		return 1;
-	}
+    if (macvector.size() == 0)
+    {
+        std::cout << "MAC address vector is empty." << std::endl;
+        return 1;
+    }
 
-	for (auto const& mcaddr: macvector)
-	{
-		std::cout << mcaddr << std::endl;
-	}
-	return 0;
+    for (auto const& mcaddr: macvector)
+    {
+        std::cout << mcaddr << std::endl;
+    }
+    return 0;
 }
 
 

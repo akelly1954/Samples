@@ -59,7 +59,7 @@
 //
 // To run this program use:
 //
-// 		main_condition_data [num_threads]
+//         main_condition_data [num_threads]
 //
 // The main output is placed in the file "main_condition_data_log.txt" (and a few lines
 // containing information are displayed to stdout on the console as the program runs).
@@ -83,8 +83,8 @@
 void Usage(std::ostream& strm, std::string command)
 {
     strm << "Usage:    " << command << " [ num_threads ]\n\n" <<
-    		     "If num_threads is specified, it has to be numerical and greater than 0. ]\n" <<
-				 "If it is not specified, it defaults to 20.\n" << std::endl;
+                 "If num_threads is specified, it has to be numerical and greater than 0. ]\n" <<
+                 "If it is not specified, it defaults to 20.\n" << std::endl;
 }
 
 // Returns the number of threads requested, or 0 if no parameters.
@@ -92,18 +92,18 @@ void Usage(std::ostream& strm, std::string command)
 int parse(int argc, const char *argv[])
 {
     // If no parameters were supplied.
-	if (argc == 1)
-	{
-		return 0;
-	}
-	else if (std::string(argv[1]) == "--help" ||
-  	    	 std::string(argv[1]) == "-h" ||
-  	    	 std::string(argv[1]) == "help")
+    if (argc == 1)
+    {
+        return 0;
+    }
+    else if (std::string(argv[1]) == "--help" ||
+               std::string(argv[1]) == "-h" ||
+               std::string(argv[1]) == "help")
     {
         Usage(std::cerr, argv[0]);
         return -1;
     }
-	return strtol(argv[1], NULL, 10);
+    return strtol(argv[1], NULL, 10);
 }
 
 // The unit of data passed around for each thread
@@ -112,10 +112,10 @@ typedef std::pair<int, std::string> threadData;
 
 void initializeSleeptimes(int numthreads, std::vector<int>& sleeptimes)
 {
-	for (int i = 0; i < numthreads; i++)
-	{
-		sleeptimes.push_back(Util::Utility::get_rand(300));
-	}
+    for (int i = 0; i < numthreads; i++)
+    {
+        sleeptimes.push_back(Util::Utility::get_rand(300));
+    }
 }
 
 // All threads, including main, output to this channel
@@ -123,7 +123,7 @@ const char *logChannelName = "main_condition_data";
 
 int main(int argc, const char *argv[])
 {
-	using namespace Util;
+    using namespace Util;
 
     int numthreads = parse(argc, argv);
     // DEBUG   std::cerr << "Parse returned: " << numthreads << std::endl;
@@ -145,12 +145,12 @@ int main(int argc, const char *argv[])
 
     if (numthreads == -1)
     {
-    	Usage(std::cerr, argv[0]);
-    	return 1;
+        Usage(std::cerr, argv[0]);
+        return 1;
     }
     else if(numthreads == 0)
     {
-    	numthreads = 20;
+        numthreads = 20;
     }
 
     std::cerr << "Number of threads chosen: " << numthreads << std::endl;
@@ -163,42 +163,42 @@ int main(int argc, const char *argv[])
     for (int i = 1; i <= numthreads; i++)
     {
         // Create a Logger object, using a "main_condition_data_log" Channel
-    	// This is still running in the main thread - just before the new
-    	// thread is created
-    	Log::Logger logger(logChannelName);
+        // This is still running in the main thread - just before the new
+        // thread is created
+        Log::Logger logger(logChannelName);
 
-    	workers.push_back( std::thread([i, &logger, &sleeptimes, &condvar]()
-    	{
-    		int threadno = i-1;
-    		int slp = sleeptimes[threadno];
+        workers.push_back( std::thread([i, &logger, &sleeptimes, &condvar]()
+        {
+            int threadno = i-1;
+            int slp = sleeptimes[threadno];
 
-    		// The point behind this sleep is for all threads to be started
-    		// and initialized before continuing
-    		std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+            // The point behind this sleep is for all threads to be started
+            // and initialized before continuing
+            std::this_thread::sleep_for(std::chrono::milliseconds(slp));
 
-    		// After sleeping for various times, all threads wait for the main()
-    		// function to see if they should start. The condition variable allowing
-    		// them to continue is set by the main() function once, after all threads have
-    		// been initialized.
-    		condvar.wait_for_ready();
+            // After sleeping for various times, all threads wait for the main()
+            // function to see if they should start. The condition variable allowing
+            // them to continue is set by the main() function once, after all threads have
+            // been initialized.
+            condvar.wait_for_ready();
 
-    		// It's ready - get the data and reset it to a new value
-    		threadData oldvalue = condvar.get_data();
+            // It's ready - get the data and reset it to a new value
+            threadData oldvalue = condvar.get_data();
 
-    		std::ostringstream lostr;
-    		lostr << "thread " << threadno << " slept " << slp <<
-    				 " msec -- from thread " <<
-    				 oldvalue.first << " = \"" << oldvalue.second.substr(0, 74) << "...";
+            std::ostringstream lostr;
+            lostr << "thread " << threadno << " slept " << slp <<
+                     " msec -- from thread " <<
+                     oldvalue.first << " = \"" << oldvalue.second.substr(0, 74) << "...";
 
-    		std::string result = lostr.str();
-    		threadData newvalue = threadData(threadno, result);
+            std::string result = lostr.str();
+            threadData newvalue = threadData(threadno, result);
 
-    		// Log it
-    		logger.notice() << result;
+            // Log it
+            logger.notice() << result;
 
-    		// And set it free
-    		condvar.send_ready(newvalue);
-    	}));
+            // And set it free
+            condvar.send_ready(newvalue);
+        }));
     }
 
     std::cerr << "main thread: Sending ready message to all threads\n";
@@ -216,7 +216,7 @@ int main(int argc, const char *argv[])
 
     std::for_each(workers.begin(), workers.end(), [](std::thread &t)
     {
-    	if (t.joinable()) t.join();
+        if (t.joinable()) t.join();
     });
 
     return 0;
@@ -228,13 +228,13 @@ int main(int argc, const char *argv[])
 # By default, the output is sorted chronologically (when each thread finishes its work).
 #
 # To sort the output in main_condition_data_log.txt by the thread number:
-# 		sort -k6 -n main_condition_data_log.txt
+#         sort -k6 -n main_condition_data_log.txt
 #
 # To sort the output in main_condition_data_log.txt by the milliseconds' delay:
-# 		sort -k8 -n main_condition_data_log.txt
+#         sort -k8 -n main_condition_data_log.txt
 #
 # To sort the output in main_condition_data_log.txt by the previous thread number from the condition variable:
-# 		sort -k13 -n main_condition_data_log.txt
+#         sort -k13 -n main_condition_data_log.txt
 #
 # SAMPLE RUN:
 $

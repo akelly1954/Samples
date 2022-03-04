@@ -45,15 +45,15 @@ void Usage(std::string command)
 {
     std::cout << "Usage:    " << command << " --help (or -h or help)" << std::endl;
     std::cout << "Or:       " << command << "\n"
-    			 "                  -ii IntParam \n" <<
-				 "                  -i1 LongParam \n" <<
-				 "                  -i2 LongLongParam \n" <<
-				 "                  -ff FloatParam \n" <<
-				 "                  -fd DoubleParam \n" <<
-				 "                  -fl LongDoubleParam \n" <<
-				 "                  -st StringParam \n" <<
-				 "(all params are optional, although that's not useful...)" <<
-				 std::endl;
+                 "                  -ii IntParam \n" <<
+                 "                  -i1 LongParam \n" <<
+                 "                  -i2 LongLongParam \n" <<
+                 "                  -ff FloatParam \n" <<
+                 "                  -fd DoubleParam \n" <<
+                 "                  -fl LongDoubleParam \n" <<
+                 "                  -st StringParam \n" <<
+                 "(all params are optional, although that's not useful...)" <<
+                 std::endl;
 }
 
 // You write this
@@ -64,18 +64,18 @@ bool parse(int argc, char *argv[])
     std::map<std::string,bool> specified;
 
     specified["-ii"] = getArg(cmdmap, "-ii", intParam1);
-	specified["-i1"] = getArg(cmdmap, "-i1", longParam1);
+    specified["-i1"] = getArg(cmdmap, "-i1", longParam1);
     specified["-i2"] = getArg(cmdmap, "-i2", longlongParam1);
-	specified["-st"] = getArg(cmdmap, "-st", stringParam1);
-	specified["-ff"] = getArg(cmdmap, "-ff", floatParam1);
-	specified["-fd"] = getArg(cmdmap, "-fd", doubleParam1);
-	specified["-fl"] = getArg(cmdmap, "-fl", longdoubleParam1);
+    specified["-st"] = getArg(cmdmap, "-st", stringParam1);
+    specified["-ff"] = getArg(cmdmap, "-ff", floatParam1);
+    specified["-fd"] = getArg(cmdmap, "-fd", doubleParam1);
+    specified["-fl"] = getArg(cmdmap, "-fl", longdoubleParam1);
 
 #ifdef FOR_DEBUG
-	for (auto it = specified.begin(); it != specified.end(); ++it)
-	{
-		std::cout << it->first.c_str() << " = " << (it->second? "true" : "false") << std::endl;
-	}
+    for (auto it = specified.begin(); it != specified.end(); ++it)
+    {
+        std::cout << it->first.c_str() << " = " << (it->second? "true" : "false") << std::endl;
+    }
 #endif // FOR_DEBUG
 
     // If any of the parameters were specified, it's ok
@@ -90,10 +90,10 @@ int main(int argc, char *argv[])
 
     // If no parameters were supplied, or help was requested:
     if (argc <= 1 || (argc > 1 &&
-    		(std::string(const_cast<const char *>(argv[1])) == "--help" ||
-  	    	 std::string(const_cast<const char *>(argv[1])) == "-h" ||
-  	    	 std::string(const_cast<const char *>(argv[1])) == "help")
-		)
+            (std::string(const_cast<const char *>(argv[1])) == "--help" ||
+               std::string(const_cast<const char *>(argv[1])) == "-h" ||
+               std::string(const_cast<const char *>(argv[1])) == "help")
+        )
     )
     {
         Usage(argv0);
@@ -115,17 +115,17 @@ int main(int argc, char *argv[])
     std::cout.unsetf ( std::ios::floatfield );
     std::cout << std::setprecision(4);
     std::cout.setf( std::ios::fixed, std:: ios::floatfield );
-	std::cout << "float floatParam1 = " << floatParam1 << std::endl;
+    std::cout << "float floatParam1 = " << floatParam1 << std::endl;
 
-	std::cout.unsetf ( std::ios::floatfield );
+    std::cout.unsetf ( std::ios::floatfield );
     std::cout << std::setprecision(8);
     std::cout.setf( std::ios::fixed, std:: ios::floatfield );
-	std::cout << "double doubleParam1 = " << doubleParam1 << std::endl;
+    std::cout << "double doubleParam1 = " << doubleParam1 << std::endl;
 
     std::cout.unsetf ( std::ios::floatfield );
     std::cout << std::setprecision(10);
     std::cout.setf( std::ios::fixed, std:: ios::floatfield );
-	std::cout << "long double longdoubleParam1 = " << longdoubleParam1 << std::endl;
+    std::cout << "long double longdoubleParam1 = " << longdoubleParam1 << std::endl;
 
     std::cout << "std::string stringParam1 = \"" << stringParam1 << "\"" << std::endl;
 

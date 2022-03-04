@@ -42,12 +42,12 @@ static std::recursive_mutex mac_address_mutex;
 // Returns empty vector if not found
 std::vector<std::string> EnetUtil::get_all_self_mac_addresses()
 {
-	using namespace Util;
+    using namespace Util;
 
     if (static_self_mac_addresses.size() != 0)
     {
         // Once set, we don't allow the system's mac addresses to change for the lifetime of the process.
-    	std::cerr << "ERROR.  The MAC address object is not empty." << std::endl;
+        std::cerr << "ERROR.  The MAC address object is not empty." << std::endl;
         return static_self_mac_addresses;
     }
 
@@ -58,7 +58,7 @@ std::vector<std::string> EnetUtil::get_all_self_mac_addresses()
     if (static_self_mac_addresses.size() != 0)
     {
         // Once set, we don't allow the system's mac addresses to change for the lifetime of the process.
-    	std::cerr << "ERROR.  The MAC address object is not empty." << std::endl;
+        std::cerr << "ERROR.  The MAC address object is not empty." << std::endl;
         return static_self_mac_addresses;
     }
 
@@ -74,35 +74,35 @@ std::vector<std::string> EnetUtil::get_all_self_mac_addresses()
 
     if (fp == NULL)
     {
-    	std::cerr << "ERROR.  errno: " << Utility::get_errno_message(errno) << std::endl;
+        std::cerr << "ERROR.  errno: " << Utility::get_errno_message(errno) << std::endl;
         if (macAddressVector.size() == 0)
         {
-        	return macAddressVector;   // it's empty
+            return macAddressVector;   // it's empty
         }
     }
     else
     {
-    	while (fgets(var, sizeof (var) - 1, fp) != NULL)
-		{
-			tmpstr = const_cast<const char *>(var);
-			tmpstr = Utility::trim(tmpstr, " \t\n\v\f\r");
-			tmpstr = Utility::replace_all(tmpstr, ":", "");  // Remove all : chars - we'll add them back later on....
+        while (fgets(var, sizeof (var) - 1, fp) != NULL)
+        {
+            tmpstr = const_cast<const char *>(var);
+            tmpstr = Utility::trim(tmpstr, " \t\n\v\f\r");
+            tmpstr = Utility::replace_all(tmpstr, ":", "");  // Remove all : chars - we'll add them back later on....
 
-			if (tmpstr.length() != MIN_MAC_ADDR_LENGTH)
-			{
-				continue;
-			}
-			Utility::to_upper(tmpstr);
-			macAddress = tmpstr.substr(0, 2) + ":" + tmpstr.substr(2, 2) + ":" + tmpstr.substr(4, 2) + ":"
-					+ tmpstr.substr(6, 2) + ":" + tmpstr.substr(8, 2) + ":" + tmpstr.substr(10, 2);
-			macAddressVector.push_back(macAddress);
-		}
+            if (tmpstr.length() != MIN_MAC_ADDR_LENGTH)
+            {
+                continue;
+            }
+            Utility::to_upper(tmpstr);
+            macAddress = tmpstr.substr(0, 2) + ":" + tmpstr.substr(2, 2) + ":" + tmpstr.substr(4, 2) + ":"
+                    + tmpstr.substr(6, 2) + ":" + tmpstr.substr(8, 2) + ":" + tmpstr.substr(10, 2);
+            macAddressVector.push_back(macAddress);
+        }
     }
 
     if (fp != NULL) pclose(fp);
     if (macAddressVector.size() == 0)
     {
-    	return macAddressVector;   // it's empty
+        return macAddressVector;   // it's empty
     }
 
     static_self_mac_addresses = macAddressVector;

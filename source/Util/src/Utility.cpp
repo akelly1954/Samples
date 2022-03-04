@@ -47,10 +47,10 @@ using namespace Util;
 // This is a bit of a hack.  If LoggerCPP persists in these projects,
 // some of the hoaky-ness needs to be cleaned up.
 void Utility::initializeLogManager( Log::Config::Vector& configList,
-									Log::Log::Level loglevel,
-									const std::string& logfilename,
-									bool enableConsoleOutput,
-									bool enableFileOutput)
+                                    Log::Log::Level loglevel,
+                                    const std::string& logfilename,
+                                    bool enableConsoleOutput,
+                                    bool enableFileOutput)
 {
     Log::Manager::setDefaultLevel(loglevel);
 
@@ -59,7 +59,7 @@ void Utility::initializeLogManager( Log::Config::Vector& configList,
     // Enforce either console or file output
     if (enableConsoleOutput || (enableConsoleOutput == false && enableFileOutput == false))
     {
-    	Log::Config::addOutput(configList, "OutputConsole");
+        Log::Config::addOutput(configList, "OutputConsole");
     }
 
     if (enableFileOutput)
@@ -81,18 +81,18 @@ std::cerr << "Enabled file output to " << logfilename.c_str() << std::endl;
 }
 void Utility::configureLogManager( Log::Config::Vector& configList, std::string channelName )
 {
-	// Create a Logger object, using the parameter Channel
-	Log::Logger logger(channelName.c_str());
+    // Create a Logger object, using the parameter Channel
+    Log::Logger logger(channelName.c_str());
 
-	try
-	{
-		// Configure the Log Manager (create the Output objects)
-		Log::Manager::configure(configList);
-	}
-	catch (std::exception& e)
-	{
-		std::cerr << e.what();
-	}
+    try
+    {
+        // Configure the Log Manager (create the Output objects)
+        Log::Manager::configure(configList);
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what();
+    }
 }
 
 long Utility::get_UTC_time_as_long()

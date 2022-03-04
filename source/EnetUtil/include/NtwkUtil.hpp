@@ -129,7 +129,7 @@ public:
     static int enet_send (Log::Logger& logger,
                              int fd,
                              arrayUint8 & array_element_buffer,
-							 size_t actual_size,
+                             size_t actual_size,
                              int flag = MSG_NOSIGNAL);
 
     static int enet_receive(Log::Logger& logger,

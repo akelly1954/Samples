@@ -54,8 +54,8 @@ public:
     // Call put() with a condition_data mechanism to
     // notify a waiting thread that there is data ready.
     void put(T item, condition_data<int>& condvar) {
-    	put(item);
-    	condvar.send_ready (size(), condition_data<int>::All);
+        put(item);
+        condvar.send_ready (size(), condition_data<int>::All);
     }
 
     T get() {
