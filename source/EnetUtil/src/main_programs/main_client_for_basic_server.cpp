@@ -193,6 +193,7 @@ int main(int argc, char *argv[])
     /////////////////
 
 	arrayUint8 array_element_buffer;
+	size_t totalbytes_sent = 0;
     int ret = 0;
     while (!std::feof(input_stream))
     {
@@ -219,10 +220,13 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
-				logger.debug() << argv0 << ": Successfully sent " << ret << " bytes to " << connection_ip << ":" << connection_port_number;
+				// logger.debug() << argv0 << ": Successfully sent " << ret << " bytes to " << connection_ip << ":" << connection_port_number;
 			}
+			totalbytes_sent += ret;
     	}
     }
+
+    logger.debug() << argv0 << ": Successfully sent file \"" << input_filename << "\" with " << totalbytes_sent << " bytes to " << connection_ip << ":" << connection_port_number;
 
     /////////////////
     // Cleanup

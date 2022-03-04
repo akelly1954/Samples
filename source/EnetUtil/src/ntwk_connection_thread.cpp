@@ -52,16 +52,16 @@ auto thread_connection_handler = [](int socketfd, int threadno, Log::Logger logg
     // FOR DEBUG    std::cout << "socket_connection_thread::handler(): started thread for connection "
     //                        << threadno << ", fd = " << socketfd << std::endl;
 
-	logger.debug() << "socket_connection_thread::handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
+	// logger.debug() << "socket_connection_thread::handler(" << threadno << "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
 
     /////////////////
     // Loop through all enet_receive()'s for this connection and write
 	// the data to a unique file name (associated with thread number)
     /////////////////
 
-	std::string output_filename = std::string("tests/data_") +
+	std::string output_filename = std::string("tests/output_") +
 								  socket_connection_thread::get_seq_num_string(threadno) +
-								  ".txt";
+								  ".data";
 
 	FILE *output_stream = NULL;
 	int errnocopy = 0;
@@ -75,8 +75,8 @@ auto thread_connection_handler = [](int socketfd, int threadno, Log::Logger logg
 
             int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
 
-            logger.debug() << "socket_connection_thread::handler(" << threadno << "): Received " <<
-                    num_elements_received << " bytes on fd " << socketfd;
+            // logger.debug() << "socket_connection_thread::handler(" << threadno << "): Received " <<
+            //         num_elements_received << " bytes on fd " << socketfd;
 
             if (num_elements_received == 0)  // EOF
             {
@@ -93,9 +93,9 @@ auto thread_connection_handler = [](int socketfd, int threadno, Log::Logger logg
                     finished = true;
                     continue;
                 }
-				logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
-						"Set number of valid elements to " <<
-						num_elements_received << " bytes on fd " << socketfd;
+				// logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
+				// 		"Set number of valid elements to " <<
+				// 		num_elements_received << " bytes on fd " << socketfd;
 
 				bool finished = false;
 
@@ -113,7 +113,7 @@ auto thread_connection_handler = [](int socketfd, int threadno, Log::Logger logg
 						finished = true;
 						continue;
 					}
-					logger.notice() << "Created/truncated output file (thread " << threadno << ") \"" << output_filename << "\"";
+					// logger.debug() << "Created/truncated output file (thread " << threadno << ") \"" << output_filename << "\"";
 
 				}
 
@@ -144,8 +144,8 @@ void socket_connection_thread::start (int accpt_socket, int threadno, const char
 	assert(logChannelName);
 
 	Log::Logger logger(logChannelName);
-	logger.debug() << "socket_connection_handler(): starting a connection handler thread: ";
-	logger.debug() << "fd = " << accpt_socket << ", thread number: " << threadno << ", log channel: " << logChannelName;
+	// logger.debug() << "socket_connection_handler(): starting a connection handler thread: ";
+	// logger.debug() << "fd = " << accpt_socket << ", thread number: " << threadno << ", log channel: " << logChannelName;
 
 	try
     {
@@ -173,8 +173,8 @@ void socket_connection_thread::start (int accpt_socket, int threadno, const char
                           threadno << " for socket fd " << accpt_socket;
     }
 
-    logger.debug() << "socket_connection_handler(): started thread " <<
-                          threadno << " for socket fd " << accpt_socket;
+    // logger.debug() << "socket_connection_handler(): started thread " <<
+    //                       threadno << " for socket fd " << accpt_socket;
 }
 
 std::string socket_connection_thread::get_seq_num_string(long num)
