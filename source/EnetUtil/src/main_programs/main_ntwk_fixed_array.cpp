@@ -33,7 +33,7 @@ using namespace EnetUtil;
 
 void initialize(Log::Logger& logger, uint8_t val, std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp)
 {
-    for (uint8_t i = 0; i < NtwkUtilBufferSize; i++)
+    for (size_t i = 0; i < NtwkUtilBufferSize; i++)
     {
         if (! sp->set_element(i, val+i) )
         {
