@@ -228,8 +228,8 @@ int NtwkUtil::enet_receive(    Log::Logger& logger,
 
         if (actual_requestsize < 1)
         {
-            logger.error() << "NtwkUtil::enet_receive: have no room left in the receive buffer";
-            throw std::out_of_range("NtwkUtil::enet_receive: have no room left in the receive buffer");
+            logger.error() << "NtwkUtil::enet_receive: have no room in the receive buffer";
+            throw std::out_of_range("NtwkUtil::enet_receive: have no room in the receive buffer");
             return -1;  // Shouldn't get here...
         }
 
@@ -280,7 +280,7 @@ bool NtwkUtil::get_ntwk_message(Log::Logger& logger, int socket_fd, std::string&
 	arrayUint8 responsebuffer;
 	memset (&responsebuffer[0], 0, responsebuffer.size());
 
-	int ret = NtwkUtil::enet_receive(logger, socket_fd, responsebuffer, responsebuffer.size()-1);
+	int ret = NtwkUtil::enet_receive(logger, socket_fd, responsebuffer, responsebuffer.size());
 
 	if (ret == 0)// EOF
 	{
@@ -296,6 +296,8 @@ bool NtwkUtil::get_ntwk_message(Log::Logger& logger, int socket_fd, std::string&
 	}
 
 	retstring = std::string((const char *) responsebuffer.data());
+	std::cout << "buffer size: " << retstring.size();
+
 	return true;
 }
 
@@ -304,10 +306,17 @@ bool NtwkUtil::send_ntwk_message(Log::Logger& logger, int socket_fd, std::string
 {
 	arrayUint8 messagebuf;
 
-	size_t num = message.size() < messagebuf.size()?  message.size() : messagebuf.size()-1;
+	size_t num = message.size() < messagebuf.size()?  message.size() : messagebuf.size();
+	::memset(messagebuf.data(), 0, messagebuf.size());
 	strncpy((char *) (&messagebuf[0]), message.c_str(), num);
-	messagebuf[num] = '\0';		// String terminating zero byte.
-
+	if (num < messagebuf.size())
+	{
+		messagebuf[num] = '\0';		// String terminating zero byte.
+	}
+	else
+	{
+		messagebuf[messagebuf.size()-1] = '\0';		// String terminating zero byte.
+	}
 	logger.notice() << "NtwkUtil::send_ntwk_message: Sending to remote connection: " << (const char *) &messagebuf[0];
 
 	int ret = NtwkUtil::enet_send(logger, socket_fd, messagebuf, messagebuf.size(), MSG_NOSIGNAL);
