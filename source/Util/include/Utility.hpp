@@ -58,13 +58,11 @@ namespace Util {
         // For example, get_rand(10,3) gets you a random number between
         // 3 and 12 (inclusive).
         static int get_rand(int range, int low = 0);
-
-        static std::vector<std::string> split_based_on_word(std::string strToSplit, std::string delimeter);
-
         static bool string_starts_with(std::string mainStr, std::string toMatch);
-        static std::string trim(const std::string& str,const std::string& whitespace = " \t");
+        static std::string trim(std::string str, std::string whitespace = " \t");
         static std::string stringFormat(const std::string& format, ...);
-        static std::vector<std::string> split(std::string strToSplit, char delimeter);
+        static std::vector<std::string> split(const std::string& str, const std::string& delim);
+        static std::vector<std::string> split_and_trim(const std::string& str, const std::string& delim);
 
         // Replace all occurences in ------------ haystack of -------- needle with -------- replacement
         static std::string replace_all(const std::string &, const std::string &, const std::string &);

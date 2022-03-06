@@ -14,15 +14,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#ifdef NOBUILD
-
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <thread>
-
-#endif // NOBUILD
-
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License

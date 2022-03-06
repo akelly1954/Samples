@@ -57,15 +57,56 @@ auto thread_connection_handler =
 	//                   "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
 
 	/////////////////
-	// Loop through all enet_receive()'s for this connection and write
+	// First get the initial client message with the bytecount and filename.
+	// Then, loop through all enet_receive()'s for this connection and write
 	// the data to a unique file name (associated with thread number)
 	/////////////////
 
+	// get initial client message in a string
+	std::string message;
+	if (NtwkUtil::get_ntwk_message(logger, socketfd, message))
+	{
+		logger.notice() << "thread_connection_handler: Initial client message: " << message;
+	}
+	else
+	{
+		logger.error() << message;
+		if (socketfd >= 0) ::close(socketfd);
+		return;
+	}
+
+	std::vector<std::string> remote_message_vector = Util::Utility::split(message, "|");
+
+    // for (std::string const& str: remote_message_vector)
+    // {
+    //     logger.debug() << str;
+    // }
+
+	if (remote_message_vector.size() != 2)
+	{
+		logger.error() << "thread_connection_handler: ERROR: Initial client message expects two fields.  Received " <<
+						  remote_message_vector.size() << ". Terminating connection...";
+		if (socketfd >= 0) ::close(socketfd);
+		return;
+	}
+
+	std::string remote_filename = remote_message_vector[0];
+	std::string remote_bytecount_string = remote_message_vector[1];
+	size_t remote_bytecount = strtoul(remote_bytecount_string.c_str(), NULL, 10);
+
 	std::string output_filename = std::string("tests/output_") +
-	socket_connection_thread::get_seq_num_string(threadno) +
-	".data";
+	                              socket_connection_thread::get_seq_num_string(threadno) +
+								  "." +
+								  remote_filename +
+                             	  ".data";
+
+	logger.notice() << "thread_connection_handler: byte count from remote = " <<
+			           std::to_string(remote_bytecount) << ", local server output to \"" <<
+			           output_filename << "\"";
 
 	FILE *output_stream = NULL;
+	size_t bytesremaining = remote_bytecount;
+	size_t byteswritten = 0;
 	int errnocopy = 0;
 	bool finished = false;
 	while (!finished)
@@ -99,7 +140,7 @@ auto thread_connection_handler =
 				//         "Set number of valid elements to " <<
 				//         num_elements_received << " bytes on fd " << socketfd;
 
-				bool finished = false;
+				finished = false;
 
 				//
 				// Write to file
@@ -119,8 +160,10 @@ auto thread_connection_handler =
 
 				}
 
-				size_t elementswritten = std::fwrite(&sp_data->data()[0], sizeof(uint8_t), sp_data->num_valid_elements(), output_stream);
+				size_t elementswritten = std::fwrite(sp_data->data().data(), sizeof(uint8_t), sp_data->num_valid_elements(), output_stream);
 				errnocopy = errno;
+				byteswritten += (elementswritten * sizeof(uint8_t));
+				fflush(output_stream);
 
 				if (elementswritten != sp_data->num_valid_elements())
 				{
@@ -130,13 +173,36 @@ auto thread_connection_handler =
 					finished = true;
 					continue;
 				}
+
+				bytesremaining -= byteswritten;
+				if (bytesremaining <= 0)
+				{
+					finished = true;
+					continue;
+				}
 			}
 		}
 	}
 
+	if (output_stream != NULL)
+	{
+		fflush(output_stream);
+	}
+
+	// Respond to the file transfer
+	std::string response = std::string("OK|") + output_filename +
+			               "|" + std::to_string(byteswritten);
+
+	// No need to check return - the function writes to the
+	// log file, and we are done anyways.
+	NtwkUtil::send_ntwk_message(logger, socketfd, response);
+
 	// CLEANUP.
 
-	if (output_stream != NULL) fclose(output_stream);
+	if (output_stream != NULL)
+	{
+		fclose(output_stream);
+	}
 	close(socketfd);
 };
 

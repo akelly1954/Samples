@@ -127,16 +127,27 @@ public:
                               int retries = 3);
 
     static int enet_send (Log::Logger& logger,
-                             int fd,
-                             arrayUint8 & array_element_buffer,
-                             size_t actual_size,
-                             int flag = MSG_NOSIGNAL);
+                          int fd,
+                          arrayUint8 & array_element_buffer,
+                          size_t actual_size,
+                          int flag = MSG_NOSIGNAL);
 
     static int enet_receive(Log::Logger& logger,
                             int fd,
                             arrayUint8 & array_element_buffer,
                             // requestsize can be smaller than the array<>::size()
                             size_t requestsize);
+
+    // Get a string message from a remote network connection.
+	// retstring is an existing std::string - contents overwritten
+	// socket_fd - open connection to the remote system
+    // Returns true if successful - restring contains the message from the remote connection.
+    // Returns false if failure - retstring contains text about the error.
+	static bool get_ntwk_message(Log::Logger& logger, int socket_fd, std::string& retstring);
+
+	// Send the string message to remote connection socket_fd (already open).
+	static bool send_ntwk_message(Log::Logger& logger, int socket_fd, std::string& message);
+
 };  // end of class NtwkUtil
 
 }  // end of namespace EnetUtil

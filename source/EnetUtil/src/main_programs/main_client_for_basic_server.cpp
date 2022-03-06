@@ -5,7 +5,6 @@
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <stdio.h>
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -18,6 +17,8 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <thread>
+#include <sys/stat.h>
+#include <time.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -63,13 +64,13 @@ const int server_buffer_size = NtwkUtilBufferSize;
 
 void Usage(std::ostream &strm, std::string command)
 {
-	strm << "Usage:    " << command << " --help (or -h or help)" << std::endl;
+	strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
 	strm << "Or:       " << command
 			<< "\n"
-					"                  [ -ip server-ip-address ] (default is 127.0.0.1)\n"
-			<< "                  [ -pn port-number ]       (port num to connect to, default is "
+			<< "              -fn file-name    (MANDATORY: file holding the data to be transmitted, has to exist)\n"
+			<< "              [ -ip server-ip-address ] (default is IADDR_ANY - 0.0.0.0)\n"
+			<< "              [ -pn port-number ]       (port num to connect to, default is "
 			<< connection_port_number << ")\n"
-			<< "                  [ -fn file-name           (holding the data to be transmitted, has to exist - default is \"stdin\")\n"
 			<< std::endl;
 }
 
@@ -83,11 +84,40 @@ bool parse(int argc, char *argv[])
 	specified["-pn"] = getArg(cmdmap, "-pn", connection_port_number);
 	specified["-fn"] = getArg(cmdmap, "-fn", input_filename);
 
-	bool ret = true; // Currently all flags have default values, so it's always good.
+	bool ret = false; // Currently all flags have default values, except for -fn filename.
 	std::for_each(specified.begin(), specified.end(), [&ret](auto member)
 	{	if (member.second)
 		{	ret = true;}});
 	return ret;
+}
+
+bool check_input_file(std::string input_filename, struct stat *sb, size_t & numbytesinfile)
+{
+	int errnocopy = 0;
+
+	if (stat(input_filename.c_str(), sb) == -1)
+	{
+		errnocopy = errno;
+		std::cerr << "\nCannot perform stat() on input file \"" << input_filename << "\": "
+				<< Util::Utility::get_errno_message(errnocopy) << "\n"
+				<< std::endl;
+		return false;
+	}
+
+	if (! S_ISREG(sb->st_mode))
+	{
+		std::cerr << "\nFile " << input_filename << " is not a regular file.\n" << std::endl;
+		return false;
+	}
+
+	if (sb->st_size >= (off_t) 0x7fffffffffffffff)
+	{
+		std::cerr << "\nFile " << input_filename << " is too big. Max size allowed is 2*32-1 (32 bits).\n" << std::endl;
+		return false;
+	}
+
+	numbytesinfile = (size_t) sb->st_size;
+	return true;
 }
 
 int main(int argc, char *argv[])
@@ -101,10 +131,11 @@ int main(int argc, char *argv[])
 	std::string argv0 = const_cast<const char*>(argv[0]);
 
 	// If no parameters were supplied, or help was requested:
-	if (argc > 1
+	if (argc == 1 || (argc > 1
 			&& (std::string(const_cast<const char*>(argv[1])) == "--help"
 					|| std::string(const_cast<const char*>(argv[1])) == "-h"
 					|| std::string(const_cast<const char*>(argv[1])) == "help"))
+			)
 	{
 		Usage(std::cerr, argv0);
 		return 0;
@@ -125,14 +156,25 @@ int main(int argc, char *argv[])
 	// want to set up the logger, or open up a network connection before exiting.
 	int errnocopy = 0;
 	FILE *input_stream = NULL;
-	bool fclose_after = false; // This prevents fclose(stdin) from being called.
 	if (input_filename.empty())
 	{
-		fclose_after = false;
-		input_stream = ::stdin;
-		std::cout << "Using standard input..." << std::endl;
+		std::cerr << "\nError: the \"-fn\" flag is missing. Specifying input file name with the -fn flag is mandatory." << std::endl;
+		Usage(std::cerr, argv0);
+		return 1;
 	}
-	else if ((input_stream = ::fopen(input_filename.c_str(), "r")) == NULL)
+
+	// to get the file size
+	struct stat sb;
+	size_t numbytesinfile = 0;
+
+	if (! check_input_file(input_filename, &sb, numbytesinfile))
+	{
+		// The check_input_file function writes all errors to std::cerr
+		Usage(std::cerr, argv0);
+		return 1;
+	}
+
+	if ((input_stream = ::fopen(input_filename.c_str(), "r")) == NULL)
 	{
 		errnocopy = errno;
 		std::cerr << "\nCannot open input file \"" << input_filename << "\": "
@@ -143,9 +185,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		// When input_stream is NOT stdin, this allows fclose(input_stream) to be called
-		fclose_after = true;
-		std::cout << "Using " << input_filename << " for input..." << std::endl;
+		std::cout << "Using " << input_filename << " for input. Size is " << numbytesinfile << " bytes." << std::endl;
 	}
 
 	/////////////////
@@ -153,8 +193,7 @@ int main(int argc, char *argv[])
 	/////////////////
 
 	Log::Config::Vector configList;
-	Util::Utility::initializeLogManager(configList, Log::Log::Level::eDebug,
-			logFileName, true, false);
+	Util::Utility::initializeLogManager(configList, Log::Log::Level::eDebug, logFileName, true, false);
 	// Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, logFileName, false, true);
 	Util::Utility::configureLogManager(configList, logChannelName);
 	Log::Logger logger(logChannelName);
@@ -181,26 +220,36 @@ int main(int argc, char *argv[])
 				<< "Error returned from setup_sockaddr_in(): Setup connection for "
 				<< connection_ip << ":" << connection_port_number
 				<< " failed. Aborting...";
-		if (fclose_after && input_stream != NULL)
-			::fclose(input_stream);
+		if (input_stream != NULL) ::fclose(input_stream);
 		return 1;
 	}
 
 	int socket_fd = -1;
-	if ((socket_fd = NtwkUtil::client_socket_connect(logger,
-			(sockaddr*) &sin_addr)) < 0)
+	if ((socket_fd = NtwkUtil::client_socket_connect(logger, (sockaddr*) &sin_addr)) < 0)
 	{
 		logger.error()
 				<< "Error returned from client_socket_connect(): Connection to "
 				<< connection_ip << ":" << connection_port_number
 				<< " failed. Aborting...";
-		if (fclose_after && input_stream != NULL)
-			::fclose(input_stream);
+		if (input_stream != NULL) ::fclose(input_stream);
 		return 1;
 	}
 
 	logger.notice() << "Client connected to " << connection_ip << ":"
 			<< connection_port_number << " Successfully.";
+
+
+	std::vector<std::string> path = Utility::split(input_filename, "/");
+	std::string file_basename = path.back();
+	std::string initialMessage = file_basename + "|" + std::to_string(numbytesinfile);
+
+	// Log output has been written already
+	if (!NtwkUtil::send_ntwk_message(logger, socket_fd, initialMessage))
+	{
+		if (input_stream != NULL) ::fclose(input_stream);
+		if (socket_fd >= 0) ::close(socket_fd);
+		return 1;
+	}
 
 	/////////////////
 	// And work: loop data from file to network
@@ -249,12 +298,24 @@ int main(int argc, char *argv[])
 			<< "\" with " << totalbytes_sent << " bytes to " << connection_ip
 			<< ":" << connection_port_number;
 
+	// get server response in a string
+	std::string response;
+	if (NtwkUtil::get_ntwk_message(logger, socket_fd, response))
+	{
+		logger.notice() << "Server response: " << response;
+	}
+	else
+	{
+		logger.error() << response;
+	}
+
 	/////////////////
 	// Cleanup
 	/////////////////
 
-	if (fclose_after && input_stream != NULL)
+	if (input_stream != NULL)
 		::fclose(input_stream);
+
 	if (socket_fd >= 0)
 		::close(socket_fd);
 

@@ -65,7 +65,7 @@ const int server_buffer_size = NtwkUtilBufferSize;
 
 void Usage(std::ostream& strm, std::string command)
 {
-    strm << "Usage:    " << command << " --help (or -h or help)" << std::endl;
+    strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
     strm << "Or:       " << command << "\n"
                  "                  -ip server listen ip address (default is 127.0.0.1) \n" <<
                  "                  -pn port number server is listening on\n" <<
@@ -100,7 +100,6 @@ int main(int argc, char *argv[])
     // Parse command line
     /////////////////
 
-    // If no parameters were supplied, or help was requested:
     if (argc > 1 &&
             (std::string(const_cast<const char *>(argv[1])) == "--help" ||
                std::string(const_cast<const char *>(argv[1])) == "-h" ||

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <algorithm>
+#include <vector>
 #include "Utility.hpp"
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -137,7 +138,7 @@ bool Utility::string_starts_with(std::string mainStr, std::string toMatch)
         return false;
 }
 
-std::string Utility::trim(const std::string &str, const std::string &whitespace)
+std::string Utility::trim(std::string str, std::string whitespace)
 {
     const auto strBegin = str.find_first_not_of(whitespace);
     if (strBegin == std::string::npos)
@@ -162,35 +163,48 @@ std::string Utility::stringFormat(const std::string &format, ...)
     return &vec[0];
 }
 
-std::vector<std::string> Utility::split(std::string strToSplit, char delimeter)
+std::vector<std::string> Utility::split(const std::string& str, const std::string& delim)
 {
-    std::stringstream ss(strToSplit);
-    std::string item;
-    std::vector<std::string> splitStrings;
-    while (std::getline(ss, item, delimeter))
-    {
-        splitStrings.push_back(item);
-    }
-    return splitStrings;
+    std::vector<std::string> vs;
+    size_t pos {};
+
+    for (size_t fdelim = 0; (fdelim = str.find(delim, pos)) != std::string::npos; pos = fdelim + delim.size())
+        vs.emplace_back(str.data() + pos, str.data() + fdelim);
+
+    vs.emplace_back(str.data() + pos, str.data() + str.size());
+    return vs;
 }
 
-std::vector<std::string> Utility::split_based_on_word(std::string strToSplit, std::string delimeter)
+// All blank/empty vector members are removed, and all members are trimmed (left and right).
+std::vector<std::string> Utility::split_and_trim(const std::string& str, const std::string& delim)
 {
-    std::vector<std::string> splitStrings;
-    int delimeterLength = delimeter.length();
-    while (strToSplit.length() > 0)
+    std::vector<std::string> vs = Utility::split(str,delim);
+    std::vector<std::string> result;
+
+    for (auto& e : vs)
     {
-        std::size_t found = strToSplit.find(delimeter);
-        if (found != std::string::npos)
-        {
-            splitStrings.push_back(strToSplit.substr(0, found));
-            strToSplit.erase(0, found + delimeterLength );
-        }
-        else
-            break;
+    	e = Utility::trim(e);
+    	if (e.size() > 0)
+    	{
+    		result.push_back(e);
+    	}
     }
-    return splitStrings;
+
+    return result;
 }
+
+
+#ifdef NOBUILD
+
+int main()
+{
+    const auto vs {split(",,do,,re,me, ,,fa,so,la,ti,do,,", ",")};
+
+    for (const auto& e : vs)
+        std::cout << e << '\n';
+}
+
+#endif
 
 std::string Utility::replace_all(   // Replace all occurences
         const std::string & str ,   // in haystack
