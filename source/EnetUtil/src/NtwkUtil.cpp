@@ -296,7 +296,6 @@ bool NtwkUtil::get_ntwk_message(Log::Logger& logger, int socket_fd, std::string&
 	}
 
 	retstring = std::string((const char *) responsebuffer.data());
-	std::cout << "buffer size: " << retstring.size();
 
 	return true;
 }
@@ -317,17 +316,17 @@ bool NtwkUtil::send_ntwk_message(Log::Logger& logger, int socket_fd, std::string
 	{
 		messagebuf[messagebuf.size()-1] = '\0';		// String terminating zero byte.
 	}
-	logger.notice() << "NtwkUtil::send_ntwk_message: Sending to remote connection: " << (const char *) &messagebuf[0];
+	// logger.notice() << "NtwkUtil::send_ntwk_message: Sending to remote connection: " << (const char *) &messagebuf[0];
 
 	int ret = NtwkUtil::enet_send(logger, socket_fd, messagebuf, messagebuf.size(), MSG_NOSIGNAL);
 	if (ret < 0)
 	{
-		logger.debug() << "NtwkUtil::send_ntwk_message: Error sending message to connection fd " << socket_fd;
+		logger.error() << "NtwkUtil::send_ntwk_message: Error sending message to connection fd " << socket_fd;
 		return false;
 	}
 	else if (ret == 0)
 	{
-		logger.debug() << "NtwkUtil::send_ntwk_message: No message data was sent to connection fd " << socket_fd;
+		logger.error() << "NtwkUtil::send_ntwk_message: No message data was sent to connection fd " << socket_fd;
 		return false;
 	}
 

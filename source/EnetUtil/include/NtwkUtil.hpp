@@ -65,7 +65,7 @@ static const size_t NtwkUtilLargeBufferSize = 8192;
 // TODO: Note: The fixed_array and related objects are currently specialized to the data
 // object being a single byte size.  This needs to be worked in the code to generalize it.
 
-static const size_t NtwkUtilBufferSize = NtwkUtilSmallBufferSize;
+static const size_t NtwkUtilBufferSize = NtwkUtilRegularBufferSize;
 ///////  Use:       static const size_t NtwkUtilBufferSize = NtwkUtilLargeBufferSize;
 //////   Or...      static const size_t NtwkUtilBufferSize = NtwkUtilRegularBufferSize;
 //////      or...   static const size_t NtwkUtilBufferSize = NtwkUtilNanoBufferSize;

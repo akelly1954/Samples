@@ -25,9 +25,10 @@ export LD_LIBRARY_PATH=${localrun}:${LD_LIBRARY_PATH}
 
 rm output_*.data
 
+i=0
 list1=`ls -1 inp*.data | head -3`
 list2=`ls -1 inp*.data | tail -3`
-while true
+while [ $i -lt 50 ]
 do
     for file in $list1
     do
@@ -40,4 +41,5 @@ do
     done
 
     date
+    i=$((i+1))
 done

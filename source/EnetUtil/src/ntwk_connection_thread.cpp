@@ -97,29 +97,27 @@ auto thread_connection_handler =
 	std::string output_filename = std::string("tests/output_") +
 	                              socket_connection_thread::get_seq_num_string(threadno) +
 								  "." +
-								  remote_filename +
-                             	  ".data";
+								  remote_filename;
 
 	logger.notice() << "thread_connection_handler: byte count from remote = " <<
 			           std::to_string(remote_bytecount) << ", local server output to \"" <<
 			           output_filename << "\"";
 
 	FILE *output_stream = NULL;
-	size_t bytesremaining = remote_bytecount;
-	size_t byteswritten = 0;
+	long long bytesremaining = remote_bytecount;
+	size_t totalbyteswritten = 0;
 	int errnocopy = 0;
 	bool finished = false;
 	while (!finished)
 	{
 		// This extra scope gets out of context at the end of file, which
 		// destructs the shared_ptr<>, so that a new one is created here:
-		{
+		// {
 			std::shared_ptr<fixed_uint8_array_t> sp_data = fixed_uint8_array_t::create();
 
 			int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
-
-			// logger.debug() << "socket_connection_thread::handler(" << threadno << "): Received " <<
-			//         num_elements_received << " bytes on fd " << socketfd;
+			// logger.debug() << "socket_connection_thread::handler(" << threadno << "): Read " <<
+			// 	num_elements_received << " bytes on fd " << socketfd << ", remaining: " << bytesremaining;
 
 			if (num_elements_received == 0)// EOF
 			{
@@ -137,8 +135,8 @@ auto thread_connection_handler =
 					continue;
 				}
 				// logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
-				//         "Set number of valid elements to " <<
-				//         num_elements_received << " bytes on fd " << socketfd;
+				// 					"Set number of valid elements to " <<
+				// 					num_elements_received << " bytes on fd " << socketfd;
 
 				finished = false;
 
@@ -157,12 +155,12 @@ auto thread_connection_handler =
 						continue;
 					}
 					// logger.debug() << "Created/truncated output file (thread " << threadno << ") \"" << output_filename << "\"";
-
 				}
 
 				size_t elementswritten = std::fwrite(sp_data->data().data(), sizeof(uint8_t), sp_data->num_valid_elements(), output_stream);
 				errnocopy = errno;
-				byteswritten += (elementswritten * sizeof(uint8_t));
+				size_t byteswritten = (elementswritten * sizeof(uint8_t));
+				totalbyteswritten += byteswritten;
 				fflush(output_stream);
 
 				if (elementswritten != sp_data->num_valid_elements())
@@ -175,12 +173,13 @@ auto thread_connection_handler =
 				}
 
 				bytesremaining -= byteswritten;
+				// logger.debug() << "Wrote " << (elementswritten * sizeof(uint8_t)) << " bytes into " << output_filename << ". Bytes remaining: " << bytesremaining;
 				if (bytesremaining <= 0)
 				{
 					finished = true;
 					continue;
 				}
-			}
+			// }
 		}
 	}
 
@@ -191,7 +190,7 @@ auto thread_connection_handler =
 
 	// Respond to the file transfer
 	std::string response = std::string("OK|") + output_filename +
-			               "|" + std::to_string(byteswritten);
+			               "|" + std::to_string(totalbyteswritten);
 
 	// No need to check return - the function writes to the
 	// log file, and we are done anyways.
