@@ -257,7 +257,7 @@ int NtwkUtil::enet_receive(    Log::Logger& logger,
 			return -1;  // Should never even get here....
 		}
 
-		// logger.notice() << "NtwkUtil::enet_receive: got end of file/disconnect on socket read...";
+		logger.debug() << "NtwkUtil::enet_receive: got end of file/disconnect on socket read...";
 		return bytesreceived;
 
     } catch (std::exception &exp)
@@ -316,7 +316,6 @@ bool NtwkUtil::send_ntwk_message(Log::Logger& logger, int socket_fd, std::string
 	{
 		messagebuf[messagebuf.size()-1] = '\0';		// String terminating zero byte.
 	}
-	// logger.notice() << "NtwkUtil::send_ntwk_message: Sending to remote connection: " << (const char *) &messagebuf[0];
 
 	int ret = NtwkUtil::enet_send(logger, socket_fd, messagebuf, messagebuf.size(), MSG_NOSIGNAL);
 	if (ret < 0)
@@ -330,7 +329,7 @@ bool NtwkUtil::send_ntwk_message(Log::Logger& logger, int socket_fd, std::string
 		return false;
 	}
 
-	logger.notice() << "NtwkUtil::send_ntwk_message: Message sent to connection fd " << socket_fd << ": \"" << message << "\"";
+	logger.debug() << "NtwkUtil::send_ntwk_message: Message sent to connection fd " << socket_fd << ": \"" << message << "\"";
 	return true;
 }
 

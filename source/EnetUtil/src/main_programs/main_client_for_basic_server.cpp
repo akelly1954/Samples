@@ -59,6 +59,9 @@ uint16_t connection_port_number = default_connection_port_number; // can be modi
 
 std::string input_filename = ""; // This has to be specified on the command line
 
+std::string default_log_level = "notice";
+std::string log_level = default_log_level;
+
 // fixed size of the std::array<> used for the data
 const int server_buffer_size = NtwkUtilBufferSize;
 
@@ -67,10 +70,20 @@ void Usage(std::ostream &strm, std::string command)
 	strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
 	strm << "Or:       " << command
 			<< "\n"
-			<< "              -fn file-name    (MANDATORY: file holding the data to be transmitted, has to exist)\n"
-			<< "              [ -ip server-ip-address ] (default is IADDR_ANY - 0.0.0.0)\n"
-			<< "              [ -pn port-number ]       (port num to connect to, default is "
-			<< connection_port_number << ")\n"
+			<< "              -fn file-name             (MANDATORY: both the \"-fn\" flag and the name of the \n"
+			<< "                                        existing file containing the data to be transmitted \n"
+			<< "                                        have to be specified on the command line)\n"
+			<< "              [ -ip server-ip-address ] (default is \"IADDR_ANY\" same as \"\")\n"
+			<< "              [ -pn port-number ]       (port num to connect to, default is the port number \n"
+			<< "                                        used by the server - see NOTE below)\n"
+			<< "              [ -lg log-level ]         (see below, default is \"notice\"\n"
+			<< "\n"
+			<< "log-level can be one of: {\"debug\", \"info\", \"notice\", \"warning\", \"error\", \"critical\"}\n"
+			<< "\n"
+			<< "NOTE: the default port numbers that both client and server use match up at the time the sources were built.\n"
+			<< "      If the port number is set on the command line, it should be done for both client and server.\n"
+			<< "      The server always reports the port number it is listening on in the first few lines of its log file.\n"
+			"\n"
 			<< std::endl;
 }
 
@@ -83,6 +96,7 @@ bool parse(int argc, char *argv[])
 	specified["-ip"] = getArg(cmdmap, "-ip", connection_ip);
 	specified["-pn"] = getArg(cmdmap, "-pn", connection_port_number);
 	specified["-fn"] = getArg(cmdmap, "-fn", input_filename);
+	specified["-lg"] = getArg(cmdmap, "-lg", log_level);
 
 	bool ret = false; // Currently all flags have default values, except for -fn filename.
 	std::for_each(specified.begin(), specified.end(), [&ret](auto member)
@@ -149,6 +163,25 @@ int main(int argc, char *argv[])
 	}
 
 	/////////////////
+	// Check out specified log level
+	/////////////////
+
+    Log::Log::Level loglevel = Log::Log::eNotice;
+
+	if (log_level == "debug") loglevel = Log::Log::eDebug;
+	else if (log_level == "info") loglevel = Log::Log::eInfo;
+	else if (log_level == "notice") loglevel = Log::Log::eNotice;
+	else if (log_level == "warning") loglevel = Log::Log::eWarning;
+	else if (log_level == "error") loglevel = Log::Log::eError;
+	else if (log_level == "critical") loglevel = Log::Log::eCritic;
+	else
+	{
+		std::cerr << "\nIncorrect use of the \"-lg\" flag." << std::endl;
+		Usage(std::cerr, argv0);
+		return 1;
+	}
+
+	/////////////////
 	// Open input file
 	/////////////////
 
@@ -183,20 +216,17 @@ int main(int argc, char *argv[])
 		Usage(std::cerr, argv0);
 		return 1;
 	}
-	else
-	{
-		std::cout << "Using " << input_filename << " for input. Size is " << numbytesinfile << " bytes." << std::endl;
-	}
 
 	/////////////////
 	// Set up logger
 	/////////////////
 
 	Log::Config::Vector configList;
-	Util::Utility::initializeLogManager(configList, Log::Log::Level::eDebug, logFileName, true, false);
-	// Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, logFileName, false, true);
+	Util::Utility::initializeLogManager(configList, loglevel, logFileName, true, false);
 	Util::Utility::configureLogManager(configList, logChannelName);
 	Log::Logger logger(logChannelName);
+
+	logger.debug() << "Using " << input_filename << " for input. Size is " << numbytesinfile << " bytes.";
 
 	/////////////////
 	// Set up connection to server
@@ -302,7 +332,7 @@ int main(int argc, char *argv[])
 	std::string response;
 	if (NtwkUtil::get_ntwk_message(logger, socket_fd, response))
 	{
-		logger.notice() << "Server response: " << response;
+		logger.debug() << "Server response: " << response;
 	}
 	else
 	{

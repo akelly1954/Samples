@@ -66,7 +66,7 @@ auto thread_connection_handler =
 	std::string message;
 	if (NtwkUtil::get_ntwk_message(logger, socketfd, message))
 	{
-		logger.notice() << "thread_connection_handler: Initial client message: " << message;
+		logger.debug() << "thread_connection_handler: Initial client message: " << message;
 	}
 	else
 	{
@@ -99,7 +99,7 @@ auto thread_connection_handler =
 								  "." +
 								  remote_filename;
 
-	logger.notice() << "thread_connection_handler: byte count from remote = " <<
+	logger.debug() << "thread_connection_handler: byte count from remote = " <<
 			           std::to_string(remote_bytecount) << ", local server output to \"" <<
 			           output_filename << "\"";
 
@@ -110,76 +110,72 @@ auto thread_connection_handler =
 	bool finished = false;
 	while (!finished)
 	{
-		// This extra scope gets out of context at the end of file, which
-		// destructs the shared_ptr<>, so that a new one is created here:
-		// {
-			std::shared_ptr<fixed_uint8_array_t> sp_data = fixed_uint8_array_t::create();
+		std::shared_ptr<fixed_uint8_array_t> sp_data = fixed_uint8_array_t::create();
 
-			int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
-			// logger.debug() << "socket_connection_thread::handler(" << threadno << "): Read " <<
-			// 	num_elements_received << " bytes on fd " << socketfd << ", remaining: " << bytesremaining;
+		int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
+		// logger.debug() << "socket_connection_thread::handler(" << threadno << "): Read " <<
+		// 	num_elements_received << " bytes on fd " << socketfd << ", remaining: " << bytesremaining;
 
-			if (num_elements_received == 0)// EOF
+		if (num_elements_received == 0)// EOF
+		{
+			finished = true;
+			continue;
+		}
+		else
+		{
+			if (! sp_data->set_num_valid_elements(num_elements_received))
 			{
+				logger.error() << "socket_connection_thread::handler: Error in setting socket_connection_thread::handler(" << threadno <<
+				") num_valid_elements. Got  " << num_elements_received << " elements on fd " << socketfd <<
+				". Aborting...";
 				finished = true;
 				continue;
 			}
-			else
+			// logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
+			// 					"Set number of valid elements to " <<
+			// 					num_elements_received << " bytes on fd " << socketfd;
+
+			finished = false;
+
+			//
+			// Write to file
+			//
+			if (output_stream == NULL)
 			{
-				if (! sp_data->set_num_valid_elements(num_elements_received))
-				{
-					logger.error() << "socket_connection_thread::handler: Error in setting socket_connection_thread::handler(" << threadno <<
-					") num_valid_elements. Got  " << num_elements_received << " elements on fd " << socketfd <<
-					". Aborting...";
-					finished = true;
-					continue;
-				}
-				// logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
-				// 					"Set number of valid elements to " <<
-				// 					num_elements_received << " bytes on fd " << socketfd;
-
-				finished = false;
-
-				//
-				// Write to file
-				//
-				if (output_stream == NULL)
-				{
-					// File has not been created yet.
-					if ((output_stream = ::fopen (output_filename.c_str(), "w")) == NULL)
-					{
-						errnocopy = errno;
-						logger.error() << "Cannot create/truncate output file (thread " << threadno << ") \"" <<
-						output_filename << "\": " << Util::Utility::get_errno_message(errnocopy);
-						finished = true;
-						continue;
-					}
-					// logger.debug() << "Created/truncated output file (thread " << threadno << ") \"" << output_filename << "\"";
-				}
-
-				size_t elementswritten = std::fwrite(sp_data->data().data(), sizeof(uint8_t), sp_data->num_valid_elements(), output_stream);
-				errnocopy = errno;
-				size_t byteswritten = (elementswritten * sizeof(uint8_t));
-				totalbyteswritten += byteswritten;
-				fflush(output_stream);
-
-				if (elementswritten != sp_data->num_valid_elements())
+				// File has not been created yet.
+				if ((output_stream = ::fopen (output_filename.c_str(), "w")) == NULL)
 				{
 					errnocopy = errno;
-					logger.error() << "Error writing output file (thread " << threadno << ") \"" <<
+					logger.error() << "Cannot create/truncate output file (thread " << threadno << ") \"" <<
 					output_filename << "\": " << Util::Utility::get_errno_message(errnocopy);
 					finished = true;
 					continue;
 				}
+				// logger.debug() << "Created/truncated output file (thread " << threadno << ") \"" << output_filename << "\"";
+			}
 
-				bytesremaining -= byteswritten;
-				// logger.debug() << "Wrote " << (elementswritten * sizeof(uint8_t)) << " bytes into " << output_filename << ". Bytes remaining: " << bytesremaining;
-				if (bytesremaining <= 0)
-				{
-					finished = true;
-					continue;
-				}
-			// }
+			size_t elementswritten = std::fwrite(sp_data->data().data(), sizeof(uint8_t), sp_data->num_valid_elements(), output_stream);
+			errnocopy = errno;
+			size_t byteswritten = (elementswritten * sizeof(uint8_t));
+			totalbyteswritten += byteswritten;
+			fflush(output_stream);
+
+			if (elementswritten != sp_data->num_valid_elements())
+			{
+				errnocopy = errno;
+				logger.error() << "Error writing output file (thread " << threadno << ") \"" <<
+				output_filename << "\": " << Util::Utility::get_errno_message(errnocopy);
+				finished = true;
+				continue;
+			}
+
+			bytesremaining -= byteswritten;
+			// logger.debug() << "Wrote " << (elementswritten * sizeof(uint8_t)) << " bytes into " << output_filename << ". Bytes remaining: " << bytesremaining;
+			if (bytesremaining <= 0)
+			{
+				finished = true;
+				continue;
+			}
 		}
 	}
 
@@ -216,10 +212,7 @@ void socket_connection_thread::start(int accpt_socket, int threadno,
 
 	try
 	{
-		std::thread *sp_queue_thread = NULL;
-
-		// The next two sets of braces are for scope. The first set protects the vector
-		// critical region, and the second protects the map critical region.
+		// This next set of braces is for scope. Protecting the workers vector.
 		{
 			// The logger is passed to the new thread because it has to be instantiated in
 			// the main thread (right here) before it is used from inside the new thread.

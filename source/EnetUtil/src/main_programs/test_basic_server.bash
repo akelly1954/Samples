@@ -43,3 +43,10 @@ do
     date
     i=$((i+1))
 done
+
+echo
+echo Waiting for jobs to finish...
+echo
+
+wait
+
