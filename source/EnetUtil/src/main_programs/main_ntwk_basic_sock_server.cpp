@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 
     Log::Config::Vector configList;
 
-    Util::Utility::initializeLogManager(configList, loglevel, logFileName, false, true);
+    Util::Utility::initializeLogManager(configList, loglevel, logFileName, Utility::disableConsole, Utility::enableLogFile);
     Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
     std::cout << "Log level is set to \"" << log_level << "\"" << std::endl;

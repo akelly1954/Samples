@@ -131,9 +131,9 @@ auto thread_connection_handler =
 				finished = true;
 				continue;
 			}
-			// logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
-			// 					"Set number of valid elements to " <<
-			// 					num_elements_received << " bytes on fd " << socketfd;
+			//logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
+			//					"Set number of valid elements to " <<
+			//					num_elements_received << " bytes on fd " << socketfd;
 
 			finished = false;
 
@@ -185,8 +185,8 @@ auto thread_connection_handler =
 	}
 
 	// Respond to the file transfer
-	std::string response = std::string("OK|") + output_filename +
-			               "|" + std::to_string(totalbyteswritten);
+	std::string response =
+		std::string("OK|") + std::to_string(threadno) + std::string("|") + output_filename + std::string("|") + std::to_string(totalbyteswritten);
 
 	// No need to check return - the function writes to the
 	// log file, and we are done anyways.

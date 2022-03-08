@@ -1,7 +1,6 @@
 #pragma once
 
 #include <LoggerCpp/LoggerCpp.h>
-#include <mutex>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <memory>
@@ -92,7 +91,8 @@ class NtwkUtil
 {
 public:
 
-    static std::recursive_mutex m_recursive_mutex;
+    static std::mutex m_send_mutex;
+    static std::mutex m_recv_mutex;
 
     // The ip address and port number are used to set the proper values
     // in the empty address structure for all the utilities used in EnetUtil.

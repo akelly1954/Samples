@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 	/////////////////
 
 	Log::Config::Vector configList;
-	Util::Utility::initializeLogManager(configList, loglevel, logFileName, true, false);
+	Util::Utility::initializeLogManager(configList, loglevel, logFileName, Utility::enableConsole, Utility::disableLogFile);
 	Util::Utility::configureLogManager(configList, logChannelName);
 	Log::Logger logger(logChannelName);
 
@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	logger.debug() << argv0 << ": Successfully sent file \"" << input_filename
+	logger.notice() << argv0 << ": Successfully sent file \"" << input_filename
 			<< "\" with " << totalbytes_sent << " bytes to " << connection_ip
 			<< ":" << connection_port_number;
 
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 	std::string response;
 	if (NtwkUtil::get_ntwk_message(logger, socket_fd, response))
 	{
-		logger.debug() << "Server response: " << response;
+		logger.notice() << "Server response (for file \"" << input_filename << "\"): " << response;
 	}
 	else
 	{

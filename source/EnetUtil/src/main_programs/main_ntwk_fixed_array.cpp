@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 {
 
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "", false, false);
+    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "", Util::Utility::enableConsole, Util::Utility::disableLogFile);
     Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
 

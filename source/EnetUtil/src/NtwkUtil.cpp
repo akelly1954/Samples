@@ -45,7 +45,8 @@ using namespace EnetUtil;
 // SOCKET UTILITIES
 
 // class NtwkUtil static objects:
-std::recursive_mutex NtwkUtil::m_recursive_mutex;
+std::mutex NtwkUtil::m_send_mutex;
+std::mutex NtwkUtil::m_recv_mutex;
 
 // The ip address and port number are used to set the proper values
 // in the empty address structure for all the utilities used in EnetUtil.
@@ -189,7 +190,7 @@ int NtwkUtil::enet_send(Log::Logger& logger,
                         size_t actual_size,
                         int flag)
 {
-    std::lock_guard<std::recursive_mutex> lock(NtwkUtil::m_recursive_mutex);
+    // std::lock_guard<std::mutex> lock(NtwkUtil::m_send_mutex);
 
     int sockreturn = -1;
     int errnocopy = 0;
@@ -218,6 +219,7 @@ int NtwkUtil::enet_receive(    Log::Logger& logger,
                             arrayUint8 & array_element_buffer,    // data and length
                             size_t requestsize)   // requestsize can be smaller than the array<>::size()
 {
+    // std::lock_guard<std::mutex> lock(NtwkUtil::m_recv_mutex);
     int bytesreceived = 0;
 
     try
@@ -240,10 +242,15 @@ int NtwkUtil::enet_receive(    Log::Logger& logger,
             return -1;  // Shouldn't get here...
         }
 
-        // This affects all threads:  signal(SIGPIPE, SIG_IGN);
+        // signal(SIGPIPE, SIG_IGN);      // This affects all threads
 
 		int errnocopy = 0;
-		int num = read(fd, array_element_buffer.data(), actual_requestsize);
+
+		// Removed MSG_WAITALL from the flags (4th) parameter to recv() since it causes
+		// a deadlock with the client when the last send from the client while it is sending
+		// the contents of a file, contains less bytes than the fixed buffer size requested.
+		// (MSG_WAITALL tells the system to wait until the full size requested has arrived. Deadlock.)
+		int num = recv(fd, array_element_buffer.data(), actual_requestsize, 0);
 		errnocopy = errno;  // will be used if needed
 		if (num > 0)
 		{
@@ -257,15 +264,18 @@ int NtwkUtil::enet_receive(    Log::Logger& logger,
 			return -1;  // Should never even get here....
 		}
 
-		logger.debug() << "NtwkUtil::enet_receive: got end of file/disconnect on socket read...";
+        // if (num == 0)  // Remove soon - this just for a debugger breakpoint
+		//      return bytesreceived;
+		// logger.debug() << "NtwkUtil::enet_receive: got end of file/disconnect on socket read...";
+
 		return bytesreceived;
 
     } catch (std::exception &exp)
     {
-        logger.error() << "Got exception in NtwkUtil::enet_receive after read(s) from socket: " << exp.what();
+        logger.error() << "Got exception in NtwkUtil::enet_receive after recv() from socket: " << exp.what();
     } catch (...)
     {
-        logger.error() << "General exception occurred in NtwkUtil::enet_receive after read(s) from socket";
+        logger.error() << "General exception occurred in NtwkUtil::enet_receive after recv() from socket";
     }
     // should only get here from the catch{} blocks
     return -1;

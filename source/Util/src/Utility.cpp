@@ -1,4 +1,4 @@
-
+#include "Utility.hpp"
 #include <stdarg.h>
 #include <string>
 #include <string.h>
@@ -13,7 +13,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include "Utility.hpp"
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -50,31 +49,31 @@ using namespace Util;
 void Utility::initializeLogManager( Log::Config::Vector& configList,
                                     Log::Log::Level loglevel,
                                     const std::string& logfilename,
-                                    bool enableConsoleOutput,
-                                    bool enableFileOutput)
+									Utility::ConsoleOutput useConsole,
+									Utility::UseLogFile useLogFile)
 {
     Log::Manager::setDefaultLevel(loglevel);
 
     // Configure the Output objects
 
     // Enforce either console or file output
-    if (enableConsoleOutput || (enableConsoleOutput == false && enableFileOutput == false))
+    if (useConsole == Utility::enableConsole ||
+    		(useConsole == Utility::disableConsole && useLogFile == Utility::disableLogFile))
     {
         Log::Config::addOutput(configList, "OutputConsole");
     }
 
-    if (enableFileOutput)
+    if (useLogFile == Utility::enableLogFile)
     {
         Log::Config::addOutput(configList, "OutputFile");
         Log::Config::setOption(configList, "filename",          logfilename.c_str());
-std::cerr << "Enabled file output to " << logfilename.c_str() << std::endl;
+        std::string oldlogfilename = std::string("old.")+logfilename;
+        Log::Config::setOption(configList, "filename_old",  	oldlogfilename.c_str());
+        std::cout << "Enabled file output to " << logfilename.c_str() << std::endl;
     }
 
-    // NO ROTATION OF LOG FILES FOR THIS PROGRAM
-    // Log::Config::setOption(configList, "filename_old",      "main_condition_data_log.old.txt");
-
     Log::Config::setOption(configList, "max_startup_size",  "0");
-    Log::Config::setOption(configList, "max_size",          "1000000");
+    Log::Config::setOption(configList, "max_size",          "100000000");
 #ifdef WIN32
     Log::Config::addOutput(configList, "OutputDebug");
 #endif
