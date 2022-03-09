@@ -4,9 +4,9 @@
 #
 # in ...Samples/build/localrun/tests:
 #
-# Prepate a bunch of input files to be transfered, of varying sizes - say five or six.
-# Call them inputXXX.data - where XXXX is different in each one. My smallest file was a few bytes,
-# and my biggest one was 60Mb or so.  Protect them from being removed by accident (chmod 444 inp*.data)
+# Prepare a bunch of input files to be transfered, of varying sizes - say seven or eight files.
+# Call them inputXXX.data - where XXXX is different for each file. My smallest file was a few bytes,
+# and my biggest one was 23Mb or so.  Protect them from being removed by accident (chmod 444 inp*.data)
 #
 # cd to ...Samples/build/localrun, and start the server (main_ntwk_basic_sock_server) on a different terminal.
 #
