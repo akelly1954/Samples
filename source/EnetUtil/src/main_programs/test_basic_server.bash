@@ -26,8 +26,9 @@ export LD_LIBRARY_PATH=${localrun}:${LD_LIBRARY_PATH}
 rm output_*.data
 
 i=0
-list1=`ls -1 inp*.data | head -3`
-list2=`ls -1 inp*.data | tail -3`
+list1=`ls -1 inp*.data | head -4`
+list2=`ls -1 inp*.data | tail -4`
+
 while [ $i -lt 50 ]
 do
     for file in $list1
@@ -35,13 +36,20 @@ do
         ../main_client_for_basic_server -fn $file &
     done
 
+    nc=`ps xa | grep main_client_for_basic_server | wc -l`
+    echo $((nc-1)) clients are running concurrently
+
     for file in $list2
     do
         ../main_client_for_basic_server -fn $file &
     done
 
-    date
+    nc=`ps xa | grep main_client_for_basic_server | wc -l`
+    echo $((nc-1)) clients are running concurrently
+
     i=$((i+1))
+    date
+
 done
 
 echo

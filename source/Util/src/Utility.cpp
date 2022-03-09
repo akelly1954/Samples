@@ -192,19 +192,6 @@ std::vector<std::string> Utility::split_and_trim(const std::string& str, const s
     return result;
 }
 
-
-#ifdef NOBUILD
-
-int main()
-{
-    const auto vs {split(",,do,,re,me, ,,fa,so,la,ti,do,,", ",")};
-
-    for (const auto& e : vs)
-        std::cout << e << '\n';
-}
-
-#endif
-
 std::string Utility::replace_all(   // Replace all occurences
         const std::string & str ,   // in haystack
         const std::string & find ,  // of needle
