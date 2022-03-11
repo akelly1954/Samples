@@ -4,6 +4,7 @@ project( Sample )
 
 add_subdirectory(Util)
 add_subdirectory(EnetUtil)
+add_subdirectory(Video)
 
 # Basic dependencies
 # add_dependencies (${Projectname1} ${dependsOnProject2} ${dependsOnProjectN})

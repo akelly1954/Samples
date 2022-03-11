@@ -12,7 +12,7 @@ if (NOT WIN32)
     message (STATUS "Linux system detected." )
 
     set (DBG "")
-    set( LINKOPTIONS "stdc++fs" )
+    ###  set( LINKOPTIONS "stdc++fs" )
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${LoggerCppSource_DIR}/include")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/usr/lib/gcc/x86_64-linux-gnu/10/include")
@@ -25,6 +25,7 @@ if (NOT WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D \"DBG_BUILD=\\\"${DBG}\\\"\"" )
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread -ldl")
 
+    set (CMAKE_C_COMPILER /usr/bin/gcc)
     set (CMAKE_CXX_COMPILER /usr/bin/g++)
     set (CMAKE_CXX_STANDARD 17)
     set (CMAKE_CXX_STANDARD_REQUIRED ON)
