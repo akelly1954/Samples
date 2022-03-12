@@ -13,7 +13,7 @@ file(GLOB TEST_SCRIPTS "src/main_programs/*.bash")
 set( SOURCES ${SOURCEFILES} ${MAIN_HEADERS} ${HEADERS} ${LOGGER_HEADERS} )
 
 set ( LIBTYPE "${Enet_LIBTYPE}" )
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
+# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 
 include_directories( ${EnetUtil_HEADERS}
                      src/main_programs/include
@@ -33,8 +33,8 @@ install(FILES ${MAIN_HEADERS} DESTINATION include/EnetUtil/ntwk_basic_sock_serve
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
 
 install(FILES ${TEST_SCRIPTS} 
-        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
-                    GROUP_EXECUTE GROUP_WRITE GROUP_READ
+        PERMISSIONS OWNER_EXECUTE OWNER_READ
+                    GROUP_EXECUTE GROUP_READ
                     WORLD_EXECUTE WORLD_READ
         DESTINATION localrun/tests)
 

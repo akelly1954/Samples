@@ -10,5 +10,6 @@ add_subdirectory(Video)
 # add_dependencies (${Projectname1} ${dependsOnProject2} ${dependsOnProjectN})
 
 add_dependencies ( EnetUtil Util )
+add_dependencies ( Video EnetUtil Util )
 
 

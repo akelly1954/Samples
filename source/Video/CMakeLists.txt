@@ -12,7 +12,10 @@ set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" )
 set ( LIBTYPE "${Video_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 
-include_directories( ${Video_HEADERS} ${LoggerCpp_HEADERS} )
+include_directories( ${Video_HEADERS} 
+                     ../Util/include
+                     ../EnetUtil/include
+                     ${LoggerCpp_HEADERS} )
 
 add_library( ${Video} ${LIBTYPE} ${SOURCES} )
 target_link_libraries( ${Video}
@@ -24,6 +27,8 @@ install(TARGETS ${Video} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/Video)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
 
+set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
+set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
 #
 # v4l2_raw_capture main
 #
@@ -31,6 +36,8 @@ set (main_v4l2_raw_capture "main_v4l2_raw_capture${DBG}")
 add_executable (main_v4l2_raw_capture src/main_programs/main_v4l2_raw_capture.cpp)
 target_link_libraries( main_v4l2_raw_capture 
                             ${Video_LIB}
+                            ${EnetUtil_LIB}
+                            ${Util_LIB}
                             ${LoggerCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}

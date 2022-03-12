@@ -126,6 +126,19 @@ namespace EnetUtil {
             }
         }
 
+        // private in order to prevent make_shared<> from being called
+        // (see static create() functions below)
+        fixed_size_array(uint8_t *databuffer, size_t nvalid_elements)
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            m_num_valid_elements = nvalid_elements > m_array_data.size()? m_array_data.size() : nvalid_elements;
+
+            for (size_t i = 0; i < m_num_valid_elements; i++)
+            {
+                m_array_data[i] = databuffer[i];
+            }
+        }
+
     public:
         // The first time this object is constructed in order to obtain a shared_ptr<> for a brand
         // new managed object, the ::create() function MUST be called.  All subsequent shared_ptr<>'s
@@ -167,6 +180,11 @@ namespace EnetUtil {
         {
             datapairUint8_t newpair(nvalid_elements, obj);
             return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(newpair));
+        }
+
+        [[nodiscard]] static std::shared_ptr<EnetUtil::fixed_size_array<T,N>> create(uint8_t *databuffer, size_t nvalid_elements)
+        {
+            return std::shared_ptr<EnetUtil::fixed_size_array<T,N>>(new EnetUtil::fixed_size_array<T,N>(databuffer, nvalid_elements));
         }
 
     public:

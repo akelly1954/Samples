@@ -45,6 +45,7 @@ static const size_t NtwkUtilTinyBufferSize = 256;
 static const size_t NtwkUtilSmallBufferSize = 1024;
 static const size_t NtwkUtilRegularBufferSize = 4096;
 static const size_t NtwkUtilLargeBufferSize = 8192;
+static const size_t NtwkUtilHugeBufferSize = 1024*250;
 
 // NtwkUtilBufferSize - is the fixed size of the std::array<> - baked into the program -
 // can't change (like a #define'd constant can't change at runtime...). The std::array<>
@@ -64,12 +65,13 @@ static const size_t NtwkUtilLargeBufferSize = 8192;
 // TODO: Note: The fixed_array and related objects are currently specialized to the data
 // object being a single byte size.  This needs to be worked in the code to generalize it.
 
-static const size_t NtwkUtilBufferSize = NtwkUtilRegularBufferSize;
+static const size_t NtwkUtilBufferSize = NtwkUtilHugeBufferSize;
 ///////  Use:       static const size_t NtwkUtilBufferSize = NtwkUtilLargeBufferSize;
 //////   Or...      static const size_t NtwkUtilBufferSize = NtwkUtilRegularBufferSize;
 //////      or...   static const size_t NtwkUtilBufferSize = NtwkUtilNanoBufferSize;
 //////      or...   static const size_t NtwkUtilBufferSize = NtwkUtilSmallBufferSize;
 //////     or...
+/////////           static const size_t NtwkUtilBufferSize = NtwkUtilHugeBufferSize;
 
 // Options for port numbers for listening and connecting to:
 // Do not use directly.  See NtwkUtilBufferSize below.
@@ -77,8 +79,7 @@ static const uint16_t base_simple_server_port_number =  57314;
 
 // This is the real port number. Both connections and listening use this variable.
 // Make sure to rebuild all clients when connecting to a server using this if it changes.
-static const uint16_t simple_server_port_number =
-        base_simple_server_port_number+NtwkUtilBufferSize;
+static const uint16_t simple_server_port_number = base_simple_server_port_number;
 
 // This is the actual type of the data being handled
 typedef std::array<uint8_t,NtwkUtilBufferSize> arrayUint8;

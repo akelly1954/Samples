@@ -100,6 +100,14 @@ public:
         }
     }
 
+    // In case some thread is waiting. Make sure there is an indication
+    // in the waiting thread that this is it (i.e. a "bool finished = true;"
+    // that would prevent it from waiting again).
+    void flush(const T& data, condition_data::NotifyEnum w = One)
+	{
+		send_ready(data, w);
+	}
+
 private:
     std::condition_variable m_ready_condition;
     mutable std::mutex m_ready_mutex;
