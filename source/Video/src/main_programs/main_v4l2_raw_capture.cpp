@@ -54,14 +54,14 @@ Log::Logger *global_logger = NULL;
 
 void v4l2capture_logger(const char *logmessage)
 {
-	if (global_logger == NULL)
-	{
-		fprintf (stderr, "%s\n", logmessage);
-	}
-	else
-	{
-		global_logger->debug() << logmessage;
-	}
+    if (global_logger == NULL)
+    {
+        fprintf (stderr, "%s\n", logmessage);
+    }
+    else
+    {
+        global_logger->debug() << logmessage;
+    }
 }
 
 void (*logger_function)(const char *logmessage) = v4l2capture_logger;
@@ -78,27 +78,27 @@ void (*logger_function)(const char *logmessage) = v4l2capture_logger;
 
 void v4l2capture_callback(void *p, size_t bsize)
 {
-	if (p != NULL)
-	{
-		size_t bytesleft = bsize;
-		uint8_t *startdata = static_cast<uint8_t*>(p);
-		size_t nextsize = 0;
+    if (p != NULL)
+    {
+        size_t bytesleft = bsize;
+        uint8_t *startdata = static_cast<uint8_t*>(p);
+        size_t nextsize = 0;
 
-		while (bytesleft > 0)
-		{
-			nextsize = bytesleft > EnetUtil::NtwkUtilBufferSize? EnetUtil::NtwkUtilBufferSize : bytesleft;
+        while (bytesleft > 0)
+        {
+            nextsize = bytesleft > EnetUtil::NtwkUtilBufferSize? EnetUtil::NtwkUtilBufferSize : bytesleft;
 
-			std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp =
-						EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>::create(startdata, nextsize);
+            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp =
+                        EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>::create(startdata, nextsize);
 
-			startdata += nextsize;
-			bytesleft -= nextsize;
-			assert (sp->num_valid_elements() == nextsize);
+            startdata += nextsize;
+            bytesleft -= nextsize;
+            assert (sp->num_valid_elements() == nextsize);
 
-			// Add the shared_ptr to the queue
-			VideoCapture::video_capture_queue::s_ringbuf.put(sp, VideoCapture::video_capture_queue::s_condvar);
-		}
-	}
+            // Add the shared_ptr to the queue
+            VideoCapture::video_capture_queue::s_ringbuf.put(sp, VideoCapture::video_capture_queue::s_condvar);
+        }
+    }
 }
 
 void (*callback_function)(void *, size_t) = v4l2capture_callback;
@@ -110,42 +110,42 @@ int main(int argc, char *argv[])
     Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName.c_str());
 
-	// Setup of the logger callback function (from the C code).
+    // Setup of the logger callback function (from the C code).
     global_logger = &logger;
 
     std::thread queuethread;
     int ret = 0;
     try
-	{
-    	// Start the thread which handles the queue of raw buffers that the callback
-    	// function handles.
-		queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, logger);
+    {
+        // Start the thread which handles the queue of raw buffers that the callback
+        // function handles.
+        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, logger);
 
-		// This is the C based code close to the hardware
-		ret = ::v4l2_raw_capture_main(argc, argv, callback_function, logger_function);
+        // This is the C based code close to the hardware
+        ret = ::v4l2_raw_capture_main(argc, argv, callback_function, logger_function);
 
-		// Make sure the ring buffer gets emptied
-		VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+        // Make sure the ring buffer gets emptied
+        VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
 
-		VideoCapture::video_capture_queue::set_terminated(true);
-	}
-	catch (std::exception &exp)
-	{
-		logger.error()
-				<< "Got exception in main() starting the raw_buffer_queue_handler thread "
-				<< exp.what();
-		ret = 1;
-	} catch (...)
-	{
-		logger.error()
-				<< "General exception occurred in MAIN() the raw_buffer_queue_handler thread ";
-		ret = 1;
-	}
+        VideoCapture::video_capture_queue::set_terminated(true);
+    }
+    catch (std::exception &exp)
+    {
+        logger.error()
+                << "Got exception in main() starting the raw_buffer_queue_handler thread "
+                << exp.what();
+        ret = 1;
+    } catch (...)
+    {
+        logger.error()
+                << "General exception occurred in MAIN() the raw_buffer_queue_handler thread ";
+        ret = 1;
+    }
 
     // Wait for the queue thread to finish
-	if (queuethread.joinable()) queuethread.join();
+    if (queuethread.joinable()) queuethread.join();
 
-	// Terminate the Log Manager (destroy the Output objects)
+    // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
 
     return ret;

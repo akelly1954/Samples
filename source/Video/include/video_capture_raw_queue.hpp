@@ -1,17 +1,5 @@
 #pragma once
 
-#ifdef NOBUILD
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
-#endif //  NOBUILD
-
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -56,11 +44,11 @@ void raw_buffer_queue_handler(Log::Logger logger);
 class video_capture_queue
 {
 public:
-	static void set_terminated(bool t);  // main() sets this to true or false
+    static void set_terminated(bool t);  // main() sets this to true or false
 
-	static std::mutex s_vector_mutex;
+    static std::mutex s_vector_mutex;
 
-	static bool s_terminated;
+    static bool s_terminated;
 
     static Util::condition_data<int> s_condvar;
 

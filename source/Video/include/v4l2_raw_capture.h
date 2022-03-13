@@ -58,8 +58,8 @@ extern "C" void v4l2capture_init_device(void);
 extern "C" void v4l2capture_close_device(void);
 extern "C" void v4l2capture_open_device(void);
 extern "C" int v4l2_raw_capture_main(int argc, char *argv[],
-									void (*callback_function)(void *, size_t),
-									void (*logger_function)(const char *));
+                                    void (*callback_function)(void *, size_t),
+                                    void (*logger_function)(const char *));
 
 #else // __cplusplus
 
@@ -82,8 +82,8 @@ void v4l2capture_init_device(void);
 void v4l2capture_close_device(void);
 void v4l2capture_open_device(void);
 int v4l2_raw_capture_main(int argc, char *argv[],
-							void (*callback_function)(void *, size_t),
-							void (*logger_function)(const char *));
+                            void (*callback_function)(void *, size_t),
+                            void (*logger_function)(const char *));
 
 #endif // __cplusplus
 

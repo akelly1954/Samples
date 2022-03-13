@@ -1,5 +1,5 @@
 /*
- * From kernel.org/doc/html/v4.11/media/uapi/v4l/capture.c.html 3-10-2022
+ * Adapted from kernel.org/doc/html/v4.11/media/uapi/v4l/capture.c.html 3-10-2022
  */
 
 /*
@@ -39,7 +39,7 @@ static int              out_buf = 1;   // This is now the default ("-o" flag).
 static int              force_format = 0;
 static int              frame_count = 70;
 static void             (*v4l2capture_callback_function)(void *, size_t) = NULL;
-static void 			(*v4l2capture_logger_function)(const char *) = NULL;
+static void             (*v4l2capture_logger_function)(const char *) = NULL;
 
 void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)) // can be NULL
 {
@@ -596,8 +596,8 @@ long_options[] = {
 
 /* called directly by the C++ main() */
 int v4l2_raw_capture_main(int argc, char *argv[],
-		void (*callback_function)(void *, size_t),	// call with each ready buffer
-		void (*logger_function)(const char *))		// logging facility
+        void (*callback_function)(void *, size_t),    // call with each ready buffer
+        void (*logger_function)(const char *))        // logging facility
 {
         dev_name = "/dev/video0";
 

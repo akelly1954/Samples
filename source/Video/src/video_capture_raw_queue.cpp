@@ -50,34 +50,34 @@ bool video_capture_queue::s_terminated = false;
 std::mutex video_capture_queue::s_vector_mutex;
 Util::condition_data<int> video_capture_queue::s_condvar(0);
 Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>>
-																			video_capture_queue::s_ringbuf(100);
+                                                                            video_capture_queue::s_ringbuf(100);
 
 void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
 {
 
-	while (!video_capture_queue::s_terminated)
-	{
-		video_capture_queue::s_condvar.wait_for_ready();
+    while (!video_capture_queue::s_terminated)
+    {
+        video_capture_queue::s_condvar.wait_for_ready();
 
-		while (!video_capture_queue::s_terminated && !video_capture_queue::s_ringbuf.empty())
-		{
-			auto sp_frame = video_capture_queue::s_ringbuf.get();
-			logger.debug() << "From queue: Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
-		}
-	}
+        while (!video_capture_queue::s_terminated && !video_capture_queue::s_ringbuf.empty())
+        {
+            auto sp_frame = video_capture_queue::s_ringbuf.get();
+            logger.debug() << "From queue: Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
+        }
+    }
 
-	logger.debug() << "Queue thread terminating ...";
+    logger.debug() << "Queue thread terminating ...";
 
-	// terminating: clear out the circular buffer queue
-	while (!video_capture_queue::s_ringbuf.empty())
-	{
-		auto sp_frame = video_capture_queue::s_ringbuf.get();
-		logger.debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
-	}
+    // terminating: clear out the circular buffer queue
+    while (!video_capture_queue::s_ringbuf.empty())
+    {
+        auto sp_frame = video_capture_queue::s_ringbuf.get();
+        logger.debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
+    }
 }
 
 void video_capture_queue::set_terminated(bool t)
 {
-	video_capture_queue::s_terminated = t;
+    video_capture_queue::s_terminated = t;
 }
 
