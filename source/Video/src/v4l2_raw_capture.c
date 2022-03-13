@@ -46,6 +46,18 @@ void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)
     if (callback_function != NULL)  v4l2capture_callback_function = callback_function;
 }
 
+/*
+ * Use the LOGGER(x) macro like this:
+ *  {
+ *         char sbuf[128];
+ *         snprintf(sbuf, sizeof(sbuf), "Got frame with %ld bytes", buf.bytesused);
+ *         LOGGER(sbuf);
+ *  }
+ *
+ *  Don't add newlines at the end of the string.  The logger does that for you.
+ */
+#define LOGGER(x) if (v4l2capture_logger_function != NULL) { v4l2capture_logger_function(x); } else { ; }
+
 void v4l2capture_set_logger_function(void (*logger_function)(const char *)) // can be NULL
 {
     if (logger_function != NULL)  v4l2capture_logger_function = logger_function;
@@ -53,8 +65,13 @@ void v4l2capture_set_logger_function(void (*logger_function)(const char *)) // c
 
 void v4l2capture_errno_exit(const char *s)
 {
-        fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
-        exit(EXIT_FAILURE);
+    {
+        char sbuf[256];
+        snprintf(sbuf, sizeof(sbuf), "%s error %d, %s", s, errno, strerror(errno));
+        LOGGER(sbuf);
+    }
+
+    exit(EXIT_FAILURE);
 }
 
 int v4l2capture_xioctl(int fh, int request, void *arg)
@@ -73,13 +90,8 @@ void v4l2capture_process_image(void *p, int size)
     // repurpose the -o flag to use callback instead of fwrite
     if (out_buf)
     {
-        /* fwrite(p, size, 1, stdout); */
         if (v4l2capture_callback_function != NULL) v4l2capture_callback_function(p, size);
     }
-
-    // fflush(stderr);
-    // fprintf(stderr, ".");
-    // fflush(stdout);
 }
 
 int v4l2capture_read_frame(void)
@@ -202,7 +214,7 @@ void v4l2capture_mainloop(void)
                         }
 
                         if (0 == r) {
-                                fprintf(stderr, "select timeout\n");
+                                LOGGER("select timeout")
                                 exit(EXIT_FAILURE);
                         }
 
@@ -308,7 +320,7 @@ void v4l2capture_init_read(unsigned int buffer_size)
         buffers = calloc(1, sizeof(*buffers));
 
         if (!buffers) {
-                fprintf(stderr, "Out of memory\n");
+                LOGGER("Out of memory");
                 exit(EXIT_FAILURE);
         }
 
@@ -316,7 +328,7 @@ void v4l2capture_init_read(unsigned int buffer_size)
         buffers[0].start = malloc(buffer_size);
 
         if (!buffers[0].start) {
-                fprintf(stderr, "Out of memory\n");
+                LOGGER("Out of memory");
                 exit(EXIT_FAILURE);
         }
 }
@@ -332,26 +344,32 @@ void v4l2capture_init_mmap(void)
         req.memory = V4L2_MEMORY_MMAP;
 
         if (-1 == v4l2capture_xioctl(fd, VIDIOC_REQBUFS, &req)) {
-                if (EINVAL == errno) {
-                        fprintf(stderr, "%s does not support "
-                                 "memory mappingn", dev_name);
-                        exit(EXIT_FAILURE);
-                } else {
-                        v4l2capture_errno_exit("VIDIOC_REQBUFS");
+            if (EINVAL == errno) {
+                {
+                    char sbuf[256];
+                    snprintf(sbuf, sizeof(sbuf), "%s does not support memory mapping", dev_name);
+                    LOGGER(sbuf);
                 }
+                exit(EXIT_FAILURE);
+            } else {
+                v4l2capture_errno_exit("VIDIOC_REQBUFS");
+            }
         }
 
         if (req.count < 2) {
-                fprintf(stderr, "Insufficient buffer memory on %s\n",
-                         dev_name);
-                exit(EXIT_FAILURE);
+            {
+                char sbuf[256];
+                snprintf(sbuf, sizeof(sbuf), "Insufficient buffer memory on %s", dev_name);
+                LOGGER(sbuf);
+            }
+            exit(EXIT_FAILURE);
         }
 
         buffers = calloc(req.count, sizeof(*buffers));
 
         if (!buffers) {
-                fprintf(stderr, "Out of memory\n");
-                exit(EXIT_FAILURE);
+            LOGGER("Out of memory");
+            exit(EXIT_FAILURE);
         }
 
         for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
@@ -390,19 +408,22 @@ void v4l2capture_init_userp(unsigned int buffer_size)
         req.memory = V4L2_MEMORY_USERPTR;
 
         if (-1 == v4l2capture_xioctl(fd, VIDIOC_REQBUFS, &req)) {
-                if (EINVAL == errno) {
-                        fprintf(stderr, "%s does not support "
-                                 "user pointer i/on", dev_name);
-                        exit(EXIT_FAILURE);
-                } else {
-                        v4l2capture_errno_exit("VIDIOC_REQBUFS");
+            if (EINVAL == errno) {
+                {
+                    char sbuf[256];
+                    snprintf(sbuf, sizeof(sbuf), "%s does not support user pointer i/o", dev_name);
+                    LOGGER(sbuf);
                 }
+                exit(EXIT_FAILURE);
+            } else {
+                v4l2capture_errno_exit("VIDIOC_REQBUFS");
+            }
         }
 
         buffers = calloc(4, sizeof(*buffers));
 
         if (!buffers) {
-                fprintf(stderr, "Out of memory\n");
+                LOGGER("Out of memory");
                 exit(EXIT_FAILURE);
         }
 
@@ -411,7 +432,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
                 buffers[n_buffers].start = malloc(buffer_size);
 
                 if (!buffers[n_buffers].start) {
-                        fprintf(stderr, "Out of memory\n");
+                        LOGGER("Out of memory");
                         exit(EXIT_FAILURE);
                 }
         }
@@ -426,36 +447,48 @@ void v4l2capture_init_device(void)
         unsigned int min;
 
         if (-1 == v4l2capture_xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
-                if (EINVAL == errno) {
-                        fprintf(stderr, "%s is no V4L2 device\n",
-                                 dev_name);
-                        exit(EXIT_FAILURE);
-                } else {
-                        v4l2capture_errno_exit("VIDIOC_QUERYCAP");
+            if (EINVAL == errno) {
+                {
+                    char sbuf[256];
+                    snprintf(sbuf, sizeof(sbuf), "%s is no V4L2 device", dev_name);
+                    LOGGER(sbuf);
                 }
+                exit(EXIT_FAILURE);
+            } else {
+                v4l2capture_errno_exit("VIDIOC_QUERYCAP");
+            }
         }
 
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-                fprintf(stderr, "%s is no video capture device\n",
-                         dev_name);
-                exit(EXIT_FAILURE);
+            {
+                char sbuf[256];
+                snprintf(sbuf, sizeof(sbuf), "%s is no capture device", dev_name);
+                LOGGER(sbuf);
+            }
+            exit(EXIT_FAILURE);
         }
 
         switch (io) {
         case IO_METHOD_READ:
                 if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-                        fprintf(stderr, "%s does not support read i/o\n",
-                                 dev_name);
-                        exit(EXIT_FAILURE);
+                    {
+                        char sbuf[256];
+                        snprintf(sbuf, sizeof(sbuf), "%s does not support read i/o", dev_name);
+                        LOGGER(sbuf);
+                    }
+                    exit(EXIT_FAILURE);
                 }
                 break;
 
         case IO_METHOD_MMAP:
         case IO_METHOD_USERPTR:
                 if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-                        fprintf(stderr, "%s does not support streaming i/o\n",
-                                 dev_name);
-                        exit(EXIT_FAILURE);
+                    {
+                        char sbuf[256];
+                        snprintf(sbuf, sizeof(sbuf), "%s does not support streaming i/o", dev_name);
+                        LOGGER(sbuf);
+                    }
+                    exit(EXIT_FAILURE);
                 }
                 break;
         }
@@ -548,7 +581,7 @@ void v4l2capture_open_device(void)
         }
 
         if (!S_ISCHR(st.st_mode)) {
-                fprintf(stderr, "%s is no devicen", dev_name);
+                fprintf(stderr, "%s is no device\n", dev_name);
                 exit(EXIT_FAILURE);
         }
 
@@ -620,7 +653,7 @@ int v4l2_raw_capture_main(int argc, char *argv[],
                         break;
 
                 case 'h':
-                        v4l2capture_usage(stdout, argc, argv);
+                        v4l2capture_usage(stderr, argc, argv);
                         exit(EXIT_SUCCESS);
 
                 case 'm':
@@ -656,6 +689,7 @@ int v4l2_raw_capture_main(int argc, char *argv[],
                 }
         }
 
+        // The first two function calls have to happen first.
         v4l2capture_set_logger_function(logger_function); // Can be NULL if no callback
         v4l2capture_set_callback_function(callback_function); // Can be NULL if no callback
         v4l2capture_open_device();
@@ -665,7 +699,6 @@ int v4l2_raw_capture_main(int argc, char *argv[],
         v4l2capture_stop_capturing();
         v4l2capture_uninit_device();
         v4l2capture_close_device();
-        fprintf(stderr, "\n");
         return 0;
 }
 

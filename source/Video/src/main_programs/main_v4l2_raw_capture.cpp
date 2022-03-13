@@ -106,7 +106,7 @@ void (*callback_function)(void *, size_t) = v4l2capture_callback;
 int main(int argc, char *argv[])
 {
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, loglevel, logFilelName, Util::Utility::enableConsole, Util::Utility::enableLogFile);
+    Util::Utility::initializeLogManager(configList, loglevel, logFilelName, Util::Utility::disableConsole, Util::Utility::enableLogFile);
     Util::Utility::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName.c_str());
 
