@@ -29,6 +29,7 @@
 #include <video_capture_raw_queue.hpp>
 #include <v4l2_raw_capture.h>
 #include <Utility.hpp>
+#include <commandline.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
@@ -37,12 +38,16 @@
 
 std::string logChannelName = "v4l2_raw_capture";
 std::string logFilelName = logChannelName + "_log.txt";
+std::string output_file = logChannelName + ".data";  // Name of file intended for the video frames
 Log::Log::Level loglevel = Log::Log::Level::eDebug;
+std::string default_log_level = "debug";
+std::string log_level = default_log_level;
 
-/////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+// Interface to C language functions section
+//////////////////////////////////////////////////////////////////////////////////
+
 // Set up logging facility (for the C code) roughly equivalent to std::cerr...
-/////////////////////////////////////////////////////////////////////////////
-
 // Filthy code but I have to deal with C.
 Log::Logger *global_logger = NULL;
 
@@ -66,10 +71,8 @@ void v4l2capture_logger(const char *logmessage)
 
 void (*logger_function)(const char *logmessage) = v4l2capture_logger;
 
-/////////////////////////////////////////////////////////////////////////////
 // Setup of the callback function (from the C code).
-// Called back for every buffer that becomes available available.
-/////////////////////////////////////////////////////////////////////////////
+// Called back for every buffer that becomes available.
 #ifdef __cplusplus
     extern "C" void v4l2capture_callback(void *p, size_t size);
 #else
@@ -103,8 +106,124 @@ void v4l2capture_callback(void *p, size_t bsize)
 
 void (*callback_function)(void *, size_t) = v4l2capture_callback;
 
+//////////////////////////////////////////////////////////////////////////////////
+// Command line parsing section
+//////////////////////////////////////////////////////////////////////////////////
+
+void Usage(std::ostream &strm, std::string command)
+{
+    strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
+    strm << "Or:       " << command
+            << "\n"
+            << "              [ -fn file-name ]         The name of the file which will be created to hold\n"
+            << "                                        image frames. If it exists, the file will be truncated.\n"
+            << "                                        (The default name is \"" << output_file << "\")\n"
+            << "              [ -lg log-level ]         Can be one of: {\"debug\", \"info\", \"notice\", \"warning\",\n"
+            << "                                        \"error\", \"critical\"}. (The default is \"notice\")\n"
+            << "\n"
+            << std::endl;
+}
+
+bool parse(std::ostream &strm, int argc, char *argv[])
+{
+    using namespace Util;
+
+    const std::map<std::string, std::string> cmdmap = Util::getCLMap(argc, argv);
+    std::map<std::string, bool> specified;
+
+    // for debugging:
+    // int index = 0;
+    // strm << "Command map:" << std::endl;
+    // std::for_each(cmdmap.begin(), cmdmap.end(), [&strm, &index](auto member)
+    // {
+    //     strm << "cmdmap[" << index++ << "]: first=" << member.first << " second=" << member.second << std::endl;
+    // });
+
+    bool ret1 = true;
+    auto it = cmdmap.find("-fn");
+    if (it != cmdmap.end())
+    {
+        // if the flag were specified, it has to be valid
+        std::string sarg;
+        if (Util::getArg(cmdmap, "-fn", sarg) && sarg == "")
+        {
+            strm << "\nCommand line error: " << it->first << " flag is missing its parameter\n" << std::endl;
+            ret1 = false;
+        }
+        else
+        {
+            ret1 = true;
+            output_file = sarg;
+        }
+    }
+
+    bool ret2 = true;
+    it = cmdmap.find("-lg");
+    if (it != cmdmap.end())
+    {
+        // if the flag were specified, it has to be valid
+        std::string sarg;
+        if (Util::getArg(cmdmap, "-lg", sarg) && sarg == "")
+        {
+            strm << "\nCommand line error: " << it->first << " flag is missing its parameter\n" << std::endl;
+            ret2 = false;
+        }
+        else
+        {
+            ret2 = true;
+            log_level = sarg;
+        }
+    }
+
+    if (!ret1 || !ret2 ) return false;
+
+    // Check out specified log level
+    if (log_level == "debug") loglevel = Log::Log::eDebug;
+    else if (log_level == "info") loglevel = Log::Log::eInfo;
+    else if (log_level == "notice") loglevel = Log::Log::eNotice;
+    else if (log_level == "warning") loglevel = Log::Log::eWarning;
+    else if (log_level == "error") loglevel = Log::Log::eError;
+    else if (log_level == "critical") loglevel = Log::Log::eCritic;
+    else
+    {
+        std::cerr << "\nIncorrect use of the \"-lg\" flag." << std::endl;
+        return false;
+    }
+    return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+// Main program
+//////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char *argv[])
 {
+    /////////////////
+    // Parse the command line
+    /////////////////
+
+    std::string argv0 = const_cast<const char*>(argv[0]);
+
+    // If no parameters were supplied, or help was requested:
+    if (argc > 1 && (std::string(const_cast<const char*>(argv[1])) == "--help"
+                    || std::string(const_cast<const char*>(argv[1])) == "-h"
+                    || std::string(const_cast<const char*>(argv[1])) == "help")
+            )
+    {
+        Usage(std::cerr, argv0);
+        return 0;
+    }
+
+    if (! parse(std::cerr, argc, argv))
+    {
+        Usage(std::cerr, argv0);
+        return 1;
+    }
+
+    /////////////////
+    // Set up the logger
+    /////////////////
+
     Log::Config::Vector configList;
     Util::Utility::initializeLogManager(configList, loglevel, logFilelName, Util::Utility::disableConsole, Util::Utility::enableLogFile);
     Util::Utility::configureLogManager( configList, logChannelName );
@@ -112,6 +231,14 @@ int main(int argc, char *argv[])
 
     // Setup of the logger callback function (from the C code).
     global_logger = &logger;
+
+    std::cerr << "Log level is: " << log_level << std::endl;
+    std::cerr << "Ouput file: " << output_file << std::endl;
+
+
+    /////////////////
+    // Finally, get to work
+    /////////////////
 
     std::thread queuethread;
     int ret = 0;
@@ -122,7 +249,10 @@ int main(int argc, char *argv[])
         queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, logger);
 
         // This is the C based code close to the hardware
-        ret = ::v4l2_raw_capture_main(argc, argv, callback_function, logger_function);
+        // The option desired here is the "-o" flag which is set in the C code already.
+        // So -- no parameters (this can change if we need them).
+        char *fakeargv[] = { const_cast<char *>(logChannelName.c_str()), NULL };  // Used to convey the name of the program
+        ret = ::v4l2_raw_capture_main(0, fakeargv, callback_function, logger_function);
 
         // Inform the queue handler thread that the party is over...
         VideoCapture::video_capture_queue::set_terminated(true);

@@ -634,7 +634,12 @@ int v4l2_raw_capture_main(int argc, char *argv[],
 {
         dev_name = "/dev/video0";
 
-        for (;;) {
+        // NOTE:
+        // this is being called with argc = 0.  The out_buf variable
+        // is already set to 1, and io is set to IO_METHOD_MMAP.
+        // The argv[0] string this function is called with is set to
+        // the program name (not necessarily the executable name).
+        if (argc != 0) for (;;) {
                 int idx;
                 int c;
 

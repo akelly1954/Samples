@@ -36,12 +36,31 @@ std::map<std::string,std::string> Util::getCLMap(int argc, char *argv[])
         if (i >= argc) break;
 
         std::string currentArg = const_cast<const char *>(argv[i]);
-        if (currentArg[0] == '-' && currentArg.length() == 3)
+
+        if (currentArg.length() == 0) continue;  // ignore weird empty strings
+        else if (currentArg[0] == '-' && currentArg.length() == 3)
         {
             // This is a new flag
             if (i < argc-1)
             {
-                cmdmap[currentArg] = const_cast<const char *>(argv[++i]);
+                std::string nextarg = const_cast<const char *>(argv[i+1]);
+                if (nextarg.length() != 3 || nextarg[0] != '-')   // Is the next arg another flag?
+                {
+                    cmdmap[currentArg] = nextarg;
+                    i++;
+                }
+                else
+                {
+                    // This is a flag with no parameter
+                    cmdmap[currentArg] = "";  // i is not incremented because no parameter there.
+                }
+            }
+            else
+            {
+                // This is a flag at the last parameter on the command line.
+                // There is no parameter
+                cmdmap[currentArg] = "";
+                break;
             }
         }
         i++;
@@ -53,10 +72,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = static_cast<unsigned short>(strtoul(it->second.c_str(), NULL, 10) & 0xFFFF);
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = static_cast<unsigned short>(strtoul(it->second.c_str(), NULL, 10) & 0xFFFF);
+        }
     }
     return ret;
 }
@@ -65,10 +87,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = strtol(it->second.c_str(), NULL, 10);
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = strtol(it->second.c_str(), NULL, 10);
+        }
     }
     return ret;
 }
@@ -77,10 +102,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = strtol(it->second.c_str(), NULL, 10);
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = strtol(it->second.c_str(), NULL, 10);
+        }
     }
     return ret;
 }
@@ -89,10 +117,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = strtoll(it->second.c_str(), NULL, 10);
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = strtoll(it->second.c_str(), NULL, 10);
+        }
     }
     return ret;
 }
@@ -101,10 +132,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = it->second;
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = it->second;
+        }
     }
     return ret;
 }
@@ -113,10 +147,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = strtof(it->second.c_str(), NULL);
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = strtof(it->second.c_str(), NULL);
+        }
     }
     return ret;
 }
@@ -125,10 +162,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = strtod(it->second.c_str(), NULL);
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = strtod(it->second.c_str(), NULL);
+        }
     }
     return ret;
 }
@@ -137,10 +177,13 @@ bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string f
 {
     bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end() && it->second.length() > 0)
+    if (it != cmdmap.end())
     {
-        var = strtold(it->second.c_str(), NULL);
         ret = true;
+        if (it->second.length() > 0)
+        {
+            var = strtold(it->second.c_str(), NULL);
+        }
     }
     return ret;
 }

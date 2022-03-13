@@ -69,7 +69,7 @@ void Utility::initializeLogManager( Log::Config::Vector& configList,
         Log::Config::setOption(configList, "filename",          logfilename.c_str());
         std::string oldlogfilename = std::string("old.")+logfilename;
         Log::Config::setOption(configList, "filename_old",  	oldlogfilename.c_str());
-        std::cerr << "Log output can be found in " << logfilename.c_str() << std::endl;
+        std::cerr << "Log file: " << logfilename.c_str() << std::endl;
     }
 
     Log::Config::setOption(configList, "max_startup_size",  "0");
