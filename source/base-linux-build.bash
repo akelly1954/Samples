@@ -183,6 +183,7 @@ fi
 
 echo "Set LD_LIBRARY_PATH to where the all .so files are, as well as . and export it..." \
      > ${bldpath}/localrun/REMEMBER_TO_SET_LD_LIBRARY_PATH.txt
+chmod 444 ${bldpath}/localrun/REMEMBER_TO_SET_LD_LIBRARY_PATH.txt
 
 exit 0
 

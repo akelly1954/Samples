@@ -124,10 +124,11 @@ int main(int argc, char *argv[])
         // This is the C based code close to the hardware
         ret = ::v4l2_raw_capture_main(argc, argv, callback_function, logger_function);
 
-        // Make sure the ring buffer gets emptied
-        VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
-
+        // Inform the queue handler thread that the party is over...
         VideoCapture::video_capture_queue::set_terminated(true);
+
+       // Make sure the ring buffer gets emptied
+        VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
     }
     catch (std::exception &exp)
     {
