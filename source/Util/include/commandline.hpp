@@ -97,6 +97,107 @@ namespace Util {
 
 std::map<std::string,std::string> getCLMap(int argc, char *argv[]);
 
+// Generic template function definition.
+// See the specialized versions below.
+template <typename T>
+bool get_param_value(std::string data, T& var)
+{
+    if (data.length() == 0) return false;
+    var = data;
+    return true;
+}
+
+template <>
+bool get_param_value<unsigned short>(std::string data, unsigned short& var)
+{
+    if (data.length() == 0) return false;
+    var = static_cast<unsigned short>(strtoul(data.c_str(), NULL, 10) & 0xFFFF);
+    return true;
+}
+
+template <>
+bool get_param_value<int>(std::string data, int& var)
+{
+    if (data.length() == 0) return false;
+    var = static_cast<unsigned short>(strtol(data.c_str(), NULL, 10));
+    return true;
+}
+
+template <>
+bool get_param_value<long>(std::string data, long& var)
+{
+    if (data.length() == 0) return false;
+    var = static_cast<unsigned short>(strtol(data.c_str(), NULL, 10));
+    return true;
+}
+
+template <>
+bool get_param_value<long long>(std::string data, long long& var)
+{
+    if (data.length() == 0) return false;
+    var = static_cast<unsigned short>(strtoll(data.c_str(), NULL, 10));
+    return true;
+}
+
+template <>
+bool get_param_value<std::string>(std::string data, std::string& var)
+{
+    if (data.length() == 0) return false;
+    var = data;
+    return true;
+}
+
+template <>
+bool get_param_value<float>(std::string data, float& var)
+{
+    if (data.length() == 0) return false;
+    var = strtof(data.c_str(), NULL);
+    return true;
+}
+
+template <>
+bool get_param_value<double>(std::string data, double& var)
+{
+    if (data.length() == 0) return false;
+    var = strtod(data.c_str(), NULL);
+    return true;
+}
+
+template <>
+bool get_param_value<long double>(std::string data, long double& var)
+{
+    if (data.length() == 0) return false;
+    var = strtold(data.c_str(), NULL);
+    return true;
+}
+
+// Generic template function definition.
+// There are no specialized versions at this time, because of the use of get_param_value<T>().
+template <typename T>
+bool get_template_arg(const std::map<std::string,std::string>& cmdmap, std::string flag, T& var)
+{
+    bool ret = false;
+    auto it = cmdmap.find(flag);
+    if (it != cmdmap.end())
+    {
+        bool gret = false;
+        ret = true;
+        if (it->second.length() > 0)
+        {
+            gret = Util::get_param_value<T>(it->second, var);
+        }
+    }
+    // TODO: Create enum for return value instead of bool (see gret in this function)
+    return ret;
+}
+
+// Convenience overloaded functions meant for the delicate user who
+// does not wish to deal with templates? Truth is - keeping these around
+// for backward compatibility.
+//
+// TODO: These functions work fine as intended at the time. Newer programs might use the
+// template functions above which will provide more information on their return.
+//
 bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var);
 bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var);
 bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var);
