@@ -56,7 +56,6 @@ void Usage(std::string command)
                  "                  -fd DoubleParam \n" <<
                  "                  -fl LongDoubleParam \n" <<
                  "                  -st StringParam \n" <<
-                 "(all params are optional, although that's not useful...)" <<
                  std::endl;
 }
 

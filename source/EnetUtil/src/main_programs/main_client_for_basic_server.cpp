@@ -61,6 +61,7 @@ std::string input_filename = ""; // This has to be specified on the command line
 
 std::string default_log_level = "notice";
 std::string log_level = default_log_level;
+Log::Log::Level loglevel = Log::Log::eNotice;
 
 // fixed size of the std::array<> used for the data
 const int server_buffer_size = NtwkUtilBufferSize;
@@ -87,32 +88,17 @@ void Usage(std::ostream &strm, std::string command)
 			<< std::endl;
 }
 
-bool parse(int argc, char *argv[])
-{
-	using namespace Util;
-	const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv);
-	std::map<std::string, bool> specified;
+// See the end of this source file for this function
+bool parse(std::ostream &strm, int argc, char *argv[]);
 
-	specified["-ip"] = getArg(cmdmap, "-ip", connection_ip);
-	specified["-pn"] = getArg(cmdmap, "-pn", connection_port_number);
-	specified["-fn"] = getArg(cmdmap, "-fn", input_filename);
-	specified["-lg"] = getArg(cmdmap, "-lg", log_level);
-
-	bool ret = false; // Currently all flags have default values, except for -fn filename.
-	std::for_each(specified.begin(), specified.end(), [&ret](auto member)
-	{	if (member.second)
-		{	ret = true;}});
-	return ret;
-}
-
-bool check_input_file(std::string input_filename, struct stat *sb, size_t & numbytesinfile)
+bool check_input_file(std::ostream &strm, std::string input_filename, struct stat *sb, size_t & numbytesinfile)
 {
 	int errnocopy = 0;
 
 	if (stat(input_filename.c_str(), sb) == -1)
 	{
 		errnocopy = errno;
-		std::cerr << "\nCannot perform stat() on input file \"" << input_filename << "\": "
+		strm << "\nCannot perform stat() on input file \"" << input_filename << "\": "
 				<< Util::Utility::get_errno_message(errnocopy) << "\n"
 				<< std::endl;
 		return false;
@@ -120,13 +106,13 @@ bool check_input_file(std::string input_filename, struct stat *sb, size_t & numb
 
 	if (! S_ISREG(sb->st_mode))
 	{
-		std::cerr << "\nFile " << input_filename << " is not a regular file.\n" << std::endl;
+		strm << "\nFile " << input_filename << " is not a regular file.\n" << std::endl;
 		return false;
 	}
 
 	if (sb->st_size >= (off_t) 0x7fffffffffffffff)
 	{
-		std::cerr << "\nFile " << input_filename << " is too big. Max size allowed is 2*32-1 (32 bits).\n" << std::endl;
+		strm << "\nFile " << input_filename << " is too big. Max size allowed is 2*32-1 (32 bits).\n" << std::endl;
 		return false;
 	}
 
@@ -152,31 +138,15 @@ int main(int argc, char *argv[])
 			)
 	{
 		Usage(std::cerr, argv0);
+		if (argc > 2)
+		{
+		    std::cerr << "WARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
+		}
 		return 0;
 	}
 
-	bool parseres = parse(argc, argv);
-	if (!parseres)
+	if (!parse(std::cerr, argc, argv))
 	{
-		Usage(std::cerr, argv0);
-		return 1;
-	}
-
-	/////////////////
-	// Check out specified log level
-	/////////////////
-
-    Log::Log::Level loglevel = Log::Log::eNotice;
-
-	if (log_level == "debug") loglevel = Log::Log::eDebug;
-	else if (log_level == "info") loglevel = Log::Log::eInfo;
-	else if (log_level == "notice") loglevel = Log::Log::eNotice;
-	else if (log_level == "warning") loglevel = Log::Log::eWarning;
-	else if (log_level == "error") loglevel = Log::Log::eError;
-	else if (log_level == "critical") loglevel = Log::Log::eCritic;
-	else
-	{
-		std::cerr << "\nIncorrect use of the \"-lg\" flag." << std::endl;
 		Usage(std::cerr, argv0);
 		return 1;
 	}
@@ -189,18 +159,12 @@ int main(int argc, char *argv[])
 	// want to set up the logger, or open up a network connection before exiting.
 	int errnocopy = 0;
 	FILE *input_stream = NULL;
-	if (input_filename.empty())
-	{
-		std::cerr << "\nError: the \"-fn\" flag is missing. Specifying input file name with the -fn flag is mandatory." << std::endl;
-		Usage(std::cerr, argv0);
-		return 1;
-	}
 
 	// to get the file size
 	struct stat sb;
 	size_t numbytesinfile = 0;
 
-	if (! check_input_file(input_filename, &sb, numbytesinfile))
+	if (! check_input_file(std::cerr, input_filename, &sb, numbytesinfile))
 	{
 		// The check_input_file function writes all errors to std::cerr
 		Usage(std::cerr, argv0);
@@ -235,11 +199,11 @@ int main(int argc, char *argv[])
 	if (connection_ip.empty() || connection_ip == "INADDR_ANY")
 	{
 		connection_ip = "";
-		// logger.debug() << "    Client connecting to ip: INADDR_ANY:" << connection_port_number;
+		logger.debug() << "    Client connecting to ip: INADDR_ANY:" << connection_port_number;
 	}
 	else
 	{
-		// logger.debug() << "    Client connecting to ip: " << connection_ip << ":" << connection_port_number;
+		logger.debug() << "    Client connecting to ip: " << connection_ip << ":" << connection_port_number;
 	}
 
 	struct ::sockaddr_in sin_addr;
@@ -353,6 +317,93 @@ int main(int argc, char *argv[])
 	Log::Manager::terminate();
 
 	return ret;
+}
+
+bool parse(std::ostream &strm, int argc, char *argv[])
+{
+    using namespace Util;
+    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv);
+
+    switch(getArg(cmdmap, "-ip", connection_ip))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // for debugging:  strm << "-ip flag not provided. Using default " << connection_ip << std::endl;
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:  strm << "-ip flag provided. Using " << connection_ip << std::endl;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-ip\" flag is missing its parameter." << std::endl;
+            return false;
+        default:
+            assert (argc == -666);   // will cause abnormal termination
+    }
+
+    switch(getArg(cmdmap, "-pn", connection_port_number))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // for debugging:  strm << "-pn flag not provided. Using default " << connection_port_number << std::endl;
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:  strm << "-pn flag provided. Using " << connection_port_number << std::endl;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-pn\" flag is missing its parameter." << std::endl;
+            return false;
+        default:
+            assert (argc == -667);   // Bug encountered. Will cause abnormal termination
+    }
+
+    // this flag (-fn) and an existing readable regular file name are MANDATORY
+    switch(getArg(cmdmap, "-fn", input_filename))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            strm << "ERROR: the \"-fn\" flag is missing. Specifying input file name with the -fn flag is mandatory." << std::endl;
+            return false;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:  strm << "-fn flag provided. Using " << input_filename << std::endl;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-fn\" flag is missing its parameter." << std::endl;
+            return false;
+        default:
+            assert (argc == -668);   // Bug encountered. Will cause abnormal termination
+    }
+
+    switch(getArg(cmdmap, "-lg", log_level))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // for debugging:  strm << "-lg flag not provided. Using default " << log_level << std::endl;
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:  strm << "-lg flag provided. Using " << log_level << std::endl;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-lg\" flag is missing its parameter." << std::endl;
+            return false;
+        default:
+            assert (argc == -669);   // Bug encountered. Will cause abnormal termination
+    }
+
+    getArg(cmdmap, "-lg", log_level);
+
+    /////////////////
+    // Check out specified log level
+    /////////////////
+
+    if (log_level == "debug") loglevel = Log::Log::eDebug;
+    else if (log_level == "info") loglevel = Log::Log::eInfo;
+    else if (log_level == "notice") loglevel = Log::Log::eNotice;
+    else if (log_level == "warning") loglevel = Log::Log::eWarning;
+    else if (log_level == "error") loglevel = Log::Log::eError;
+    else if (log_level == "critical") loglevel = Log::Log::eCritic;
+    else
+    {
+        strm << "ERROR: Incorrect use of the \"-lg\" flag." << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 #ifdef SAMPLE_RUN

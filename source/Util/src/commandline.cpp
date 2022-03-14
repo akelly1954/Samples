@@ -69,42 +69,42 @@ std::map<std::string,std::string> Util::getCLMap(int argc, char *argv[])
 }
 
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, std::string& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, std::string& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, float& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, float& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, double& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, double& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-bool Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long double& var)
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long double& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }

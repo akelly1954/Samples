@@ -39,63 +39,73 @@ namespace Util {
 // 
 // Command line parsing:
 // 
-// In your main(), call getCLMap() with the command line parameters (arc, argv).
+// In your your code, call getCLMap() with the command line parameters (arc, argv).
 // The function will return a std::map<string,string>, organized by flags.
 // 
 // By definition, a flag is made up of three characters: A dash ('-') followed by two letters.
 // This is not negotiable at this point.
 // 
-// Say a command line looks like this:      "program -f1 param2 -f2 -f3 param3"
+// What follows is a code snippet taken from main_client_for_basic_server.cpp, showing how to
+// get information about the command line.  The two cases covered are: a mandatory flag case,
+// followed by an optional flag that has a default:
 // 
-// Each pair of map members have:  it->first (std::string) which has the flag, say "-f3",
-// and it->second (std::string), which has the value of the parameter for the flag ("param3"), or an
-// empty string.
+// FIRST CASE:
+//
+// cmdmap is the std::map<std::string, std::sting> object returned by getCLMap().
+// input_filename is an std::string which will get the specified file name.
 // 
-// The empty string could be the result of no paramter having been provided, or because the
-// empty string was specified as a parameter ("").
+// this flag (-fn) and an existing readable regular file name are MANDATORY
+// switch(getArg(cmdmap, "-fn", input_filename))
+// {
+//   case Util::ParameterStatus::FlagNotProvided:
+//         strm << "ERROR: the \"-fn\" flag is missing. Specifying input file name with the -fn flag is mandatory." << std::endl;
+//         return false;
+//     case Util::ParameterStatus::FlagPresentParameterPresent:
+//         strm << "-fn flag provided. Using " << input_filename << std::endl;
+//         break;
+//     case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+//         strm << "ERROR: -fn flag is missing its parameter." << std::endl;
+//         return false;
+//     default:
+//         assert (argc == -668);   // Bug encountered. Will cause abnormal termination
+// }
+//
+// SECOND CASE:
+//
+// cmdmap is the std::map<std::string, std::sting> object returned by getCLMap().
+// connection_port_number is a uint16_t (unsigned short) which will be assigned the port number
+// from the command line if it is specified. (unsigned short is the type for port numbers used in
+// system calls and ioctl calls used by IPV4 in linux). It holds the default port number, and that
+// will persist if the -pn parameter is not specified on the command line.
 // 
-// Try not to use the ::operator[] functionality of std::map. Using this type of construct,
-// (*it)["-f1"], will create an empty instance of this flag in the map, with an empty parameter
-// string.  Use the various ::find() functions instead.
+// switch(getArg(cmdmap, "-pn", connection_port_number))
+// {
+//     case Util::ParameterStatus::FlagNotProvided:
+//         strm << "-pn flag not provided. Using default " << connection_port_number << std::endl;
+//         break;
+//     case Util::ParameterStatus::FlagPresentParameterPresent:
+//         strm << "-pn flag provided. Using " << connection_port_number << std::endl;
+//         break;
+//     case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+//         strm << "ERROR: -pn flag is missing its parameter." << std::endl;
+//         return false;
+//     default:
+//         assert (argc == -667);   // Bug encountered. Will cause abnormal termination
+// }
+//
+// This manner of dealing with the command line is VERY verbose.  However it is also VERY clear and
+// straight forward.  MHO.
 // 
-// The overloaded getArg() functions, below, will return true or false depending on whether
-// a specific flag is present on the command line, and will convert the parameter, if it
-// exists, to the correct type (int, short, long long, double, etc etc).  It returns true
-// regardless of whether the paramter to the flag existed, and will assign the value of the
-// parameter if and only if the flag in question had a parameter on the command line.
-// 
-// So, for example, for the command line above, after getting the std::map using getCLMap(),
-// use getArg() like this for "-f2":
-// 
-//     int defaultParam2 = 33;
-//     int cmdlineParam2 = defaultParam2;
-// 
-//     // cmdmap is the std::map<std::string, std::sting> object returned by getCLMap().
-//     if (getArg(cmdmap, "-f2", cmdlineParam2) == true)
-//     {
-//         // The "-f2" flag was used on the command line
-//         // The cmdlineParam2 value will not be modified unless a command line
-//         // parameter was present.  One way to deal with that is like this:
-//         if (cmdlineParam2 != defaultParam2)
-//         {
-//             // just use the value at this point - maybe print a nice message
-//             // Alternatively, if the parameter is not optional - create an error
-//             // condition here (return value?  exception?)
-//         }
-//     }
-//     else
-//     {
-//         // The "-f2" flag was NOt used on the command line
-//         // At this point, you could just use the default:
-//         cmdlineParam2 = defaultParam2;
-//     }
-// 
-// etc.
-// 
-// The source file in ...Sample/source/Video/src/main_programs/main_v4l2_raw_capture.cpp
-// Contains a good exampele of how to use this mechanism.
 
 std::map<std::string,std::string> getCLMap(int argc, char *argv[]);
+
+// Command line parsing
+enum ParameterStatus
+{
+    FlagNotProvided = 0,                // No flag, and therefore no parameter
+    FlagProvidedWithEmptyParameter,     // Flag is there but empty or no parameter
+    FlagPresentParameterPresent,        // Flag is there, and parameter is there
+};
 
 // Generic template function definition.
 // See the specialized versions below.
@@ -174,21 +184,15 @@ bool get_param_value<long double>(std::string data, long double& var)
 // Generic template function definition.
 // There are no specialized versions at this time, because of the use of get_param_value<T>().
 template <typename T>
-bool get_template_arg(const std::map<std::string,std::string>& cmdmap, std::string flag, T& var)
+Util::ParameterStatus get_template_arg(const std::map<std::string,std::string>& cmdmap, std::string flag, T& var)
 {
-    bool ret = false;
     auto it = cmdmap.find(flag);
-    if (it != cmdmap.end())
-    {
-        bool gret = false;
-        ret = true;
-        if (it->second.length() > 0)
-        {
-            gret = Util::get_param_value<T>(it->second, var);
-        }
-    }
-    // TODO: Create enum for return value instead of bool (see gret in this function)
-    return ret;
+    if (it == cmdmap.end()) return Util::ParameterStatus::FlagNotProvided;
+
+    // Not checking for string length because get_param_value<T>() does.
+    return Util::get_param_value<T>(it->second, var) ?
+            Util::ParameterStatus::FlagPresentParameterPresent :
+            Util::ParameterStatus::FlagProvidedWithEmptyParameter;
 }
 
 // Convenience overloaded functions meant for the delicate user who
@@ -198,14 +202,14 @@ bool get_template_arg(const std::map<std::string,std::string>& cmdmap, std::stri
 // TODO: These functions work fine as intended at the time. Newer programs might use the
 // template functions above which will provide more information on their return.
 //
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var);
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var);
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var);
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var);
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, std::string& var);
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, float& var);
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, double& var);
-bool getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long double& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, std::string& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, float& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, double& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long double& var);
 
 } // namespace Util
 
