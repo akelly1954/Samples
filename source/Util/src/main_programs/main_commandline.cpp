@@ -28,6 +28,10 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 //
+// TODO: enhance this main program to account for changes in the command line structure.
+//
+
+//
 // At the end of the file there is an ifdef'ed section showing how to run
 // this program from the command line.
 //
