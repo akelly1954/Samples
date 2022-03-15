@@ -218,8 +218,7 @@ void socket_connection_thread::start(int accpt_socket, int threadno,
 			// the main thread (right here) before it is used from inside the new thread.
 			std::lock_guard<std::mutex> lock(s_vector_mutex);
 			socket_connection_thread::s_connection_workers.push_back(
-					std::thread(thread_connection_handler, accpt_socket,
-							threadno, logger));
+					std::thread(thread_connection_handler, accpt_socket, threadno, logger));
 		}
 	} catch (std::exception &exp)
 	{

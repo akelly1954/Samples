@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <iostream>
+#include <chrono>
 #include <vector>
 #include <algorithm>
 #include <sys/types.h>
@@ -86,6 +87,12 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string outp
             {
                 size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, output_file, sp_frame);
                 assert (nbytes == sp_frame->num_valid_elements());
+
+                //////////////////////////////////////////////////////////////////////
+                // Used in the code for DEBUG purposes only to simulate a heavy load.
+                // Do not un-comment it lightly.
+                // std::this_thread::sleep_for(std::chrono::milliseconds(40));
+                //////////////////////////////////////////////////////////////////////
             }
         }
     }
@@ -101,6 +108,12 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string outp
         {
             size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, output_file, sp_frame);
             assert (nbytes == sp_frame->num_valid_elements());
+
+            //////////////////////////////////////////////////////////////////////
+            // Used in the code for DEBUG purposes only to simulate a heavy load.
+            // Do not un-comment it lightly.
+            // std::this_thread::sleep_for(std::chrono::milliseconds(40));
+            //////////////////////////////////////////////////////////////////////
         }
     }
     if (video_capture_queue::s_write_frames_to_file && filestream != NULL)

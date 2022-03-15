@@ -27,6 +27,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <video_capture_raw_queue.hpp>
+#include <video_capture_profiler.hpp>
 #include <v4l2_raw_capture.h>
 #include <Utility.hpp>
 #include <commandline.hpp>
@@ -36,6 +37,9 @@
 #include <stdio.h>
 #include <thread>
 
+//////////////////////////////////////////////////////////////////////////////////
+// Static objects
+//////////////////////////////////////////////////////////////////////////////////
 std::string logChannelName = "v4l2_raw_capture";
 std::string logFilelName = logChannelName + "_log.txt";
 
@@ -49,6 +53,9 @@ size_t framecount = 200;
 std::string default_frame_count(std::to_string(framecount));
 std::string frame_count(default_frame_count);
 
+bool profiling_enabled = false;
+
+// See the end of this source file for this function
 bool parse(std::ostream &strm, int argc, char *argv[]);
 
 
@@ -129,6 +136,7 @@ void Usage(std::ostream &strm, std::string command)
             << "                                        If it exists, the file will be truncated. If the file name is omitted,\n"
             << "                                        the default name \"" << output_file << "\" will be used.\n"
             << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << framecount << ")\n"
+            << "              [ -pr ]                   Enable profiler stats\n"
             << "              [ -lg log-level ]         Can be one of: {\"debug\", \"info\", \"notice\", \"warning\",\n"
             << "                                        \"error\", \"critical\"}. (The default is \"notice\")\n"
             << "\n"
@@ -141,6 +149,8 @@ void Usage(std::ostream &strm, std::string command)
 
 int main(int argc, char *argv[])
 {
+    using namespace VideoCapture;
+
     /////////////////
     // Parse the command line
     /////////////////
@@ -181,27 +191,42 @@ int main(int argc, char *argv[])
     global_logger = &logger;
 
     std::cerr << "Log level is: " << log_level << std::endl;
-    if (VideoCapture::video_capture_queue::s_write_frames_to_file)
+    if (video_capture_queue::s_write_frames_to_file)
     {
         std::cerr << "Ouput file: " << output_file << std::endl;
     }
+
+    std::cerr << (profiling_enabled? std::string("Profiling: enabled"): std::string("Profiling: disabled")) << std::endl;
 
     std::cerr << "Frame count is: " << framecount << std::endl;
     if (framecount > 100)
     {
         std::cerr << "\nWARNING: a high frame count can create a huge output file.\n" << std::endl;
     }
+
     /////////////////
     // Finally, get to work
     /////////////////
 
     std::thread queuethread;
+    std::thread profilingthread;
+
     int ret = 0;
     try
     {
+        // Start the profiling thread if it's enabled. It wont do anything until it's kicked
+        // by the condition variable (see below video_capture_profiler::s_condvar.send_ready().
+        if (profiling_enabled)
+        {
+            profilingthread = std::thread(video_profiler, logger);
+            profilingthread.detach();
+            video_capture_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+        }
+
         // Start the thread which handles the queue of raw buffers that the callback
         // function handles.
-        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, logger, output_file);
+        queuethread = std::thread(raw_buffer_queue_handler, logger, output_file);
+        queuethread.detach();
 
         // This is the C based code close to the hardware
         // The options desired here are the "-o" flag and "-c".
@@ -217,10 +242,10 @@ int main(int argc, char *argv[])
         ret = ::v4l2_raw_capture_main(4, fakeargv, callback_function, logger_function);
 
         // Inform the queue handler thread that the party is over...
-        VideoCapture::video_capture_queue::set_terminated(true);
+        video_capture_queue::set_terminated(true);
 
        // Make sure the ring buffer gets emptied
-        VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+        video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
     }
     catch (std::exception &exp)
     {
@@ -235,8 +260,13 @@ int main(int argc, char *argv[])
         ret = 1;
     }
 
+    // CLEANUP
+
+    video_capture_profiler::set_terminated(true);
+
     // Wait for the queue thread to finish
     if (queuethread.joinable()) queuethread.join();
+    if (profiling_enabled && profilingthread.joinable()) profilingthread.join();
 
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
@@ -253,24 +283,26 @@ bool parse(std::ostream &strm, int argc, char *argv[])
     switch(getArg(cmdmap, "-fn", output_file))
     {
         case Util::ParameterStatus::FlagNotProvided:
+#ifdef FOR_DEBUG_IF_NEEDED
             strm << "Writing frames to file will remain the default: ";
-                if( VideoCapture::video_capture_queue::s_write_frames_to_file )
-                {
-                    strm << "Write-frames-to-file, file name is: \"" << output_file << "\"" << std::endl;
-                }
-                else
-                {
-                    strm << "Do-not-write-frames-to-file." << std::endl;
-                }
+            if( VideoCapture::video_capture_queue::s_write_frames_to_file )
+            {
+                strm << "Write-frames-to-file, file name is: \"" << output_file << "\"" << std::endl;
+            }
+            else
+            {
+                strm << "Do-not-write-frames-to-file." << std::endl;
+            }
+#endif // FOR_DEBUG_IF_NEEDED
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
             VideoCapture::video_capture_queue::set_write_frames_to_file(true);
-            strm << "Turning on write-frames-to-file, using: \"" << output_file << "\"." << std::endl;
+            // strm << "Turning on write-frames-to-file, using: \"" << output_file << "\"." << std::endl;
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             VideoCapture::video_capture_queue::set_write_frames_to_file(true);
-            strm << "Turning on write-frames-to-file, using the default: \"" <<
-                    output_file << "\"." << std::endl;
+            // strm << "Turning on write-frames-to-file, using the default: \"" <<
+            //         output_file << "\"." << std::endl;
             break;
         default:
             assert (argc == -668);   // Bug encountered. Will cause abnormal termination
@@ -291,6 +323,21 @@ bool parse(std::ostream &strm, int argc, char *argv[])
             assert (argc == -669);   // Bug encountered. Will cause abnormal termination
     }
 
+    switch(getArg(cmdmap, "-pr", frame_count))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            profiling_enabled = false;
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            strm << "ERROR: \"-pr\" flag has a parameter where no parameters are allowed." << std::endl;
+            return false;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            profiling_enabled = true;
+            break;
+        default:
+            assert (argc == -670);   // Bug encountered. Will cause abnormal termination
+    }
+
     switch(getArg(cmdmap, "-lg", log_level))
     {
         case Util::ParameterStatus::FlagNotProvided:
@@ -303,7 +350,7 @@ bool parse(std::ostream &strm, int argc, char *argv[])
             strm << "ERROR: \"-lg\" flag is missing its parameter." << std::endl;
             return false;
         default:
-            assert (argc == -670);   // Bug encountered. Will cause abnormal termination
+            assert (argc == -671);   // Bug encountered. Will cause abnormal termination
     }
 
     /////////////////
