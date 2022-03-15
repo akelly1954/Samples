@@ -142,6 +142,14 @@ bool get_param_value<long>(std::string data, long& var)
 }
 
 template <>
+bool get_param_value<unsigned long>(std::string data, unsigned long& var)
+{
+    if (data.length() == 0) return false;
+    var = strtoul(data.c_str(), NULL, 10);
+    return true;
+}
+
+template <>
 bool get_param_value<long long>(std::string data, long long& var)
 {
     if (data.length() == 0) return false;
@@ -199,12 +207,14 @@ Util::ParameterStatus get_template_arg(const std::map<std::string,std::string>& 
 // does not wish to deal with templates? Truth is - keeping these around
 // for backward compatibility.
 //
-// TODO: These functions work fine as intended at the time. Newer programs might use the
-// template functions above which will provide more information on their return.
-//
+// NOTE: The return value of all getArg() functions changed from bool to an enum value.  The c++ compiler
+// will allow the assignment of this return value to a bool.  "Just so happens" that the value of the enum that
+// signifies error is 0 - same as false. That's why you don't have to change anything in the code if it still
+// accepts the value of getArg() as a bool.
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned long& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, std::string& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, float& var);

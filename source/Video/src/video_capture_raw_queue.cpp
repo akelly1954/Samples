@@ -47,13 +47,31 @@ using namespace VideoCapture;
 // static members
 
 bool video_capture_queue::s_terminated = false;
-std::mutex video_capture_queue::s_vector_mutex;
+bool video_capture_queue::s_write_frames_to_file = false;
+size_t video_capture_queue::s_write_frame_count = 200;       // gets me a bit more than 100Mb output.  YMMV.
+
 Util::condition_data<int> video_capture_queue::s_condvar(0);
 Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>>
                                                                             video_capture_queue::s_ringbuf(100);
 
-void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
+void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string output_file)
 {
+    FILE *filestream = NULL;
+
+    // Captured frames also go to the output file only if the
+    // option is set (which it is not, by default)
+    if (video_capture_queue::s_write_frames_to_file)
+    {
+
+        filestream = create_output_file(logger, output_file);
+        if (filestream == NULL)
+        {
+            // detailed error message already emitted by the create function
+            logger.error() << "Exiting...";
+            video_capture_queue::set_terminated(true);
+            return;
+        }
+    }
 
     while (!video_capture_queue::s_terminated)
     {
@@ -63,6 +81,12 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
         {
             auto sp_frame = video_capture_queue::s_ringbuf.get();
             logger.debug() << "From queue: Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
+
+            if (video_capture_queue::s_write_frames_to_file)
+            {
+                size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, output_file, sp_frame);
+                assert (nbytes == sp_frame->num_valid_elements());
+            }
         }
     }
 
@@ -73,6 +97,16 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
     {
         auto sp_frame = video_capture_queue::s_ringbuf.get();
         logger.debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
+        if (video_capture_queue::s_write_frames_to_file)
+        {
+            size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, output_file, sp_frame);
+            assert (nbytes == sp_frame->num_valid_elements());
+        }
+    }
+    if (video_capture_queue::s_write_frames_to_file && filestream != NULL)
+    {
+        fflush(filestream);
+        fclose(filestream);
     }
 }
 
@@ -80,4 +114,56 @@ void video_capture_queue::set_terminated(bool t)
 {
     video_capture_queue::s_terminated = t;
 }
+
+void video_capture_queue::set_write_frame_count(size_t count)
+{
+    video_capture_queue::s_write_frame_count = count;
+}
+
+void video_capture_queue::set_write_frames_to_file(bool t)
+{
+    video_capture_queue::s_write_frames_to_file = t;
+}
+
+// Open/truncate the output file that will hold captured frames
+FILE * VideoCapture::create_output_file(Log::Logger logger, std::string output_file)
+{
+    int errnocopy = 0;
+    FILE *output_stream = NULL;
+
+    if ((output_stream = ::fopen (output_file.c_str(), "w+")) == NULL)
+    {
+        errnocopy = errno;
+        logger.error() << "Cannot create/truncate output file \"" <<
+        output_file << "\": " << Util::Utility::get_errno_message(errnocopy);
+    }
+    else
+    {
+        logger.debug() << "Created/truncated output file \"" << output_file << "\"";
+    }
+    return output_stream;
+}
+
+size_t VideoCapture::write_frame_to_file(Log::Logger logger, FILE *filestream, std::string output_file,
+                          std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
+{
+    size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), filestream);
+    int errnocopy = errno;
+    size_t byteswritten = elementswritten * sizeof(uint8_t);
+
+    if (byteswritten != sp_frame->num_valid_elements())
+    {
+        logger.error() << "VideoCapture::write_frame_to_file: fwrite returned a short count or 0 bytes written. Requested: " <<
+                        sp_frame->num_valid_elements() << ", got " << byteswritten << " bytes: " <<
+                        Util::Utility::get_errno_message(errnocopy);
+    }
+    fflush(filestream);
+
+    return byteswritten;
+}
+
+
+
+
+
 

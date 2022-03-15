@@ -84,6 +84,11 @@ Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdm
     return get_template_arg(cmdmap, flag, var);
 }
 
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned long& var)
+{
+    return get_template_arg(cmdmap, flag, var);
+}
+
 Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var)
 {
     return get_template_arg(cmdmap, flag, var);

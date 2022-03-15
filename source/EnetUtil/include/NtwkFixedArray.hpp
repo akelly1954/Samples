@@ -60,7 +60,7 @@ namespace EnetUtil {
 
         // Gets the value of the pos'th element of the std::array<>
         // TODO: returns false if pos is out of bounds. This might
-        // have to throw and exception instead.
+        // have to throw an exception instead.
         bool get_element(size_t pos, T& target)
         {
             std::lock_guard<std::mutex> lock(m_mutex);

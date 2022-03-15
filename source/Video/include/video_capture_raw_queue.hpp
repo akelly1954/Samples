@@ -5,6 +5,7 @@
 #include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
 #include <LoggerCpp/LoggerCpp.h>
+#include <stdio.h>
 #include <thread>
 #include <mutex>
 #include <vector>
@@ -38,17 +39,23 @@ namespace VideoCapture {
 
 
 // Queue handler thread
-void raw_buffer_queue_handler(Log::Logger logger);
+void raw_buffer_queue_handler(Log::Logger logger, std::string output_file);
 
+FILE *create_output_file(Log::Logger logger, std::string output_file);
+
+size_t write_frame_to_file(Log::Logger logger, FILE *filestream, std::string output_file,
+                  std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame);
 
 class video_capture_queue
 {
 public:
-    static void set_terminated(bool t);  // main() sets this to true or false
-
-    static std::mutex s_vector_mutex;
+    static void set_terminated(bool t);         // main() sets this to true or false
+    static void set_write_frames_to_file(bool t); // main() sets this to true or false
+    static void set_write_frame_count(size_t count);
 
     static bool s_terminated;
+    static bool s_write_frames_to_file;
+    static size_t s_write_frame_count;
 
     static Util::condition_data<int> s_condvar;
 

@@ -131,6 +131,7 @@ int main(int argc, char *argv[])
 	std::string argv0 = const_cast<const char*>(argv[0]);
 
 	// If no parameters were supplied, or help was requested:
+	// (since the -fn flag is mandatory).
 	if (argc == 1 || (argc > 1
 			&& (std::string(const_cast<const char*>(argv[1])) == "--help"
 					|| std::string(const_cast<const char*>(argv[1])) == "-h"
@@ -384,8 +385,6 @@ bool parse(std::ostream &strm, int argc, char *argv[])
         default:
             assert (argc == -669);   // Bug encountered. Will cause abnormal termination
     }
-
-    getArg(cmdmap, "-lg", log_level);
 
     /////////////////
     // Check out specified log level

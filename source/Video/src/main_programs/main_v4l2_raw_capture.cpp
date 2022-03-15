@@ -38,10 +38,19 @@
 
 std::string logChannelName = "v4l2_raw_capture";
 std::string logFilelName = logChannelName + "_log.txt";
-std::string output_file = logChannelName + ".data";  // Name of file intended for the video frames
+
+std::string output_file = logChannelName + ".yuv";  // Name of file intended for the video frames
+
 Log::Log::Level loglevel = Log::Log::Level::eDebug;
 std::string default_log_level = "debug";
 std::string log_level = default_log_level;
+
+size_t framecount = 200;
+std::string default_frame_count(std::to_string(framecount));
+std::string frame_count(default_frame_count);
+
+bool parse(std::ostream &strm, int argc, char *argv[]);
+
 
 //////////////////////////////////////////////////////////////////////////////////
 // Interface to C language functions section
@@ -115,84 +124,18 @@ void Usage(std::ostream &strm, std::string command)
     strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
     strm << "Or:       " << command
             << "\n"
-            << "              [ -fn file-name ]         The name of the file which will be created to hold\n"
-            << "                                        image frames. If it exists, the file will be truncated.\n"
-            << "                                        (The default name is \"" << output_file << "\")\n"
+            << "              [ -fn [ file-name ] ]     Turns on the write-frames-to-file functionality.  The file-name \n"
+            << "                                        parameter is the file which will be created to hold image frames.\n"
+            << "                                        If it exists, the file will be truncated. If the file name is omitted,\n"
+            << "                                        the default name \"" << output_file << "\" will be used.\n"
+            << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << framecount << ")\n"
             << "              [ -lg log-level ]         Can be one of: {\"debug\", \"info\", \"notice\", \"warning\",\n"
             << "                                        \"error\", \"critical\"}. (The default is \"notice\")\n"
             << "\n"
             << std::endl;
 }
 
-bool parse(std::ostream &strm, int argc, char *argv[])
-{
-    using namespace Util;
-
-    const std::map<std::string, std::string> cmdmap = Util::getCLMap(argc, argv);
-    std::map<std::string, bool> specified;
-
-    // for debugging:
-    // int index = 0;
-    // strm << "Command map:" << std::endl;
-    // std::for_each(cmdmap.begin(), cmdmap.end(), [&strm, &index](auto member)
-    // {
-    //     strm << "cmdmap[" << index++ << "]: first=" << member.first << " second=" << member.second << std::endl;
-    // });
-
-    bool ret1 = true;
-    auto it = cmdmap.find("-fn");
-    if (it != cmdmap.end())
-    {
-        // if the flag were specified, it has to be valid
-        std::string sarg;
-        if (Util::getArg(cmdmap, "-fn", sarg) && sarg == "")
-        {
-            strm << "\nCommand line error: " << it->first << " flag is missing its parameter\n" << std::endl;
-            ret1 = false;
-        }
-        else
-        {
-            ret1 = true;
-            output_file = sarg;
-        }
-    }
-
-    bool ret2 = true;
-    it = cmdmap.find("-lg");
-    if (it != cmdmap.end())
-    {
-        // if the flag were specified, it has to be valid
-        std::string sarg;
-        if (Util::getArg(cmdmap, "-lg", sarg) && sarg == "")
-        {
-            strm << "\nCommand line error: " << it->first << " flag is missing its parameter\n" << std::endl;
-            ret2 = false;
-        }
-        else
-        {
-            ret2 = true;
-            log_level = sarg;
-        }
-    }
-
-    if (!ret1 || !ret2 ) return false;
-
-    // Check out specified log level
-    if (log_level == "debug") loglevel = Log::Log::eDebug;
-    else if (log_level == "info") loglevel = Log::Log::eInfo;
-    else if (log_level == "notice") loglevel = Log::Log::eNotice;
-    else if (log_level == "warning") loglevel = Log::Log::eWarning;
-    else if (log_level == "error") loglevel = Log::Log::eError;
-    else if (log_level == "critical") loglevel = Log::Log::eCritic;
-    else
-    {
-        std::cerr << "\nIncorrect use of the \"-lg\" flag." << std::endl;
-        return false;
-    }
-    return true;
-}
-
-//////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 // Main program
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -211,6 +154,11 @@ int main(int argc, char *argv[])
             )
     {
         Usage(std::cerr, argv0);
+        if (argc > 2)
+        {
+            std::cerr << "WARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
+        }
+
         return 0;
     }
 
@@ -233,9 +181,16 @@ int main(int argc, char *argv[])
     global_logger = &logger;
 
     std::cerr << "Log level is: " << log_level << std::endl;
-    std::cerr << "Ouput file: " << output_file << std::endl;
+    if (VideoCapture::video_capture_queue::s_write_frames_to_file)
+    {
+        std::cerr << "Ouput file: " << output_file << std::endl;
+    }
 
-
+    std::cerr << "Frame count is: " << framecount << std::endl;
+    if (framecount > 100)
+    {
+        std::cerr << "\nWARNING: a high frame count can create a huge output file.\n" << std::endl;
+    }
     /////////////////
     // Finally, get to work
     /////////////////
@@ -246,13 +201,20 @@ int main(int argc, char *argv[])
     {
         // Start the thread which handles the queue of raw buffers that the callback
         // function handles.
-        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, logger);
+        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, logger, output_file);
 
         // This is the C based code close to the hardware
-        // The option desired here is the "-o" flag which is set in the C code already.
-        // So -- no parameters (this can change if we need them).
-        char *fakeargv[] = { const_cast<char *>(logChannelName.c_str()), NULL };  // Used to convey the name of the program
-        ret = ::v4l2_raw_capture_main(0, fakeargv, callback_function, logger_function);
+        // The options desired here are the "-o" flag and "-c".
+        char *fakeargv[] =
+            {
+                const_cast<char *>(logChannelName.c_str()),
+                const_cast<char *>("-o"),
+                const_cast<char *>("-c"),
+                const_cast<char *>(frame_count.c_str()),
+                NULL
+            };
+        int fakeargc = sizeof(*fakeargv)/sizeof(fakeargv[0])-1;
+        ret = ::v4l2_raw_capture_main(4, fakeargv, callback_function, logger_function);
 
         // Inform the queue handler thread that the party is over...
         VideoCapture::video_capture_queue::set_terminated(true);
@@ -281,4 +243,95 @@ int main(int argc, char *argv[])
 
     return ret;
 }
+
+bool parse(std::ostream &strm, int argc, char *argv[])
+{
+    using namespace Util;
+    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv);
+
+    // this flag (-fn) and an existing readable regular file name are MANDATORY
+    switch(getArg(cmdmap, "-fn", output_file))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            strm << "Writing frames to file will remain the default: ";
+                if( VideoCapture::video_capture_queue::s_write_frames_to_file )
+                {
+                    strm << "Write-frames-to-file, file name is: \"" << output_file << "\"" << std::endl;
+                }
+                else
+                {
+                    strm << "Do-not-write-frames-to-file." << std::endl;
+                }
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            VideoCapture::video_capture_queue::set_write_frames_to_file(true);
+            strm << "Turning on write-frames-to-file, using: \"" << output_file << "\"." << std::endl;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            VideoCapture::video_capture_queue::set_write_frames_to_file(true);
+            strm << "Turning on write-frames-to-file, using the default: \"" <<
+                    output_file << "\"." << std::endl;
+            break;
+        default:
+            assert (argc == -668);   // Bug encountered. Will cause abnormal termination
+    }
+
+    switch(getArg(cmdmap, "-fc", frame_count))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // for debugging:  strm << "-fc flag not provided. Using default " << frame_count << std::endl;
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:  strm << "-fc flag provided. Using " << frame_count << std::endl;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-fc\" flag is missing its parameter." << std::endl;
+            return false;
+        default:
+            assert (argc == -669);   // Bug encountered. Will cause abnormal termination
+    }
+
+    switch(getArg(cmdmap, "-lg", log_level))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // for debugging:  strm << "-lg flag not provided. Using default " << log_level << std::endl;
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:  strm << "-lg flag provided. Using " << log_level << std::endl;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-lg\" flag is missing its parameter." << std::endl;
+            return false;
+        default:
+            assert (argc == -670);   // Bug encountered. Will cause abnormal termination
+    }
+
+    /////////////////
+    // Check out specified log level
+    /////////////////
+
+    if (log_level == "debug") loglevel = Log::Log::eDebug;
+    else if (log_level == "info") loglevel = Log::Log::eInfo;
+    else if (log_level == "notice") loglevel = Log::Log::eNotice;
+    else if (log_level == "warning") loglevel = Log::Log::eWarning;
+    else if (log_level == "error") loglevel = Log::Log::eError;
+    else if (log_level == "critical") loglevel = Log::Log::eCritic;
+    else
+    {
+        strm << "ERROR: Incorrect use of the \"-lg\" flag." << std::endl;
+        return false;
+    }
+
+    // Assign the frame count
+    framecount = strtoul(frame_count.c_str(), NULL, 10);
+
+    return true;
+}
+
+
+
+
+
+
+
 
