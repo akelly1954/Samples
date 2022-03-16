@@ -26,6 +26,8 @@ The file here is in its raw form (unchanged) from:
     See also:     
 *https://www.kernel.org/doc/html/v4.9/media/uapi/v4l/v4l2grab-example.html*   
      
+Please see the source file for the appropriate copyright information.     
+     
      
 **LoggerCpp**     
      
@@ -39,16 +41,8 @@ The script to build the library and install header files in the *Samples* projec
     
 The cloned LoggerCpp project from Github, as used is this project is here (unchanged):     
 *...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8/*   
-
-
-
-
-
-
-
-
-
-
-
-
+    
+Please see the source file 
+*...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8/LICENSE.txt* 
+for the appropriate copyright information for LoggerCpp.     
 
