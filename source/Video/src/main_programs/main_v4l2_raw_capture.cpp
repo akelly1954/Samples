@@ -71,6 +71,10 @@ bool parse(std::ostream &strm, int argc, char *argv[]);
 // Filthy code but I have to deal with C.
 Log::Logger *global_logger = NULL;
 
+//////////////////////////////////////////////////////
+// Log to log file if possible
+//////////////////////////////////////////////////////
+
 #ifdef __cplusplus
     extern "C" void v4l2capture_logger(const char *logmessage);
 #else
@@ -88,8 +92,23 @@ void v4l2capture_logger(const char *logmessage)
         global_logger->debug() << logmessage;
     }
 }
-
 void (*logger_function)(const char *logmessage) = v4l2capture_logger;
+
+//////////////////////////////////////////////////////
+// Log to screen
+//////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+    extern "C" void v4l2capture_stream_logger(const char *logmessage);
+#else
+    void v4l2capture_stream_logger(const char *logmessage);
+#endif // __cplusplus
+
+void v4l2capture_stream_logger(const char *logmessage)
+{
+    fprintf (stderr, "%s\n", logmessage);
+}
+void (*logger_stream_function)(const char *logmessage) = v4l2capture_stream_logger;
 
 // Setup of the callback function (from the C code).
 // Called back for every buffer that becomes available.
@@ -203,7 +222,7 @@ int main(int argc, char *argv[])
     std::cerr << (profiling_enabled? std::string("Profiling: enabled"): std::string("Profiling: disabled")) << std::endl;
 
     std::cerr << "Frame count is: " << framecount << std::endl;
-    if (framecount > 100)
+    if (framecount > 500)
     {
         std::cerr << "\nWARNING: a high frame count can create a huge output file.\n" << std::endl;
     }
@@ -232,20 +251,27 @@ int main(int argc, char *argv[])
         queuethread = std::thread(raw_buffer_queue_handler, logger, output_file);
         queuethread.detach();
 
-        // This is the C based code close to the hardware
+        // This is glue for the C based code close to the hardware
+        ::v4l2capture_set_callback_functions(
+                            callback_function,
+                            logger_function,
+                            logger_stream_function
+                        );
+
         // The options desired here are the "-o" flag and "-c".
         char *fakeargv[] =
             {
                 const_cast<char *>(logChannelName.c_str()),
                 const_cast<char *>("-o"),
-                const_cast<char *>("-F"),  // force H264 format
+                // const_cast<char *>("-f"),  // force YUYV 640x480 format
+                const_cast<char *>("-F"),  // force H264 1920x1080 format
                 const_cast<char *>("-c"),
                 const_cast<char *>(frame_count.c_str()),
                 NULL
             };
         int fakeargc = sizeof(fakeargv)/sizeof(fakeargv[0])-1;  // the -1 is for the NULL at the end
 
-        ret = ::v4l2_raw_capture_main(fakeargc, fakeargv, callback_function, logger_function);
+        ret = ::v4l2_raw_capture_main(fakeargc, fakeargv);
 
         // Inform the queue handler thread that the party is over...
         video_capture_queue::set_terminated(true);

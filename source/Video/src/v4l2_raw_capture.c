@@ -40,18 +40,19 @@ static int              force_format = 0;
 static int              frame_count = 70;
 static void             (*v4l2capture_callback_function)(void *, size_t) = NULL;
 static void             (*v4l2capture_logger_function)(const char *) = NULL;
+static void             (*v4l2capture_logger_stream_function)(const char *) = NULL;
 
 void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)) // can be NULL
 {
-    if (callback_function != NULL)  v4l2capture_callback_function = callback_function;
+    v4l2capture_callback_function = callback_function;
 }
 
 /*
- * Use the LOGGER(x) macro like this:
+ * Use the LOGGER(x) or LOGGER_STDERR(x) macro like this:
  *  {
  *         char sbuf[128];
  *         snprintf(sbuf, sizeof(sbuf), "Got frame with %ld bytes", buf.bytesused);
- *         LOGGER(sbuf);
+ *         LOGGER(sbuf);  /* OR... LOGGER_STDERR(sbuf);
  *  }
  *
  *  Don't add newlines at the end of the string.  The logger does that for you.
@@ -60,15 +61,35 @@ void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)
 
 void v4l2capture_set_logger_function(void (*logger_function)(const char *)) // can be NULL
 {
-    if (logger_function != NULL)  v4l2capture_logger_function = logger_function;
+    v4l2capture_logger_function = logger_function;
 }
+
+#define LOGGER_STDERR(x) if (v4l2capture_logger_stream_function != NULL) { v4l2capture_logger_stream_function(x); } else { ; }
+
+void v4l2capture_set_logger_stream_function(void (*logger_stream_function)(const char *)) // can be NULL
+{
+    v4l2capture_logger_stream_function = logger_stream_function;
+}
+
+void v4l2capture_set_callback_functions(
+                    void (*callback_function)(void *, size_t),
+                    void (*logger_function)(const char *),
+                    void (*logger_stream_function)(const char *)
+                    )
+{
+    v4l2capture_callback_function = callback_function;
+    v4l2capture_logger_function = logger_function;
+    v4l2capture_logger_stream_function = logger_stream_function;
+}
+
+// Interface functions
 
 void v4l2capture_errno_exit(const char *s)
 {
     {
         char sbuf[256];
         snprintf(sbuf, sizeof(sbuf), "%s error %d, %s", s, errno, strerror(errno));
-        LOGGER(sbuf);
+        LOGGER_STDERR(sbuf);
     }
 
     exit(EXIT_FAILURE);
@@ -214,7 +235,7 @@ void v4l2capture_mainloop(void)
                         }
 
                         if (0 == r) {
-                                LOGGER("select timeout")
+                                LOGGER_STDERR("select timeout")
                                 exit(EXIT_FAILURE);
                         }
 
@@ -320,7 +341,7 @@ void v4l2capture_init_read(unsigned int buffer_size)
         buffers = calloc(1, sizeof(*buffers));
 
         if (!buffers) {
-                LOGGER("Out of memory");
+                LOGGER_STDERR("Out of memory");
                 exit(EXIT_FAILURE);
         }
 
@@ -328,7 +349,7 @@ void v4l2capture_init_read(unsigned int buffer_size)
         buffers[0].start = malloc(buffer_size);
 
         if (!buffers[0].start) {
-                LOGGER("Out of memory");
+                LOGGER_STDERR("Out of memory");
                 exit(EXIT_FAILURE);
         }
 }
@@ -348,7 +369,7 @@ void v4l2capture_init_mmap(void)
                 {
                     char sbuf[256];
                     snprintf(sbuf, sizeof(sbuf), "%s does not support memory mapping", dev_name);
-                    LOGGER(sbuf);
+                    LOGGER_STDERR(sbuf);
                 }
                 exit(EXIT_FAILURE);
             } else {
@@ -360,7 +381,7 @@ void v4l2capture_init_mmap(void)
             {
                 char sbuf[256];
                 snprintf(sbuf, sizeof(sbuf), "Insufficient buffer memory on %s", dev_name);
-                LOGGER(sbuf);
+                LOGGER_STDERR(sbuf);
             }
             exit(EXIT_FAILURE);
         }
@@ -368,7 +389,7 @@ void v4l2capture_init_mmap(void)
         buffers = calloc(req.count, sizeof(*buffers));
 
         if (!buffers) {
-            LOGGER("Out of memory");
+            LOGGER_STDERR("Out of memory");
             exit(EXIT_FAILURE);
         }
 
@@ -412,7 +433,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
                 {
                     char sbuf[256];
                     snprintf(sbuf, sizeof(sbuf), "%s does not support user pointer i/o", dev_name);
-                    LOGGER(sbuf);
+                    LOGGER_STDERR(sbuf);
                 }
                 exit(EXIT_FAILURE);
             } else {
@@ -423,7 +444,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
         buffers = calloc(4, sizeof(*buffers));
 
         if (!buffers) {
-                LOGGER("Out of memory");
+                LOGGER_STDERR("Out of memory");
                 exit(EXIT_FAILURE);
         }
 
@@ -432,7 +453,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
                 buffers[n_buffers].start = malloc(buffer_size);
 
                 if (!buffers[n_buffers].start) {
-                        LOGGER("Out of memory");
+                        LOGGER_STDERR("Out of memory");
                         exit(EXIT_FAILURE);
                 }
         }
@@ -451,7 +472,7 @@ void v4l2capture_init_device(void)
                 {
                     char sbuf[256];
                     snprintf(sbuf, sizeof(sbuf), "%s is no V4L2 device", dev_name);
-                    LOGGER(sbuf);
+                    LOGGER_STDERR(sbuf);
                 }
                 exit(EXIT_FAILURE);
             } else {
@@ -463,7 +484,7 @@ void v4l2capture_init_device(void)
             {
                 char sbuf[256];
                 snprintf(sbuf, sizeof(sbuf), "%s is no capture device", dev_name);
-                LOGGER(sbuf);
+                LOGGER_STDERR(sbuf);
             }
             exit(EXIT_FAILURE);
         }
@@ -474,7 +495,7 @@ void v4l2capture_init_device(void)
                     {
                         char sbuf[256];
                         snprintf(sbuf, sizeof(sbuf), "%s does not support read i/o", dev_name);
-                        LOGGER(sbuf);
+                        LOGGER_STDERR(sbuf);
                     }
                     exit(EXIT_FAILURE);
                 }
@@ -486,7 +507,7 @@ void v4l2capture_init_device(void)
                     {
                         char sbuf[256];
                         snprintf(sbuf, sizeof(sbuf), "%s does not support streaming i/o", dev_name);
-                        LOGGER(sbuf);
+                        LOGGER_STDERR(sbuf);
                     }
                     exit(EXIT_FAILURE);
                 }
@@ -561,7 +582,7 @@ void v4l2capture_init_device(void)
             // All this printing is done at init time, so no big deal.
             char sbuf[256];
             snprintf(sbuf, sizeof(sbuf), "driver: frame: %lu x %lu", fmt.fmt.pix.width, fmt.fmt.pix.height);
-            LOGGER(sbuf);
+            LOGGER_STDERR(sbuf);
 
             char bfp[256];
             switch(fmt.fmt.pix.pixelformat)
@@ -577,8 +598,8 @@ void v4l2capture_init_device(void)
                 break;
             }
 
-            snprintf(sbuf, sizeof(sbuf), "driver: pixel format set to %lX - %s", fmt.fmt.pix.pixelformat, bfp);
-            LOGGER(sbuf);
+            snprintf(sbuf, sizeof(sbuf), "driver: pixel format set to 0x%lX - %s", fmt.fmt.pix.pixelformat, bfp);
+            LOGGER_STDERR(sbuf);
         }
 
         {
@@ -604,10 +625,10 @@ void v4l2capture_init_device(void)
             }
 
             char sbuf[256];
-            snprintf(sbuf, sizeof(sbuf), "driver: bytes required: 0x%lX", fmt.fmt.pix.sizeimage);
-            LOGGER(sbuf);
+            snprintf(sbuf, sizeof(sbuf), "driver: bytes required: %ld", fmt.fmt.pix.sizeimage);
+            LOGGER_STDERR(sbuf);
             snprintf(sbuf, sizeof(sbuf), "driver: I/O METHOD: %s", bfp);
-            LOGGER(sbuf);
+            LOGGER_STDERR(sbuf);
         }
 
         switch (io) {
@@ -693,9 +714,7 @@ long_options[] = {
 };
 
 /* called directly by the C++ main() */
-int v4l2_raw_capture_main(int argc, char *argv[],
-        void (*callback_function)(void *, size_t),    // call with each ready buffer
-        void (*logger_function)(const char *))        // logging facility
+int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
 {
         dev_name = "/dev/video0";
 
@@ -762,9 +781,6 @@ int v4l2_raw_capture_main(int argc, char *argv[],
                 }
         }
 
-        // The first two function calls have to happen first.
-        v4l2capture_set_logger_function(logger_function); // Can be NULL if no callback
-        v4l2capture_set_callback_function(callback_function); // Can be NULL if no callback
         v4l2capture_open_device();
         v4l2capture_init_device();
         v4l2capture_start_capturing();

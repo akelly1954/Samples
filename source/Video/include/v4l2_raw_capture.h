@@ -41,8 +41,18 @@ struct buffer {
 
 // This section is for CPP only, outside of the extern "C" block above.
 
+// These functions serve as the "glue" between the C++ main and these C functions
 extern "C" void v4l2capture_set_logger_function(void (*logger_function)(const char *)); // can be NULL
+extern "C" void v4l2capture_set_logger_stream_function(void (*logger_stream_function)(const char *)); // can be NULL
 extern "C" void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)); // can be NULL
+
+extern "C" void v4l2capture_set_callback_functions(
+                    void (*callback_function)(void *, size_t),
+                    void (*logger_function)(const char *),
+                    void (*logger_stream_function)(const char *)
+                   );
+
+// Interface functions
 extern "C" void v4l2capture_errno_exit(const char *s);
 extern "C" int v4l2capture_xioctl(int fh, int request, void *arg);
 extern "C" void v4l2capture_process_image(void *p, int size);
@@ -57,16 +67,24 @@ extern "C" void v4l2capture_init_userp(unsigned int buffer_size);
 extern "C" void v4l2capture_init_device(void);
 extern "C" void v4l2capture_close_device(void);
 extern "C" void v4l2capture_open_device(void);
-extern "C" int v4l2_raw_capture_main(int argc, char *argv[],
-                                    void (*callback_function)(void *, size_t),
-                                    void (*logger_function)(const char *));
+extern "C" int v4l2_raw_capture_main(int argc, char *argv[]);
 
 #else // __cplusplus
 
 // This section is for C only, no CPP
 
+// These functions serve as the "glue" between the C++ main and these C functions
 void v4l2capture_set_logger_function(void (*logger_function)(const char *)); // can be NULL
+void v4l2capture_set_logger_stream_function(void (*logger_stream_function)(const char *)); // can be NULL
 void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)); // can be NULL
+
+void v4l2capture_set_callback_functions(
+                    void (*callback_function)(void *, size_t),
+                    void (*logger_function)(const char *),
+                    void (*logger_stream_function)(const char *)
+                    );
+
+// Interface functions
 void v4l2capture_errno_exit(const char *s);
 int v4l2capture_xioctl(int fh, int request, void *arg);
 void v4l2capture_process_image(void *p, int size);
@@ -81,9 +99,7 @@ void v4l2capture_init_userp(unsigned int buffer_size);
 void v4l2capture_init_device(void);
 void v4l2capture_close_device(void);
 void v4l2capture_open_device(void);
-int v4l2_raw_capture_main(int argc, char *argv[],
-                            void (*callback_function)(void *, size_t),
-                            void (*logger_function)(const char *));
+int v4l2_raw_capture_main(int argc, char *argv[]);
 
 #endif // __cplusplus
 
