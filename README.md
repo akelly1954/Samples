@@ -13,7 +13,7 @@ if the reader is looking for a focused project that can help them solve real pro
      
 The underlying structure of the Samples project has to do with needing to serve as a cross-platform solution.  You will see references to both Windows (Visual Studio, C++, etc), as well as Linux with various build tool chains - C++, Make, CMake, Eclipse, and Qt - used for building user interface objects and tools. 
 Those serve as the rationale for basing the whole Samples project on CMake. which seems to be the single most flexible tool which could help drive cross-platform as well as a cross-technology development infrastructure.  You will see references to all that, but in fact the real software and build environment that you see here, as well as the tools to "get it done" starts out being geared towards CMake, Eclipse, and the Gnu tool-chain under Linux. 
-Not having a team of developers working on this at my disposal, I'm trying to get to creating the code first, then testing, then documenting, and then one day perhaps get to the point where I actually own a Windows system (which I currently don't), let alone a Windows development system. 
+Not having a team of developers working on this at my disposal, I'm trying to get to creating the code first, then testing, then documenting, and then one day perhaps get to the point where I actually own a Windows system (which I currently don't), let alone a Windows development system.    
 
 I am not an expert with Java, Python, and cloud based infrastructures that helps large development teams for large corporate technical needs
 that one person (me) cannot possibly deal with.  Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
@@ -30,16 +30,23 @@ Thanks to the online video community which speaks a different language and uses 
      full detail of how to get to the file today, as well as a copy of the source in its 
      current raw (unmodified) form.      
 
-The (now a) function uses a configurable number of memory mapped buffers (4, in this case) that get filled up, one at a time, by the API.  This layer is implemented as a C function which uses callback functions to deliver each frame in YUYV format (Packed YUV 4:2:2, YUY2) to the next level up, C++ objects that copy each memory mapped buffer (currently I'm seeing frame sizes of up to 175Kb each using my webcam which 
-provides 1920x1080 pixels per frame). The numbers will be exponentialy higher for cameras that have a higher resolution.    
+The (now a) function uses a configurable number of memory mapped buffers (4, in this case) that get filled up, one at a time, by the API.  This layer is implemented as a C function which uses 
+callback functions to deliver each frame in YUYV format (Packed YUV 4:2:2, YUY2) or H264 (H264 with start codes) to the next level up, C++ objects that copy each memory mapped buffer (using H264, 
+I'm currently seeing frame sizes of up to 175Kb each using my webcam which 
+provides 1920x1080 pixels per frame. Most frames, though, are less than 50Kb each). The numbers will be exponentialy higher for cameras that have a higher resolution.    
         
 Each frame buffer is copied into a C++ std::array<> object (each element represented as a uint8_t character), an std::shared_ptr<> set up for it, and from that point, the data does not have to be copied again unless and until the frame has to be converted into a different video format (by Qt, one hopes...).   Each std::shared_ptr<> object is added to a ring buffer (*Util/include/circular_buffer.hpp*) and handled, one by one, in a different std::thread (not the data itself, but the pointer object to it) - using an object which has an embedded condition variable, to avoid having to poll the ring buffer for newly available frame buffers (*Util/include/condition_data.hpp*).     
     
-Currently all of this is implemented and working all the way up to and including the separate thread which peels off one frame at a time from the ring buffer, and appends each frame to a file until the process eventually exits.  This file can be viewed by any of several viewers that handle YUYV format, albeit with some abnormalities (there's no metadata included with the frames).  This is simply a test mechanism for the sanity of the layers below the thread which is handling the frame buffers.       
+Currently all of this is implemented and working all the way up to and including the separate thread which peels off one frame at a time from the ring buffer, and appends each frame to a file until the process eventually exits.  This file can be viewed by any of several viewers that handle YUYV or H264 formats. In order to see the results from the file in a viewer, you can do this (for H264 format):
+
+    ffmpeg -f h264 -i v4l2_raw_capture.data -vcodec copy v4l2_raw_capture.mp4    
+    
+Where the *v4l2_raw_capture.data* is the name of the raw data file created by **main_v4l2_raw_capture**, and the .mp4 file is the output from *ffmpeg*. Having done this, you can view the video with any viewer you normally use. 
+I use this to test the sanity of the layers below the thread which is handling the frame buffers.       
    
 Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being addressed at the moment).   
     
-Currenly, I'm implementing profiling done at run time of various factors in this mechanism that will control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), etc. This is work in progress. 
+Currenlty, I'm implementing profiling done at run time of various factors in this mechanism that will control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), etc. This is work in progress. 
      
 As this is being built up from hardware, I pause at each layer to document and test (and fix bugs) before moving up to the next layer.  After this, it's Qt time.  That should be fun.    
     

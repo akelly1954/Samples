@@ -43,7 +43,11 @@
 std::string logChannelName = "v4l2_raw_capture";
 std::string logFilelName = logChannelName + "_log.txt";
 
-std::string output_file = logChannelName + ".yuv";  // Name of file intended for the video frames
+std::string output_file = logChannelName + ".data";  // Name of file intended for the video frames
+
+// If the H264 encoding is used, this will create an mp4 file out of it, playable by vlc or whatever:
+//             ffmpeg -f h264 -i v4l2_raw_capture.data -vcodec copy v4l2_raw_capture.mp4
+
 
 Log::Log::Level loglevel = Log::Log::Level::eDebug;
 std::string default_log_level = "debug";
@@ -234,12 +238,14 @@ int main(int argc, char *argv[])
             {
                 const_cast<char *>(logChannelName.c_str()),
                 const_cast<char *>("-o"),
+                const_cast<char *>("-F"),  // force H264 format
                 const_cast<char *>("-c"),
                 const_cast<char *>(frame_count.c_str()),
                 NULL
             };
-        int fakeargc = sizeof(*fakeargv)/sizeof(fakeargv[0])-1;
-        ret = ::v4l2_raw_capture_main(4, fakeargv, callback_function, logger_function);
+        int fakeargc = sizeof(fakeargv)/sizeof(fakeargv[0])-1;  // the -1 is for the NULL at the end
+
+        ret = ::v4l2_raw_capture_main(fakeargc, fakeargv, callback_function, logger_function);
 
         // Inform the queue handler thread that the party is over...
         video_capture_queue::set_terminated(true);

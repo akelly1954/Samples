@@ -202,7 +202,7 @@ void v4l2capture_mainloop(void)
                         FD_SET(fd, &fds);
 
                         /* Timeout. */
-                        tv.tv_sec = 2;
+                        tv.tv_sec = 4;
                         tv.tv_usec = 0;
 
                         r = select(fd + 1, &fds, NULL, NULL, &tv);
@@ -523,7 +523,17 @@ void v4l2capture_init_device(void)
         CLEAR(fmt);
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (force_format) {
+        if (force_format == 2) {
+            fmt.fmt.pix.width       = 1920;
+            fmt.fmt.pix.height      = 1080;
+            fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_H264;
+            fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
+
+            if (-1 == v4l2capture_xioctl(fd, VIDIOC_S_FMT, &fmt))
+                    v4l2capture_errno_exit("VIDIOC_S_FMT");
+
+            /* Note VIDIOC_S_FMT may change width and height. */
+        } else if (force_format == 1) {
                 fmt.fmt.pix.width       = 640;
                 fmt.fmt.pix.height      = 480;
                 fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
@@ -546,6 +556,59 @@ void v4l2capture_init_device(void)
         min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
         if (fmt.fmt.pix.sizeimage < min)
                 fmt.fmt.pix.sizeimage = min;
+
+        {
+            // All this printing is done at init time, so no big deal.
+            char sbuf[256];
+            snprintf(sbuf, sizeof(sbuf), "driver: frame: %lu x %lu", fmt.fmt.pix.width, fmt.fmt.pix.height);
+            LOGGER(sbuf);
+
+            char bfp[256];
+            switch(fmt.fmt.pix.pixelformat)
+            {
+            case V4L2_PIX_FMT_YUYV:
+                strcpy (bfp, "YUYV: aka \"YUV 4:2:2\": Packed format with ½ horizontal chroma resolution");
+                break;
+            case V4L2_PIX_FMT_H264:
+                strcpy (bfp, "H264: H264 with start codes");
+                break;
+            default:
+                "See </usr/include/linux/videodev2.h> for all format encoding macros";
+                break;
+            }
+
+            snprintf(sbuf, sizeof(sbuf), "driver: pixel format set to %lX - %s", fmt.fmt.pix.pixelformat, bfp);
+            LOGGER(sbuf);
+        }
+
+        {
+            char bfp[32];
+
+            switch (io) {
+            case IO_METHOD_READ:
+                strcpy(bfp, "READ");
+                break;
+
+            case IO_METHOD_MMAP:
+                strcpy(bfp, "MMAP");
+                break;
+
+            case IO_METHOD_USERPTR:
+                strcpy(bfp, "USERPTR");
+                break;
+
+            default:
+                strcpy(bfp, "UNKNOWN - check enum");
+                break;
+
+            }
+
+            char sbuf[256];
+            snprintf(sbuf, sizeof(sbuf), "driver: bytes required: 0x%lX", fmt.fmt.pix.sizeimage);
+            LOGGER(sbuf);
+            snprintf(sbuf, sizeof(sbuf), "driver: I/O METHOD: %s", bfp);
+            LOGGER(sbuf);
+        }
 
         switch (io) {
         case IO_METHOD_READ:
@@ -606,23 +669,25 @@ void v4l2capture_usage(FILE *fp, int argc, char **argv)
                  "-r | --read          Use read() calls\n"
                  "-u | --userp         Use application allocated buffers\n"
                  "-o | --output        Outputs stream to stdout\n"
-                 "-f | --format        Force format to 640x480 YUYV\n"
+                 "-f | --formatYUYV    Force format to 640x480 YUYV\n"
+                 "-F | --formatH264    Force format to 1920x1080 H264\n"
                  "-c | --count         Number of frames to grab [%i]\n"
                  "",
                  argv[0], dev_name, frame_count);
 }
 
-static const char short_options[] = "d:hmruofc:";
+static const char short_options[] = "d:hmruofFc:";
 
 static const struct option
 long_options[] = {
         { "device", required_argument, NULL, 'd' },
-        { "help",   no_argument,       NULL, 'h' },
-        { "mmap",   no_argument,       NULL, 'm' },
-        { "read",   no_argument,       NULL, 'r' },
-        { "userp",  no_argument,       NULL, 'u' },
-        { "output", no_argument,       NULL, 'o' },
-        { "format", no_argument,       NULL, 'f' },
+        { "help",       no_argument,       NULL, 'h' },
+        { "mmap",       no_argument,       NULL, 'm' },
+        { "read",       no_argument,       NULL, 'r' },
+        { "userp",      no_argument,       NULL, 'u' },
+        { "output",     no_argument,       NULL, 'o' },
+        { "formatYUYV", no_argument,       NULL, 'f' },
+        { "formatH264", no_argument,       NULL, 'F' },
         { "count",  required_argument, NULL, 'c' },
         { 0, 0, 0, 0 }
 };
@@ -637,7 +702,8 @@ int v4l2_raw_capture_main(int argc, char *argv[],
         // NOTE:
         // The argv[0] string this function is called with is set to
         // the program name (not necessarily the executable name).
-        if (argc != 0) for (;;) {
+        if (argc != 0)
+            for (;;) {
                 int idx;
                 int c;
 
@@ -676,7 +742,11 @@ int v4l2_raw_capture_main(int argc, char *argv[],
                         break;
 
                 case 'f':
-                        force_format++;
+                        force_format = 1;
+                        break;
+
+                case 'F':
+                        force_format = 2;
                         break;
 
                 case 'c':
