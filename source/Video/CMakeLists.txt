@@ -4,6 +4,7 @@ project (Video)
 
 include (${SampleRoot_DIR}/source/cmake/Video.cmake)
 
+file(GLOB TEST_SCRIPTS "src/main_programs/*.bash")
 file(GLOB SOURCEFILES "src/*.c" "src/*.cpp")
 file(GLOB HEADERS "include/*.h*")
 file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
@@ -26,6 +27,12 @@ install(TARGETS ${Video} DESTINATION lib)
 install(TARGETS ${Video} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/Video)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
+
+install(FILES ${TEST_SCRIPTS}
+        PERMISSIONS OWNER_EXECUTE OWNER_READ
+                    GROUP_EXECUTE GROUP_READ
+                    WORLD_EXECUTE WORLD_READ
+        DESTINATION localrun)
 
 set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
 set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
