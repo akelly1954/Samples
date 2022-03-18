@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <linux/videodev2.h>
+#include <cppglue.h>
 
 #ifdef __cplusplus
     extern "C" {
@@ -26,7 +27,7 @@
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
 enum io_method {
-        IO_METHOD_READ,
+        IO_METHOD_READ = 0,
         IO_METHOD_MMAP,
         IO_METHOD_USERPTR,
 };
@@ -38,19 +39,6 @@ struct buffer {
 
 #ifdef __cplusplus
 } // extern "C"
-
-// This section is for CPP only, outside of the extern "C" block above.
-
-// These functions serve as the "glue" between the C++ main and these C functions
-extern "C" void v4l2capture_set_logger_function(void (*logger_function)(const char *)); // can be NULL
-extern "C" void v4l2capture_set_logger_stream_function(void (*logger_stream_function)(const char *)); // can be NULL
-extern "C" void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)); // can be NULL
-
-extern "C" void v4l2capture_set_callback_functions(
-                    void (*callback_function)(void *, size_t),
-                    void (*logger_function)(const char *),
-                    void (*logger_stream_function)(const char *)
-                   );
 
 // Interface functions
 extern "C" void v4l2capture_errno_exit(const char *s);
@@ -70,19 +58,6 @@ extern "C" void v4l2capture_open_device(void);
 extern "C" int v4l2_raw_capture_main(int argc, char *argv[]);
 
 #else // __cplusplus
-
-// This section is for C only, no CPP
-
-// These functions serve as the "glue" between the C++ main and these C functions
-void v4l2capture_set_logger_function(void (*logger_function)(const char *)); // can be NULL
-void v4l2capture_set_logger_stream_function(void (*logger_stream_function)(const char *)); // can be NULL
-void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)); // can be NULL
-
-void v4l2capture_set_callback_functions(
-                    void (*callback_function)(void *, size_t),
-                    void (*logger_function)(const char *),
-                    void (*logger_stream_function)(const char *)
-                    );
 
 // Interface functions
 void v4l2capture_errno_exit(const char *s);
