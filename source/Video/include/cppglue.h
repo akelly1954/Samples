@@ -92,14 +92,14 @@ extern "C" {
 }
 
 // This section is for CPP only, outside of the extern "C" block above.
+extern "C" void v4l2capture_errno_exit(const char *s);
+extern "C" void v4l2capture_exit(const char *s);
+extern "C" void v4l2capture_exit_code(int code, const char *s);
 
 // These functions serve as the "glue" between the C++ main and these C functions
 
-extern "C" void v4l2capture_set_logger_function(void (*logger_function)(const char *)); // can be NULL
-extern "C" void v4l2capture_set_logger_stream_function(void (*logger_stream_function)(const char *)); // can be NULL
-extern "C" void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)); // can be NULL
-
 extern "C" void v4l2capture_set_callback_functions(
+                    void (*terminate_function)(int, const char *),
                     void (*callback_function)(void *, size_t),
                     void (*logger_function)(const char *),
                     void (*logger_stream_function)(const char *)
@@ -107,14 +107,14 @@ extern "C" void v4l2capture_set_callback_functions(
 #else  // __cplusplus
 
 // This section is for C only, no CPP
+void v4l2capture_errno_exit(const char *s);
+void v4l2capture_exit(const char *s);
+void v4l2capture_exit_code(int code, const char *s);
 
 // These functions serve as the "glue" between the C++ main and these C functions
 
-void v4l2capture_set_logger_function(void (*logger_function)(const char *)); // can be NULL
-void v4l2capture_set_logger_stream_function(void (*logger_stream_function)(const char *)); // can be NULL
-void v4l2capture_set_callback_function(void (*callback_function)(void *, size_t)); // can be NULL
-
 void v4l2capture_set_callback_functions(
+                    void (*terminate_function)(int, const char *),
                     void (*callback_function)(void *, size_t),
                     void (*logger_function)(const char *),
                     void (*logger_stream_function)(const char *)

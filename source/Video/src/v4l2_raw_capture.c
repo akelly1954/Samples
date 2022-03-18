@@ -11,8 +11,6 @@
  * see https://linuxtv.org/docs.php for more information
  */
 
-// TODO: This C code calls exit() directly.  This does not work (other threads running, etc).  Needs to be fixed.
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -182,7 +180,7 @@ void v4l2capture_mainloop(void)
 
                         if (0 == r) {
                                 LOGGER_STDERR("select timeout")
-                                exit(EXIT_FAILURE);
+                                v4l2capture_exit("select error");
                         }
 
                         if (v4l2capture_read_frame())
@@ -287,16 +285,14 @@ void v4l2capture_init_read(unsigned int buffer_size)
         buffers = calloc(1, sizeof(*buffers));
 
         if (!buffers) {
-                LOGGER_STDERR("Out of memory");
-                exit(EXIT_FAILURE);
+            v4l2capture_exit("Out of memory");
         }
 
         buffers[0].length = buffer_size;
         buffers[0].start = malloc(buffer_size);
 
         if (!buffers[0].start) {
-                LOGGER_STDERR("Out of memory");
-                exit(EXIT_FAILURE);
+                v4l2capture_exit("Out of memory");
         }
 }
 
@@ -313,24 +309,21 @@ void v4l2capture_init_mmap(void)
         if (-1 == v4l2capture_xioctl(fd, VIDIOC_REQBUFS, &req)) {
             if (EINVAL == errno) {
                 LOGGER_STDERR_1Arg("%s does not support memory mapping", dev_name);
-                exit(EXIT_FAILURE);
-            } else {
-                v4l2capture_errno_exit("VIDIOC_REQBUFS");
             }
+            v4l2capture_exit("init_mmap - nommap");
         }
 
         if (req.count < 2) {
             {
                 LOGGER_STDERR_1Arg("Insufficient buffer memory on %s", dev_name);
             }
-            exit(EXIT_FAILURE);
+            v4l2capture_exit("init_mmap - reqcount");
         }
 
         buffers = calloc(req.count, sizeof(*buffers));
 
         if (!buffers) {
-            LOGGER_STDERR("Out of memory");
-            exit(EXIT_FAILURE);
+            v4l2capture_exit("Out of memory");
         }
 
         for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
@@ -371,7 +364,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
         if (-1 == v4l2capture_xioctl(fd, VIDIOC_REQBUFS, &req)) {
             if (EINVAL == errno) {
                 LOGGER_STDERR_1Arg("%s does not support user pointer i/o", dev_name);
-                exit(EXIT_FAILURE);
+                v4l2capture_exit("init_userp - nouserp");
             } else {
                 v4l2capture_errno_exit("VIDIOC_REQBUFS");
             }
@@ -380,8 +373,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
         buffers = calloc(4, sizeof(*buffers));
 
         if (!buffers) {
-                LOGGER_STDERR("Out of memory");
-                exit(EXIT_FAILURE);
+                v4l2capture_exit("Out of memory - nobuf");
         }
 
         for (n_buffers = 0; n_buffers < 4; ++n_buffers) {
@@ -389,8 +381,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
                 buffers[n_buffers].start = malloc(buffer_size);
 
                 if (!buffers[n_buffers].start) {
-                        LOGGER_STDERR("Out of memory");
-                        exit(EXIT_FAILURE);
+                        v4l2capture_exit("Out of memory - nostart");
                 }
         }
 }
@@ -406,7 +397,7 @@ void v4l2capture_init_device(void)
         if (-1 == v4l2capture_xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
             if (EINVAL == errno) {
                 LOGGER_STDERR_1Arg("%s is no V4L2 device", dev_name);
-                exit(EXIT_FAILURE);
+                v4l2capture_exit("not a v4l2 device");
             } else {
                 v4l2capture_errno_exit("VIDIOC_QUERYCAP");
             }
@@ -414,14 +405,14 @@ void v4l2capture_init_device(void)
 
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
             LOGGER_STDERR_1Arg("%s is no capture device", dev_name);
-            exit(EXIT_FAILURE);
+            v4l2capture_exit("device is not a capture device");
         }
 
         switch (io) {
         case IO_METHOD_READ:
                 if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
                     LOGGER_STDERR_1Arg("%s does not support read i/o", dev_name);
-                    exit(EXIT_FAILURE);
+                    v4l2capture_exit("device does not support read i/o");
                 }
                 break;
 
@@ -429,7 +420,7 @@ void v4l2capture_init_device(void)
         case IO_METHOD_USERPTR:
                 if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
                     LOGGER_STDERR_1Arg("%s does not support streaming i/o", dev_name);
-                    exit(EXIT_FAILURE);
+                    v4l2capture_exit("device does not support streaming i/o");
                 }
                 break;
         }
@@ -551,12 +542,12 @@ void v4l2capture_open_device(void)
         if (-1 == stat(dev_name, &st)) {
                 fprintf(stderr, "Cannot identify '%s': %d, %s\n",
                          dev_name, errno, strerror(errno));
-                exit(EXIT_FAILURE);
+                v4l2capture_exit("cannot identify device");
         }
 
         if (!S_ISCHR(st.st_mode)) {
                 fprintf(stderr, "%s is no device\n", dev_name);
-                exit(EXIT_FAILURE);
+                v4l2capture_exit("not a device");
         }
 
         fd = open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
@@ -564,8 +555,9 @@ void v4l2capture_open_device(void)
         if (-1 == fd) {
                 fprintf(stderr, "Cannot open '%s': %d, %s\n",
                          dev_name, errno, strerror(errno));
-                exit(EXIT_FAILURE);
+                v4l2capture_exit("cannot open device");
         }
+        LOGGER_STDERR_1Arg("device: %s", dev_name);
 }
 
 void v4l2capture_usage(FILE *fp, int argc, char **argv)
@@ -632,7 +624,7 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
 
                 case 'h':
                         v4l2capture_usage(stderr, argc, argv);
-                        exit(EXIT_SUCCESS);
+                        v4l2capture_exit_code(0, "Normal termination");
 
                 case 'm':
                         io = IO_METHOD_MMAP;
@@ -667,7 +659,7 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
 
                 default:
                         v4l2capture_usage(stderr, argc, argv);
-                        exit(EXIT_FAILURE);
+                        v4l2capture_exit("usage");
                 }
         }
 

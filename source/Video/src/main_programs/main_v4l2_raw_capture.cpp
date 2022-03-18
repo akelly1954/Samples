@@ -26,6 +26,9 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <unistd.h>
+#include <stdio.h>
+#include <thread>
 #include <video_capture_raw_queue.hpp>
 #include <video_capture_profiler.hpp>
 #include <v4l2_raw_capture.h>
@@ -34,8 +37,6 @@
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
-#include <stdio.h>
-#include <thread>
 
 //////////////////////////////////////////////////////////////////////////////////
 // Static objects
@@ -67,9 +68,31 @@ bool parse(std::ostream &strm, int argc, char *argv[]);
 // Interface to C language functions section
 //////////////////////////////////////////////////////////////////////////////////
 
+
 // Set up logging facility (for the C code) roughly equivalent to std::cerr...
 // Filthy code but I have to deal with C.
 Log::Logger *global_logger = NULL;
+
+//////////////////////////////////////////////////////
+// Exit the process (without hanging)
+//////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+    extern "C" void v4l2capture_terminate(const char *logmessage);
+#else
+    void v4l2capture_terminate(int code, const char *logmessage);
+#endif // __cplusplus
+
+void v4l2capture_terminate(int code, const char *logmessage)
+{
+    if (global_logger != NULL)
+    {
+        global_logger->debug() << "terminate process: code=" << code << ": " << logmessage;
+    }
+    fprintf (stderr, "terminate process: code=%d: %s\n", code, logmessage);
+    ::_exit(code);     // See man page for _exit(2)
+}
+void (*terminate_function)(int code, const char *logmessage) = v4l2capture_terminate;
 
 //////////////////////////////////////////////////////
 // Log to log file if possible
@@ -253,6 +276,7 @@ int main(int argc, char *argv[])
 
         // This is glue for the C based code close to the hardware
         ::v4l2capture_set_callback_functions(
+                            terminate_function,
                             callback_function,
                             logger_function,
                             logger_stream_function
@@ -263,8 +287,9 @@ int main(int argc, char *argv[])
             {
                 const_cast<char *>(logChannelName.c_str()),
                 const_cast<char *>("-o"),
-                // const_cast<char *>("-f"),  // force YUYV 640x480 format
                 const_cast<char *>("-F"),  // force H264 1920x1080 format
+                // OR: const_cast<char *>("-f"),  // force YUYV 640x480 format
+                // OR: nothing - default to whatever the video is set to (YUYV 640x320?)
                 const_cast<char *>("-c"),
                 const_cast<char *>(frame_count.c_str()),
                 NULL

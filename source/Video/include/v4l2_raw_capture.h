@@ -41,7 +41,6 @@ struct buffer {
 } // extern "C"
 
 // Interface functions
-extern "C" void v4l2capture_errno_exit(const char *s);
 extern "C" int v4l2capture_xioctl(int fh, int request, void *arg);
 extern "C" void v4l2capture_process_image(void *p, int size);
 extern "C" int v4l2capture_read_frame(void);
@@ -60,7 +59,6 @@ extern "C" int v4l2_raw_capture_main(int argc, char *argv[]);
 #else // __cplusplus
 
 // Interface functions
-void v4l2capture_errno_exit(const char *s);
 int v4l2capture_xioctl(int fh, int request, void *arg);
 void v4l2capture_process_image(void *p, int size);
 int v4l2capture_read_frame(void);
