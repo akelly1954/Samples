@@ -90,7 +90,7 @@ base-linux-build.bash (in *...Samples/source/*)
 linux-build.bash   (in *...Samples/source/EnetUtil/*)    
 linux-build.bash   (in *...Samples/source/Util/*)     
 bash_env.sh (in *...Samples/source/shell_env/*)   
-test_basic_server.bash (in *...Samples/source/EnetUtil/src/main_programs/*)
+test_basic_server.bash (in *...Samples/source/EnetUtil/src/main_programs/*)     
 localbuild.sh  (in *...Samples/source/3rdparty/LoggerCpp/*)     
      
                 
