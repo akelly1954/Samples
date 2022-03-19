@@ -99,6 +99,7 @@ localbuild.sh  (in *...Samples/source/3rdparty/LoggerCpp/*)
 cmake/EnetUtil.cmake   
 cmake/tools.cmake   
 cmake/Util.cmake   
+cmake/Video.cmake    
 CMakeLists.txt   
 EnetUtil/CMakeLists.txt   
 Util/CMakeLists.txt    
