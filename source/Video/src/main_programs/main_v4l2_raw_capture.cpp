@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
 
         // Start the thread which handles the queue of raw buffers that the callback
         // function handles.
-        queuethread = std::thread(raw_buffer_queue_handler, logger, output_file);
+        queuethread = std::thread(raw_buffer_queue_handler, logger, output_file, profiling_enabled);
         queuethread.detach();
 
         // This is glue for the C based code close to the hardware
@@ -340,17 +340,7 @@ bool parse(std::ostream &strm, int argc, char *argv[])
     switch(getArg(cmdmap, "-fn", output_file))
     {
         case Util::ParameterStatus::FlagNotProvided:
-#ifdef FOR_DEBUG_IF_NEEDED
-            strm << "Writing frames to file will remain the default: ";
-            if( VideoCapture::video_capture_queue::s_write_frames_to_file )
-            {
-                strm << "Write-frames-to-file, file name is: \"" << output_file << "\"" << std::endl;
-            }
-            else
-            {
-                strm << "Do-not-write-frames-to-file." << std::endl;
-            }
-#endif // FOR_DEBUG_IF_NEEDED
+            // This means write-to-file may or may not be enabled:  Use the default
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
             VideoCapture::video_capture_queue::set_write_frames_to_file(true);
@@ -426,16 +416,10 @@ bool parse(std::ostream &strm, int argc, char *argv[])
         return false;
     }
 
-    // Assign the frame count
+    // Assign the frame count (only after the command line parameters were applied)
     framecount = strtoul(frame_count.c_str(), NULL, 10);
 
     return true;
 }
-
-
-
-
-
-
 
 

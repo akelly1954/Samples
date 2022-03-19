@@ -1,4 +1,5 @@
 #include <video_capture_raw_queue.hpp>
+#include <video_capture_profiler.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -50,12 +51,11 @@ using namespace VideoCapture;
 bool video_capture_queue::s_terminated = false;
 bool video_capture_queue::s_write_frames_to_file = false;
 size_t video_capture_queue::s_write_frame_count = 200;       // gets me a bit more than 100Mb output.  YMMV.
-
 Util::condition_data<int> video_capture_queue::s_condvar(0);
 Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>>
                                                                             video_capture_queue::s_ringbuf(100);
 
-void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string output_file)
+void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string output_file, bool profiling_enabled)
 {
     FILE *filestream = NULL;
 
@@ -81,6 +81,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string outp
         while (!video_capture_queue::s_terminated && !video_capture_queue::s_ringbuf.empty())
         {
             auto sp_frame = video_capture_queue::s_ringbuf.get();
+            if (profiling_enabled) profiler_frame::increment_one_frame();
             logger.debug() << "From queue: Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
 
             if (video_capture_queue::s_write_frames_to_file)

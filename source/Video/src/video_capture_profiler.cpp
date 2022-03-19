@@ -48,28 +48,37 @@ using namespace VideoCapture;
 
 // static members
 
-bool video_capture_profiler::s_terminated = false;
+std::chrono::steady_clock::time_point
+video_capture_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
+std::mutex profiler_frame::stats_frames_mutex;
+long long profiler_frame::stats_total_num_frames;
+std::chrono::milliseconds profiler_frame::stats_total_frame_duration_milliseconds;
 
+bool video_capture_profiler::s_terminated = false;
 Util::condition_data<int> video_capture_profiler::s_condvar(0);
 
 void VideoCapture::video_profiler(Log::Logger logger)
 {
-    int slp = 500;
+    int slp = 800;
+    profiler_frame::initialize();
 
     logger.debug() << "Profiler thread started...";
 
     // Wait for main() to signal us to start
     video_capture_profiler::s_condvar.wait_for_ready();
 
+
     while (!video_capture_profiler::s_terminated)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(slp));
         logger.debug() << "Profiler thread running...";
         logger.debug() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
+        logger.debug() << "Number of frames received: " << profiler_frame::stats_total_num_frames;
+        logger.debug() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(slp));
     }
 
     logger.debug() << "Profiler thread terminating ...";
-
 }
 
 void video_capture_profiler::set_terminated(bool t)

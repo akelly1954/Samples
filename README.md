@@ -46,10 +46,13 @@ I use this to test the sanity of the layers below the thread which is handling t
    
 Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being addressed at the moment).   
     
-Currenlty, I'm implementing profiling done at run time of various factors in this mechanism that will control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), etc. This is work in progress. 
-     
-As this is being built up from hardware, I pause at each layer to document and test (and fix bugs) before moving up to the next layer.  After this, it's Qt time.  That should be fun.    
-    
+Currenlty, I'm just about done implementing profiling done at run time, gathering stats of various factors in this mechanism that will control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), the current frame rate, etc.   
+
+(Interim results: the average frame rate is showing as more than 24.98 fps (with the driver set to deliver at 25fps).  On the average there
+are 0 shared_ptr's in the ring buffer:  When I inserted some sleep()'s here and there to simulate load, those number came up into the few dozens depending on which part of the system I slowed down.)
+
+I will be adding more to the profiling as I progress the display part of this (Qt).  So, leaving well enough alone now, I'm moving on to the fun part.        
+        
     
 **main_ntwk_basic_sock_server.cpp** and **main_client_for_basic_server.cpp**   
 found in *...Samples/source/EnetUtil/src/main_programs/*     

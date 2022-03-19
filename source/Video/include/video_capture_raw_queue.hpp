@@ -4,6 +4,7 @@
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
+#include <video_capture_profiler.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <stdio.h>
 #include <thread>
@@ -39,7 +40,7 @@ namespace VideoCapture {
 
 
 // Queue handler thread
-void raw_buffer_queue_handler(Log::Logger logger, std::string output_file);
+void raw_buffer_queue_handler(Log::Logger logger, std::string output_file, bool profiling_enabled);
 
 FILE *create_output_file(Log::Logger logger, std::string output_file);
 
@@ -52,7 +53,7 @@ public:
     static void set_terminated(bool t);         // main() sets this to true or false
     static void set_write_frames_to_file(bool t); // main() sets this to true or false
     static void set_write_frame_count(size_t count);
-
+    static VideoCapture::profiler_frame s_pframe;
     static bool s_terminated;
     static bool s_write_frames_to_file;
     static size_t s_write_frame_count;
