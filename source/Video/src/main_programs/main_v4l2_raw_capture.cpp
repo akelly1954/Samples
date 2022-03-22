@@ -33,6 +33,7 @@
 #include <video_capture_profiler.hpp>
 #include <v4l2_raw_capture.h>
 #include <Utility.hpp>
+#include <MainLogger.hpp>
 #include <commandline.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -229,8 +230,8 @@ int main(int argc, char *argv[])
     /////////////////
 
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, loglevel, logFilelName, Util::Utility::disableConsole, Util::Utility::enableLogFile);
-    Util::Utility::configureLogManager( configList, logChannelName );
+    Util::MainLogger::initializeLogManager(configList, loglevel, logFilelName, Util::MainLogger::disableConsole, Util::MainLogger::enableLogFile);
+    Util::MainLogger::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName.c_str());
 
     // Setup of the logger callback function (from the C code).

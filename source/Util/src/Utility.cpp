@@ -40,61 +40,6 @@
 
 using namespace Util;
 
-
-//
-// Initializes options in LoggerCpp. Should be run from the main thread.
-//
-// This is a bit of a hack.  If LoggerCPP persists in these projects,
-// some of the hoaky-ness needs to be cleaned up.
-void Utility::initializeLogManager( Log::Config::Vector& configList,
-                                    Log::Log::Level loglevel,
-                                    const std::string& logfilename,
-									Utility::ConsoleOutput useConsole,
-									Utility::UseLogFile useLogFile)
-{
-    Log::Manager::setDefaultLevel(loglevel);
-
-    // Configure the Output objects
-
-    // Enforce either console or file output
-    if (useConsole == Utility::enableConsole ||
-    		(useConsole == Utility::disableConsole && useLogFile == Utility::disableLogFile))
-    {
-        Log::Config::addOutput(configList, "OutputConsole");
-    }
-
-    if (useLogFile == Utility::enableLogFile)
-    {
-        Log::Config::addOutput(configList, "OutputFile");
-        Log::Config::setOption(configList, "filename",          logfilename.c_str());
-        std::string oldlogfilename = std::string("old.")+logfilename;
-        Log::Config::setOption(configList, "filename_old",  	oldlogfilename.c_str());
-        std::cerr << "Log file: " << logfilename.c_str() << std::endl;
-    }
-
-    Log::Config::setOption(configList, "max_startup_size",  "0");
-    Log::Config::setOption(configList, "max_size",          "100000000");
-#ifdef WIN32
-    Log::Config::addOutput(configList, "OutputDebug");
-#endif
-
-}
-void Utility::configureLogManager( Log::Config::Vector& configList, std::string channelName )
-{
-    // Create a Logger object, using the parameter Channel
-    Log::Logger logger(channelName.c_str());
-
-    try
-    {
-        // Configure the Log Manager (create the Output objects)
-        Log::Manager::configure(configList);
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << e.what();
-    }
-}
-
 long Utility::get_UTC_time_as_long()
 {
     using namespace std::chrono;

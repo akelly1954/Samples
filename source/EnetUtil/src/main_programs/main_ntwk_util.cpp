@@ -1,4 +1,5 @@
 #include "Utility.hpp"
+#include "MainLogger.hpp"
 #include "NtwkUtil.hpp"
 #include "NtwkFixedArray.hpp"
 #include <LoggerCpp/LoggerCpp.h>
@@ -59,9 +60,11 @@ const char *logChannelName = "main_ntwk_util";
 
 int main(int argc, char *argv[])
 {
+    using namespace Util;
+
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "", Util::Utility::enableConsole, Util::Utility::disableLogFile);
-    Util::Utility::configureLogManager( configList, logChannelName );
+    MainLogger::initializeLogManager(configList, Log::Log::Level::eNotice, "", Util::MainLogger::enableConsole, Util::MainLogger::disableLogFile);
+    MainLogger::configureLogManager( configList, logChannelName );
 
     Log::Logger logger(logChannelName);
 

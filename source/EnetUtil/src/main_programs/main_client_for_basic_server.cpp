@@ -1,5 +1,6 @@
 #include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
 #include <Utility.hpp>
+#include <MainLogger.hpp>
 #include <commandline.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -187,8 +188,8 @@ int main(int argc, char *argv[])
 	/////////////////
 
 	Log::Config::Vector configList;
-	Util::Utility::initializeLogManager(configList, loglevel, logFileName, Utility::enableConsole, Utility::disableLogFile);
-	Util::Utility::configureLogManager(configList, logChannelName);
+	MainLogger::initializeLogManager(configList, loglevel, logFileName, MainLogger::enableConsole, MainLogger::disableLogFile);
+	MainLogger::configureLogManager(configList, logChannelName);
 	Log::Logger logger(logChannelName);
 
 	logger.debug() << "Using " << input_filename << " for input. Size is " << numbytesinfile << " bytes.";

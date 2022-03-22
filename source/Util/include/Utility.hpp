@@ -33,19 +33,6 @@ namespace Util {
 
     // This is where odds and ends go
     class Utility {
-    public:
-    	enum ConsoleOutput		// flag for initializeLogManager() method
-		{
-    		disableConsole = 0,
-			enableConsole
-		};
-
-    	enum UseLogFile          // flag for initializeLogManager() method
-		{
-    		disableLogFile = 0,
-			enableLogFile
-		};
-
     private:
         // Not allowed:
         Utility(void) = delete;
@@ -56,12 +43,6 @@ namespace Util {
 
     public:
 
-        static void initializeLogManager(  Log::Config::Vector& configList,
-                                            Log::Log::Level loglevel,
-                                            const std::string& logfilename,
-                                            Utility::ConsoleOutput useConsole,
-                                            Utility::UseLogFile useLogFile);
-        static void configureLogManager( Log::Config::Vector& configList, std::string channelName );
         static long get_UTC_time_as_long();
         static std::string get_UTC_time_as_string(const char *format = "%Y-%m-%dT%XZ");
 

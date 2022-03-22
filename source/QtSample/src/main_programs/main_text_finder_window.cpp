@@ -2,12 +2,17 @@
 #include "./ui_main_text_finder_window.h"
 #include <QFile>
 #include <QTextStream>
+#include <LoggerCpp/LoggerCpp.h>
 
 TextFinder::TextFinder(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::TextFinder)
 {
+
+    Log::Logger logger("text_finder");
+    logger.notice() << "Before setupUi";
     ui->setupUi(this);
+    logger.notice() << "Before loadTextFile";
     loadTextFile();
 }
 

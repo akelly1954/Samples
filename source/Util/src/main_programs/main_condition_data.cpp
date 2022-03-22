@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <condition_data.hpp>
 #include <Utility.hpp>
+#include <MainLogger.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -129,8 +130,8 @@ int main(int argc, const char *argv[])
     // DEBUG   std::cerr << "Parse returned: " << numthreads << std::endl;
 
     Log::Config::Vector configList;
-    Util::Utility::initializeLogManager(configList, Log::Log::Level::eNotice, "main_condition_data_log.txt", Utility::disableConsole, Utility::enableLogFile);
-    Util::Utility::configureLogManager( configList, logChannelName );
+    Util::MainLogger::initializeLogManager(configList, Log::Log::Level::eNotice, "main_condition_data_log.txt", MainLogger::disableConsole, MainLogger::enableLogFile);
+    MainLogger::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
 
     // Static global data on the heap.
