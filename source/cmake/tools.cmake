@@ -1,4 +1,4 @@
-﻿#
+#
 # Need CMAKE 3.10 and above to use --std=c++17
 # On entry, relies on ${SampleRoot_DIR} to be set to the path for the repository root
 # and ${LoggerCppSource_DIR} to be set to the LoggerCpp "src/" directory path (where include/ 
