@@ -37,7 +37,7 @@ struct buffer          *buffers = NULL;
 static unsigned int     n_buffers = 0;
 static int              out_buf = 0;
 static int              force_format = 0;
-static int              frame_count = 70;
+static int              frame_count = 0;
 
 int v4l2capture_xioctl(int fh, int request, void *arg)
 {
@@ -153,40 +153,50 @@ int v4l2capture_read_frame(void)
 
 void v4l2capture_mainloop(void)
 {
-        unsigned int count;
+        int count = frame_count;
 
-        count = frame_count;
+        // Loop while not finished, and original frame_count was 0, or counter is not done counting
+        // (Having a null finished callback() is an error checked for earlier).
+        do
+        {
+            if (frame_count != 0 && count-- <= 0) break;
 
-        while (count-- > 0) {
-                for (;;) {
-                        fd_set fds;
-                        struct timeval tv;
-                        int r;
+            for (;;)
+            {
+                fd_set fds;
+                struct timeval tv;
+                int r;
 
-                        FD_ZERO(&fds);
-                        FD_SET(fd, &fds);
+                FD_ZERO(&fds);
+                FD_SET(fd, &fds);
 
-                        /* Timeout. */
-                        tv.tv_sec = 4;
-                        tv.tv_usec = 0;
+                /* Timeout. */
+                tv.tv_sec = 4;
+                tv.tv_usec = 0;
 
-                        r = select(fd + 1, &fds, NULL, NULL, &tv);
+                r = select(fd + 1, &fds, NULL, NULL, &tv);
 
-                        if (-1 == r) {
-                                if (EINTR == errno)
-                                        continue;
-                                v4l2capture_errno_exit("select");
-                        }
-
-                        if (0 == r) {
-                                LOGGER_STDERR("select timeout")
-                                v4l2capture_exit("select error");
-                        }
-
-                        if (v4l2capture_read_frame())
-                                break;
-                        /* EAGAIN - continue select loop. */
+                if (-1 == r) {
+                        if (EINTR == errno)
+                                continue;
+                        v4l2capture_errno_exit("select");
                 }
+
+                if (0 == r) {
+                        LOGGER_STDERR("select timeout")
+                        v4l2capture_exit("select error");
+                }
+
+                if (v4l2capture_read_frame())
+                        break;
+                /* EAGAIN - continue select loop. */
+            }
+        } while ((*v4l2capture_finished_function)() == false);
+
+        if ((*v4l2capture_finished_function)())
+        {
+            // LOGGER_STDERR("CAPTURE TERMINATION REQUESTED.");
+            LOGGER("v4l2capture_mainloop: CAPTURE TERMINATION REQUESTED.");
         }
 }
 
@@ -663,6 +673,10 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
                 }
         }
 
+        if (v4l2capture_finished_function == NULL)
+        {
+            v4l2capture_exit("v4l2_raw_capture_main: Cannot have NULL v4l2capture_finished_function() callback.");
+        }
         v4l2capture_open_device();
         v4l2capture_init_device();
         v4l2capture_start_capturing();

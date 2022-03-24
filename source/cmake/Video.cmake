@@ -7,8 +7,8 @@ cmake_minimum_required(VERSION 3.10)
 include (${SampleRoot_DIR}/source/cmake/tools.cmake)
 
 if (NOT WIN32)
-    set (Video_LIB "${SampleRoot_DIR}/build/Video/libVideo.a")
-    set (Video_LIBTYPE "STATIC")
+    set (Video_LIB "${SampleRoot_DIR}/build/Video/libVideo.so")
+    set (Video_LIBTYPE "SHARED")
 
     find_package( Threads )
 else()

@@ -11,7 +11,7 @@ file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" )
 
 set ( LIBTYPE "${Video_LIBTYPE}" )
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 include_directories( ${Video_HEADERS} 
                      ../Util/include
@@ -50,7 +50,6 @@ target_link_libraries( main_v4l2_raw_capture
                             ${LINKOPTIONS}
                      )
 install(TARGETS main_v4l2_raw_capture DESTINATION localrun)
-
 
 # Dependencies
 add_dependencies (main_v4l2_raw_capture ${Video} ${Util})

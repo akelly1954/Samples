@@ -26,9 +26,6 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <unistd.h>
-#include <stdio.h>
-#include <thread>
 #include <video_capture_raw_queue.hpp>
 #include <video_capture_profiler.hpp>
 #include <v4l2_raw_capture.h>
@@ -38,6 +35,9 @@
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <thread>
 
 //////////////////////////////////////////////////////////////////////////////////
 // Static objects
@@ -73,6 +73,33 @@ bool parse(std::ostream &strm, int argc, char *argv[]);
 // Set up logging facility (for the C code) roughly equivalent to std::cerr...
 // Filthy code but I have to deal with C.
 Log::Logger *global_logger = NULL;
+
+//////////////////////////////////////////////////////
+// Flag the v4l2 capture code to stop capturing frames
+//////////////////////////////////////////////////////
+
+bool capture_finished = false;
+
+#ifdef FOR_DEBUG_PURPOSE_ONLY
+// This is used for testing the capture_finished functionality
+void debug_termination(bool *finished)
+{
+    ::sleep(5);
+    *finished = true;
+}
+#endif // FOR_DEBUG_PURPOSE_ONLY
+
+#ifdef __cplusplus
+    extern "C" bool v4l2capture_finished(void);
+#else
+    bool v4l2capture_finished(void);
+#endif // __cplusplus
+
+bool v4l2capture_finished(void)
+{
+    return capture_finished;
+}
+bool (*finished_function)() = v4l2capture_finished;
 
 //////////////////////////////////////////////////////
 // Exit the process (without hanging)
@@ -258,6 +285,11 @@ int main(int argc, char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
 
+#ifdef FOR_DEBUG_PURPOSE_ONLY
+    // This is used for testing the capture_finished functionality
+    std::thread dbg;
+#endif // FOR_DEBUG_PURPOSE_ONLY
+
     int ret = 0;
     try
     {
@@ -275,8 +307,14 @@ int main(int argc, char *argv[])
         queuethread = std::thread(raw_buffer_queue_handler, logger, output_file, profiling_enabled);
         queuethread.detach();
 
+#ifdef FOR_DEBUG_PURPOSE_ONLY
+        // This is used for testing the capture_finished functionality
+        dbg = std::thread (debug_termination, &capture_finished);
+#endif // FOR_DEBUG_PURPOSE_ONLY
+
         // This is glue for the C based code close to the hardware
         ::v4l2capture_set_callback_functions(
+                            finished_function,
                             terminate_function,
                             callback_function,
                             logger_function,
@@ -319,8 +357,13 @@ int main(int argc, char *argv[])
     }
 
     // CLEANUP
-
+    capture_finished = true;
     video_capture_profiler::set_terminated(true);
+
+#ifdef FOR_DEBUG_PURPOSE_ONLY
+        // This is used for testing the capture_finished functionality
+    if (dbg.joinable()) dbg.join();
+#endif // FOR_DEBUG_PURPOSE_ONLY
 
     // Wait for the queue thread to finish
     if (queuethread.joinable()) queuethread.join();
@@ -418,6 +461,7 @@ bool parse(std::ostream &strm, int argc, char *argv[])
     }
 
     // Assign the frame count (only after the command line parameters were applied)
+    // Frame count set to 0 means stream non-stop.
     framecount = strtoul(frame_count.c_str(), NULL, 10);
 
     return true;

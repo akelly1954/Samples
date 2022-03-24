@@ -66,7 +66,7 @@ install(FILES src/main_programs/input.txt
 
 set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
 set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
-set (Video_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
+set (Video_LIB "${SampleRoot_DIR}/build/Video/libVideo.so")
 #
 # text_finder_main
 #

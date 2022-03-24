@@ -17,6 +17,7 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 #include <linux/videodev2.h>
 #include <cppglue.h>
 

@@ -68,10 +68,18 @@ public:
         using namespace std::chrono;
         std::lock_guard<std::mutex> lock(stats_frames_mutex);
 
-        stats_total_num_frames++;
-        stats_total_frame_duration_milliseconds =
-                duration_cast<milliseconds>(steady_clock::now() - video_capture_profiler::s_profiler_start_timepoint);
-
+        // Use the first frame as the baseline for the total duration counter.
+        if (!profiler_frame::initialized)
+        {
+            profiler_frame::initialized = true;
+            video_capture_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
+        }
+        else
+        {
+            stats_total_num_frames++;
+            stats_total_frame_duration_milliseconds =
+                    duration_cast<milliseconds>(steady_clock::now() - video_capture_profiler::s_profiler_start_timepoint);
+        }
         return stats_total_num_frames;
     }
 
@@ -94,6 +102,7 @@ public:
     static std::mutex stats_frames_mutex;
     static long long stats_total_num_frames;
     static std::chrono::milliseconds stats_total_frame_duration_milliseconds;
+    static bool initialized;
 };
 
 } // end of namespace VideoCapture

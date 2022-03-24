@@ -50,7 +50,7 @@ using namespace VideoCapture;
 
 bool video_capture_queue::s_terminated = false;
 bool video_capture_queue::s_write_frames_to_file = false;
-size_t video_capture_queue::s_write_frame_count = 200;       // gets me a bit more than 100Mb output.  YMMV.
+size_t video_capture_queue::s_write_frame_count = 200;
 Util::condition_data<int> video_capture_queue::s_condvar(0);
 Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>>
                                                                             video_capture_queue::s_ringbuf(100);
