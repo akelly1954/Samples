@@ -74,20 +74,12 @@ bool parse(std::ostream &strm, int argc, char *argv[]);
 // Filthy code but I have to deal with C.
 Log::Logger *global_logger = NULL;
 
+
 //////////////////////////////////////////////////////
 // Flag the v4l2 capture code to stop capturing frames
 //////////////////////////////////////////////////////
 
 bool capture_finished = false;
-
-#ifdef FOR_DEBUG_PURPOSE_ONLY
-// This is used for testing the capture_finished functionality
-void debug_termination(bool *finished)
-{
-    ::sleep(5);
-    *finished = true;
-}
-#endif // FOR_DEBUG_PURPOSE_ONLY
 
 #ifdef __cplusplus
     extern "C" bool v4l2capture_finished(void);
@@ -99,7 +91,38 @@ bool v4l2capture_finished(void)
 {
     return capture_finished;
 }
+
+// finished can only be set to true.
+void set_v4l2capture_finished(void)
+{
+    capture_finished = true;
+}
 bool (*finished_function)() = v4l2capture_finished;
+
+//////////////////////////////////////////////////////
+// Flag the v4l2 capture code to pause/resume capturing frames
+//////////////////////////////////////////////////////
+
+bool capture_pause = false;
+
+#ifdef __cplusplus
+    extern "C" bool v4l2capture_pause(void);
+#else
+    bool v4l2capture_pause(void);
+#endif // __cplusplus
+
+bool v4l2capture_pause(void)
+{
+    return capture_pause;
+}
+
+// pause is true when capturing is paused. Set to false to resume.
+void set_v4l2capture_pause(bool pause)
+{
+    capture_pause = pause;
+}
+bool (*pause_function)() = v4l2capture_pause;
+
 
 //////////////////////////////////////////////////////
 // Exit the process (without hanging)
@@ -196,6 +219,37 @@ void v4l2capture_callback(void *p, size_t bsize)
 
 void (*callback_function)(void *, size_t) = v4l2capture_callback;
 
+////////////////////////////////////////////////////////////////////////////////
+// This is a short-lived thread which exercises pause/resume capture
+
+// Un-comment-out this define if a test of pause/resume/finish capture is needed.
+//
+// #define TEST_RAW_CAPTURE_CTL
+
+#ifdef TEST_RAW_CAPTURE_CTL
+
+void test_raw_capture_ctl(Log::Logger logger)
+{
+    logger.debug() << "In test_raw_capture_ctl: thread running";
+
+    for (int i = 1; i <= 3; i++)
+    {
+        ::sleep(3);
+        logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
+        set_v4l2capture_pause(true);
+
+        ::sleep(3);
+        logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
+        set_v4l2capture_pause(false);
+    }
+
+    ::sleep(3);
+    logger.debug() << "test_raw_capture_ctl: FINISH CAPTURE REQUEST...";
+    set_v4l2capture_finished();
+}
+
+#endif // TEST_RAW_CAPTURE_CTL
+
 //////////////////////////////////////////////////////////////////////////////////
 // Command line parsing section
 //////////////////////////////////////////////////////////////////////////////////
@@ -285,10 +339,10 @@ int main(int argc, char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
 
-#ifdef FOR_DEBUG_PURPOSE_ONLY
-    // This is used for testing the capture_finished functionality
-    std::thread dbg;
-#endif // FOR_DEBUG_PURPOSE_ONLY
+    // this can be turned on/off in ...Samples/source/Video/CMakeLists.txt
+#ifdef TEST_RAW_CAPTURE_CTL
+    std::thread trcc;
+#endif // TEST_RAW_CAPTURE_CTL
 
     int ret = 0;
     try
@@ -307,13 +361,15 @@ int main(int argc, char *argv[])
         queuethread = std::thread(raw_buffer_queue_handler, logger, output_file, profiling_enabled);
         queuethread.detach();
 
-#ifdef FOR_DEBUG_PURPOSE_ONLY
-        // This is used for testing the capture_finished functionality
-        dbg = std::thread (debug_termination, &capture_finished);
-#endif // FOR_DEBUG_PURPOSE_ONLY
+// this can be turned on/off in ...Samples/source/Video/CMakeLists.txt
+#ifdef TEST_RAW_CAPTURE_CTL
+        // this will pause/sleep/resume/sleep a bunch of times, then exit.
+        trcc = std::thread (test_raw_capture_ctl, logger);
+#endif // TEST_RAW_CAPTURE_CTL
 
         // This is glue for the C based code close to the hardware
         ::v4l2capture_set_callback_functions(
+                            pause_function,
                             finished_function,
                             terminate_function,
                             callback_function,
@@ -357,13 +413,13 @@ int main(int argc, char *argv[])
     }
 
     // CLEANUP
-    capture_finished = true;
+    ::set_v4l2capture_finished();
     video_capture_profiler::set_terminated(true);
 
-#ifdef FOR_DEBUG_PURPOSE_ONLY
-        // This is used for testing the capture_finished functionality
-    if (dbg.joinable()) dbg.join();
-#endif // FOR_DEBUG_PURPOSE_ONLY
+// this can be turned on/off in ...Samples/source/Video/CMakeLists.txt
+#ifdef TEST_RAW_CAPTURE_CTL
+    if (trcc.joinable()) trcc.join();
+#endif // TEST_RAW_CAPTURE_CTL
 
     // Wait for the queue thread to finish
     if (queuethread.joinable()) queuethread.join();

@@ -84,6 +84,7 @@ extern "C" {
     };
 
     extern struct string_io_methods string_methods;
+    extern bool (*v4l2capture_pause_function)();
     extern bool (*v4l2capture_finished_function)();
     extern void (*v4l2capture_callback_function)(void *, size_t);
     extern void (*v4l2capture_logger_function)(const char *);
@@ -100,6 +101,7 @@ extern "C" void v4l2capture_exit_code(int code, const char *s);
 // These functions serve as the "glue" between the C++ main and these C functions
 
 extern "C" void v4l2capture_set_callback_functions(
+                    bool (*pause_function)(),
                     bool (*finished_function)(),
                     void (*terminate_function)(int, const char *),
                     void (*callback_function)(void *, size_t),
@@ -116,6 +118,7 @@ void v4l2capture_exit_code(int code, const char *s);
 // These functions serve as the "glue" between the C++ main and these C functions
 
 void v4l2capture_set_callback_functions(
+                    bool (*pause_function)(),
                     bool (*finished_function)(),
                     void (*terminate_function)(int, const char *),
                     void (*callback_function)(void *, size_t),

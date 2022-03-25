@@ -55,6 +55,13 @@ void v4l2capture_process_image(void *p, int size)
     // repurpose the -o flag to use callback instead of fwrite
     if (out_buf)
     {
+        if ((*v4l2capture_pause_function)())
+        {
+            // if we're paused, continue the frame capture
+            // but don't really do anything with it.
+            return;
+        }
+
         if (v4l2capture_callback_function != NULL) v4l2capture_callback_function(p, size);
     }
 }
@@ -677,6 +684,12 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
         {
             v4l2capture_exit("v4l2_raw_capture_main: Cannot have NULL v4l2capture_finished_function() callback.");
         }
+
+        if (v4l2capture_pause_function == NULL)
+        {
+            v4l2capture_exit("v4l2_raw_capture_main: Cannot have NULL v4l2capture_pause_function.");
+        }
+
         v4l2capture_open_device();
         v4l2capture_init_device();
         v4l2capture_start_capturing();

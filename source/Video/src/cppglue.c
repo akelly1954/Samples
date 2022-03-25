@@ -31,6 +31,7 @@
 #include <assert.h>
 #include <v4l2_raw_capture.h>
 
+bool    (*v4l2capture_pause_function)() = NULL;
 bool    (*v4l2capture_finished_function)() = NULL;
 void    (*v4l2capture_terminate_function)(int, const char *) = NULL;
 void    (*v4l2capture_callback_function)(void *, size_t) = NULL;
@@ -38,6 +39,7 @@ void    (*v4l2capture_logger_function)(const char *) = NULL;
 void    (*v4l2capture_logger_stream_function)(const char *) = NULL;
 
 void v4l2capture_set_callback_functions(
+                    bool (*pause_function)(),
                     bool (*finished_function)(),
                     void (*terminate_function)(int, const char *),
                     void (*callback_function)(void *, size_t),
@@ -45,6 +47,7 @@ void v4l2capture_set_callback_functions(
                     void (*logger_stream_function)(const char *)
                     )
 {
+    v4l2capture_pause_function = pause_function;
     v4l2capture_finished_function = finished_function;
     v4l2capture_terminate_function = terminate_function;
     v4l2capture_callback_function = callback_function;
