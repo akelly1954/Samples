@@ -86,7 +86,7 @@ public:
     static double frames_per_millisecond()
     {
         double ret;
-        if (stats_total_num_frames != 0)
+        if (stats_total_frame_duration_milliseconds.count() != 0)
         {
             return static_cast<double>(stats_total_num_frames) / static_cast<double>(stats_total_frame_duration_milliseconds.count());
         }
