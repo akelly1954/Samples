@@ -26,6 +26,7 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <v4l2_interface.hpp>
 #include <video_capture_raw_queue.hpp>
 #include <video_capture_profiler.hpp>
 #include <v4l2_raw_capture.h>
@@ -40,189 +41,22 @@
 #include <thread>
 
 //////////////////////////////////////////////////////////////////////////////////
-// Static objects
-//////////////////////////////////////////////////////////////////////////////////
-std::string logChannelName = "v4l2_raw_capture";
-std::string logFilelName = logChannelName + "_log.txt";
-
-std::string output_file = logChannelName + ".data";  // Name of file intended for the video frames
-
-// If the H264 encoding is used, this will create an mp4 file out of it, playable by vlc or whatever:
+//
+// If the H264 encoding is used in this program, it will create an mp4 file out of it,
+// playable by vlc or whatever:
+//
 //             ffmpeg -f h264 -i v4l2_raw_capture.data -vcodec copy v4l2_raw_capture.mp4
+//
+//////////////////////////////////////////////////////////////////////////////////
 
-
-Log::Log::Level loglevel = Log::Log::Level::eDebug;
-std::string default_log_level = "debug";
-std::string log_level = default_log_level;
-
-size_t framecount = 200;
-std::string default_frame_count(std::to_string(framecount));
-std::string frame_count(default_frame_count);
-
-bool profiling_enabled = false;
 
 // See the end of this source file for this function
 bool parse(std::ostream &strm, int argc, char *argv[]);
 
-
-//////////////////////////////////////////////////////////////////////////////////
-// Interface to C language functions section
-//////////////////////////////////////////////////////////////////////////////////
-
-
-// Set up logging facility (for the C code) roughly equivalent to std::cerr...
-// Filthy code but I have to deal with C.
-Log::Logger *global_logger = NULL;
-
-
-//////////////////////////////////////////////////////
-// Flag the v4l2 capture code to stop capturing frames
-//////////////////////////////////////////////////////
-
-bool capture_finished = false;
-
-#ifdef __cplusplus
-    extern "C" bool v4l2capture_finished(void);
-#else
-    bool v4l2capture_finished(void);
-#endif // __cplusplus
-
-bool v4l2capture_finished(void)
-{
-    return capture_finished;
-}
-
-// finished can only be set to true.
-void set_v4l2capture_finished(void)
-{
-    capture_finished = true;
-}
-bool (*finished_function)() = v4l2capture_finished;
-
-//////////////////////////////////////////////////////
-// Flag the v4l2 capture code to pause/resume capturing frames
-//////////////////////////////////////////////////////
-
-bool capture_pause = false;
-
-#ifdef __cplusplus
-    extern "C" bool v4l2capture_pause(void);
-#else
-    bool v4l2capture_pause(void);
-#endif // __cplusplus
-
-bool v4l2capture_pause(void)
-{
-    return capture_pause;
-}
-
-// pause is true when capturing is paused. Set to false to resume.
-void set_v4l2capture_pause(bool pause)
-{
-    capture_pause = pause;
-}
-bool (*pause_function)() = v4l2capture_pause;
-
-
-//////////////////////////////////////////////////////
-// Exit the process (without hanging)
-//////////////////////////////////////////////////////
-
-#ifdef __cplusplus
-    extern "C" void v4l2capture_terminate(const char *logmessage);
-#else
-    void v4l2capture_terminate(int code, const char *logmessage);
-#endif // __cplusplus
-
-void v4l2capture_terminate(int code, const char *logmessage)
-{
-    if (global_logger != NULL)
-    {
-        global_logger->debug() << "terminate process: code=" << code << ": " << logmessage;
-    }
-    fprintf (stderr, "terminate process: code=%d: %s\n", code, logmessage);
-    ::_exit(code);     // See man page for _exit(2)
-}
-void (*terminate_function)(int code, const char *logmessage) = v4l2capture_terminate;
-
-//////////////////////////////////////////////////////
-// Log to log file if possible
-//////////////////////////////////////////////////////
-
-#ifdef __cplusplus
-    extern "C" void v4l2capture_logger(const char *logmessage);
-#else
-    void v4l2capture_logger(const char *logmessage);
-#endif // __cplusplus
-
-void v4l2capture_logger(const char *logmessage)
-{
-    if (global_logger == NULL)
-    {
-        fprintf (stderr, "%s\n", logmessage);
-    }
-    else
-    {
-        global_logger->debug() << logmessage;
-    }
-}
-void (*logger_function)(const char *logmessage) = v4l2capture_logger;
-
-//////////////////////////////////////////////////////
-// Log to screen
-//////////////////////////////////////////////////////
-
-#ifdef __cplusplus
-    extern "C" void v4l2capture_stream_logger(const char *logmessage);
-#else
-    void v4l2capture_stream_logger(const char *logmessage);
-#endif // __cplusplus
-
-void v4l2capture_stream_logger(const char *logmessage)
-{
-    fprintf (stderr, "%s\n", logmessage);
-}
-void (*logger_stream_function)(const char *logmessage) = v4l2capture_stream_logger;
-
-// Setup of the callback function (from the C code).
-// Called back for every buffer that becomes available.
-#ifdef __cplusplus
-    extern "C" void v4l2capture_callback(void *p, size_t size);
-#else
-    void v4l2capture_callback(void *p, size_t size);
-#endif // __cplusplus
-
-void v4l2capture_callback(void *p, size_t bsize)
-{
-    if (p != NULL)
-    {
-        size_t bytesleft = bsize;
-        uint8_t *startdata = static_cast<uint8_t*>(p);
-        size_t nextsize = 0;
-
-        while (bytesleft > 0)
-        {
-            nextsize = bytesleft > EnetUtil::NtwkUtilBufferSize? EnetUtil::NtwkUtilBufferSize : bytesleft;
-
-            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp =
-                        EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>::create(startdata, nextsize);
-
-            startdata += nextsize;
-            bytesleft -= nextsize;
-            assert (sp->num_valid_elements() == nextsize);
-
-            // Add the shared_ptr to the queue
-            VideoCapture::video_capture_queue::s_ringbuf.put(sp, VideoCapture::video_capture_queue::s_condvar);
-        }
-    }
-}
-
-void (*callback_function)(void *, size_t) = v4l2capture_callback;
-
 ////////////////////////////////////////////////////////////////////////////////
-// This is a short-lived thread which exercises pause/resume capture
-
-// Un-comment-out this define if a test of pause/resume/finish capture is needed.
+// This is a debug-only short-lived thread which exercises pause/resume capture
+// If used, set frame count from the command line ("-fc 0").
+// Un-comment-out this #define if a low-level test of pause/resume/finish capture is needed.
 //
 // #define TEST_RAW_CAPTURE_CTL
 
@@ -236,23 +70,20 @@ void test_raw_capture_ctl(Log::Logger logger)
     {
         ::sleep(3);
         logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
-        set_v4l2capture_pause(true);
+        ::set_v4l2capture_pause(true);
 
         ::sleep(3);
         logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
-        set_v4l2capture_pause(false);
+        ::set_v4l2capture_pause(false);
     }
 
     ::sleep(3);
     logger.debug() << "test_raw_capture_ctl: FINISH CAPTURE REQUEST...";
-    set_v4l2capture_finished();
+    ::set_v4l2capture_finished();
 }
 
 #endif // TEST_RAW_CAPTURE_CTL
 
-//////////////////////////////////////////////////////////////////////////////////
-// Command line parsing section
-//////////////////////////////////////////////////////////////////////////////////
 
 void Usage(std::ostream &strm, std::string command)
 {
@@ -271,9 +102,6 @@ void Usage(std::ostream &strm, std::string command)
             << std::endl;
 }
 
-/////////////////////////////////////////////////////////////////////////////////
-// Main program
-//////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {
