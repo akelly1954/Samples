@@ -26,12 +26,6 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#ifdef NOBUILD
-#include <video_capture_profiler.hpp>
-#include <v4l2_raw_capture.h>
-#include <thread>
-#endif // NOBUILD
-
 #include <v4l2_interface.hpp>
 #include <video_capture_raw_queue.hpp>
 #include <Utility.hpp>

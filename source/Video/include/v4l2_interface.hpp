@@ -24,16 +24,6 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#ifdef NOBUILD
-#include <video_capture_raw_queue.hpp>
-#include <video_capture_profiler.hpp>
-#include <v4l2_raw_capture.h>
-#include <commandline.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
-#include <thread>
-#endif // NOBUILD
-
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <LoggerCpp/LoggerCpp.h>

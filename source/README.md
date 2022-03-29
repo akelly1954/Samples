@@ -107,17 +107,5 @@ File indexing is done in the background as soon as Eclipse starts running.  It t
 
 I tend not to use source code control (git) from within Eclipse, since it tends to slow things down considerably, especially if you have a slow network connection.
 
-This section will be expanded in the future as I start having to deal with Qt, and Windows.  
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -6,24 +6,28 @@ If you are here to look at how to get things done (one way, anyways) or you are 
 you might want to start with either libraries of objects, or with some main programs that use them, and work your way out from there.
 I'll be updating the README files as I go along, perhaps a step or two behind the software being developed.  
 
+The underlying structure of the Samples project has to do with needing to serve as a cross-platform solution.  You will see references to both Windows (Visual Studio, C++, etc), as well as Linux with various build tool chains - C++, Make, CMake, Eclipse, and more - used for building user interface objects and tools.    
+     
+Those serve as the rationale for basing the whole Samples project on CMake. which seems to be the single most flexible tool which could help drive cross-platform as well as a cross-technology development infrastructure.  You will see references to all that, but in fact the real software and build environment that you see here, as well as the tools to "get it done" starts out being geared towards CMake, Eclipse, and the Gnu tool-chain under Linux.   
+    
+Not having a team of developers working on this at my disposal, I'm trying to get to creating the code first, then testing, with documention in the README's and comments in the code.     
+     
+I am not an expert with Java, Python, and cloud based infrastructures that helps large development teams for large corporate technical needs
+that one person (me) cannot possibly deal with.  Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
+     
+
 ## Intetesting main programs: 
 
 These programs are used to test objects, as well as to stress-test them.  They don't always have a useful purpose beyond that, except that 
 if the reader is looking for a focused project that can help them solve real problems they face, this is not a bad way to start.    
      
-The underlying structure of the Samples project has to do with needing to serve as a cross-platform solution.  You will see references to both Windows (Visual Studio, C++, etc), as well as Linux with various build tool chains - C++, Make, CMake, Eclipse, and Qt - used for building user interface objects and tools. 
-Those serve as the rationale for basing the whole Samples project on CMake. which seems to be the single most flexible tool which could help drive cross-platform as well as a cross-technology development infrastructure.  You will see references to all that, but in fact the real software and build environment that you see here, as well as the tools to "get it done" starts out being geared towards CMake, Eclipse, and the Gnu tool-chain under Linux. 
-Not having a team of developers working on this at my disposal, I'm trying to get to creating the code first, then testing, then documenting, and then one day perhaps get to the point where I actually own a Windows system (which I currently don't), let alone a Windows development system.    
-
-I am not an expert with Java, Python, and cloud based infrastructures that helps large development teams for large corporate technical needs
-that one person (me) cannot possibly deal with.  Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
-     
 **main_v4l2_raw_capture.cpp**    
 found *...Samples/source/Video/src/main_programs/*    
      
-This is under development even as we speak (so to speak), and will result with an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then gets rid of these frames (i.e. passing them on) to software that deals with each frame - either saving them in a file, analyzing/modifying each frame, and/or displaying them (Qt).    
+This is under development even as we speak (so to speak), and will result with an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then gets rid of these frames (by passing them on) to software that deals with each frame - either saving them in a file, analyzing/modifying each frame, and/or displaying them.    
       
-Thanks to the online video community which speaks a different language and uses tools and designs that are a step or three beyond what I know, I'm using a C program at the heart of the video frame "pump" that interfaces betwen the V4L ("Video For Linux" - V4L2 in this case) interface to the hardware, and upper levels of the software (C++, Qt, etc).  This is part of software which is provided freely with the V4L2 API.      
+Thanks to the online video community which speaks a different language and uses tools and designs that are a step or three beyond what I know, I'm using a C program at the heart of the video frame "pump" that interfaces betwen the V4L ("Video For Linux" - V4L2 in this case) interface to the hardware, 
+and upper levels of the software (C++ objects, Qt, etc).  This is part of software which is provided freely with the V4L2 API.      
      
      The actual C function used is based on the *v4l/capture.c* sample program copied 
      from *kernel.org*. See the directory ...Samples/References in this project for the 
@@ -35,7 +39,7 @@ callback functions to deliver each frame in YUYV format (Packed YUV 4:2:2, YUY2)
 I'm currently seeing frame sizes of up to 175Kb each using my webcam which 
 provides 1920x1080 pixels per frame. Most frames, though, are less than 50Kb each). The numbers will be exponentialy higher for cameras that have a higher resolution.    
         
-Each frame buffer is copied into a C++ std::array<> object (each element represented as a uint8_t character), an std::shared_ptr<> set up for it, and from that point, the data does not have to be copied again unless and until the frame has to be converted into a different video format (by Qt, one hopes...).   Each std::shared_ptr<> object is added to a ring buffer (*Util/include/circular_buffer.hpp*) and handled, one by one, in a different std::thread (not the data itself, but the pointer object to it) - using an object which has an embedded condition variable, to avoid having to poll the ring buffer for newly available frame buffers (*Util/include/condition_data.hpp*).     
+Each frame buffer is copied into a C++ std::array<> object (each element represented as a uint8_t character), an std::shared_ptr<> set up for it, and from that point, the data does not have to be copied again unless and until the frame has to be converted into a different video format.  Each std::shared_ptr<> object is added to a ring buffer (*Util/include/circular_buffer.hpp*) and handled, one by one, in a different std::thread (not the data itself, but the pointer object to it) - using an object which has an embedded condition variable, to avoid having to poll the ring buffer for newly available frame buffers (*Util/include/condition_data.hpp*).     
     
 Currently all of this is implemented and working all the way up to and including the separate thread which peels off one frame at a time from the ring buffer, and appends each frame to a file until the process eventually exits.  This file can be viewed by any of several viewers that handle YUYV or H264 formats. In order to see the results from the file in a viewer, you can do this (for H264 format):
 
@@ -50,9 +54,7 @@ Currenlty, I'm just about done implementing profiling done at run time, gatherin
 
 (Interim results: the average frame rate is showing as more than 24.98 fps (with the driver set to deliver at 25fps).  On the average there
 are 0 shared_ptr's in the ring buffer:  When I inserted some sleep()'s here and there to simulate load, those number came up into the few dozens depending on which part of the system I slowed down.)
-
-I will be adding more to the profiling as I progress the display part of this (Qt).  So, leaving well enough alone now, I'm moving on to the fun part.        
-        
+    
     
 **main_ntwk_basic_sock_server.cpp** and **main_client_for_basic_server.cpp**   
 found in *...Samples/source/EnetUtil/src/main_programs/*     
