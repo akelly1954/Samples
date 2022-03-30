@@ -24,7 +24,7 @@ if the reader is looking for a focused project that can help them solve real pro
 **main_v4l2_raw_capture.cpp**    
 found *...Samples/source/Video/src/main_programs/*    
      
-This is under development even as we speak (so to speak), and will result with an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then gets rid of these frames (by passing them on) to software that deals with each frame - either saving them in a file, analyzing/modifying each frame, and/or displaying them.    
+This is an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then gets rid of these frames (by passing them on) to software that deals with each frame - either saving them in a file, analyzing/modifying each frame, and/or displaying them.    
       
 Thanks to the online video community which speaks a different language and uses tools and designs that are a step or three beyond what I know, I'm using a C program at the heart of the video frame "pump" that interfaces betwen the V4L ("Video For Linux" - V4L2 in this case) interface to the hardware, 
 and upper levels of the software (C++ objects, Qt, etc).  This is part of software which is provided freely with the V4L2 API.      
@@ -50,9 +50,9 @@ I use this to test the sanity of the layers below the thread which is handling t
    
 Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being addressed at the moment).   
     
-Currenlty, I'm just about done implementing profiling done at run time, gathering stats of various factors in this mechanism that will control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), the current frame rate, etc.   
+Run time profiling implemented in this set of objects, gathers stats of various factors in this mechanism that control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), the current frame rate, etc.   
 
-(Interim results: the average frame rate is showing as more than 24.98 fps (with the driver set to deliver at 25fps).  On the average there
+(Current results: the average frame rate is showing as more than 25 fps (with the driver set to deliver at 25fps).  On the average there
 are 0 shared_ptr's in the ring buffer:  When I inserted some sleep()'s here and there to simulate load, those number came up into the few dozens depending on which part of the system I slowed down.)
     
     
