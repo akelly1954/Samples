@@ -36,7 +36,8 @@ std::string MainLogger::default_log_level = "debug";
 std::string MainLogger::log_level = default_log_level;
 std::mutex MainLogger::s_logger_mutex;
 
-void Util::MainLogger::initialize(  const std::string& channel_name,
+void Util::MainLogger::initialize(  Log::Config::Vector& configList,
+                                    const std::string& channel_name,
                                     Log::Log::Level level,
                                     MainLogger::ConsoleOutput useConsole,
                                     MainLogger::UseLogFile useLogFile
@@ -48,8 +49,7 @@ void Util::MainLogger::initialize(  const std::string& channel_name,
     logFilelName = logChannelName + "_log.txt";
     loglevel = level;
 
-    Log::Config::Vector configList;
-    MainLogger::initializeLogManager(configList,
+    MainLogger::initializeLogManager(   configList,
                                         loglevel,
                                         logFilelName,
                                         useConsole,

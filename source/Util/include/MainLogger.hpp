@@ -47,17 +47,18 @@ namespace Util {
             enableLogFile
         };
     public:
-        static void initialize( const std::string& channel_name,
+        static void initialize( Log::Config::Vector& configList,
+                                const std::string& channel_name,
                                 Log::Log::Level level,
                                 MainLogger::ConsoleOutput useConsole,
                                 MainLogger::UseLogFile useLogFile
                                );
 
         static void initializeLogManager(  Log::Config::Vector& configList,
-                                            Log::Log::Level loglevel,
-                                            const std::string& logfilename,
-                                            ConsoleOutput useConsole,
-                                            UseLogFile useLogFile
+                                           Log::Log::Level loglevel,
+                                           const std::string& logfilename,
+                                           ConsoleOutput useConsole,
+                                           UseLogFile useLogFile
                                          );
 
         static void configureLogManager( Log::Config::Vector& configList, std::string channelName );

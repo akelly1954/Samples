@@ -1,9 +1,4 @@
 #pragma once
-#include <string>
-#include <vector>
-#include <memory>
-#include <mutex>
-#include <LoggerCpp/LoggerCpp.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -28,6 +23,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
+
+#include <string>
+#include <vector>
+#include <memory>
+#include <mutex>
+#include <LoggerCpp/LoggerCpp.h>
 
 namespace Util {
 
