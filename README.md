@@ -81,9 +81,16 @@ a real large number (30,000 in one successful case on my system). This program w
 **main_circular_buffer.cpp**    
 found in *...Samples/source/Util/src/main_programs*   
      
-Exercises the ring buffer and shows functionality.  This is a great mechanism to use with **std::shared_ptr<>**'s.
-
-**Includes:** *...Samples/source/EnetUtil/include/* and *...Samples/source/Util/include/* show the definition of objects used in the above programs.  See also *...Samples/source/EnetUtil/src/main_programs/include*.     
+Exercises the ring buffer and shows functionality.  This is a great mechanism to use with **std::shared_ptr<>**'s.     
+     
+**main_enet_util.cpp**     
+found in *...Samples/source/EnetUtil/src/main_programs* (see also *...Samples/source/EnetUtil/src/EnetUtil.cpp* and *...Samples/source/EnetUtil/include/EnetUtil.hpp*)     
+      
+Shows how to iterate through all of a system's network links and obtain useful information from them (ip address, family type, interface type, mac address, etc), without resorting to use of command line utilities embedded in the c++ code.  Also shows how to obtain a system's primary interface to the internet - including the system's self ip address and mac address.     
+     
+     
+**Includes:**     
+*...Samples/source/EnetUtil/include/* and *...Samples/source/Util/include/* show the definition of objects used in the above programs.  See also *...Samples/source/EnetUtil/src/main_programs/include*.     
      
      
 **Shell scripts:**    
