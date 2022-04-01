@@ -77,11 +77,18 @@ int main(int argc, char *argv[])
     std::string primaryMacAddress = EnetUtil::get_self_mac_address(logger, interface);
     if (primaryMacAddress.empty())
     {
-        logger.error() << "Cannot get self MAC address: get_self_mac_address() returned empty string.";
+        logger.error() << "Cannot get self MAC address: get_self_mac_address() returned empty mac address.";
         return 1;
     }
 
-    logger.notice() << "Primary MAC address: " << primaryMacAddress;
+    if (primaryMacAddress == "00:00:00:00:00:00")
+    {
+        logger.notice() << "Primary MAC address (not available): " << primaryMacAddress;
+    }
+    else
+    {
+        logger.notice() << "Primary MAC address: " << primaryMacAddress;
+    }
 
     return 0;
 }
