@@ -14,11 +14,15 @@ if (MSVC)
     set(SYSTEM_LIBRARIES        "")
     add_definitions (/D_CRT_SECURE_NO_WARNINGS)
 else()
+    if (LOGGERCPP_NO_CONSOLE_COLOR)
+        add_definitions (-DLOGGERCPP_NO_CONSOLE_COLOR) # g++ command line definition
+    endif()
+
     set(CPPLINT_ARG_OUTPUT      "--output=eclipse")
     set(CPPCHECK_ARG_TEMPLATE   "--template=gcc")
     set(DEV_NULL                "/dev/null")
     set(SYSTEM_LIBRARIES        "rt")
-    add_definitions (-std=c++0x)  # -std=c++11
+    add_definitions (-std=c++0x) # -std=c++11
 endif()
 set(CPPLINT_ARG_VERBOSE "--verbose=3")
 set(CPPLINT_ARG_LINELENGTH "--linelength=120")

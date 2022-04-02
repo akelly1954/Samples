@@ -73,20 +73,34 @@ unsigned int OutputConsole::toEscapeCode(Log::Level aLevel) {
 void OutputConsole::output(const Channel::Ptr& aChannelPtr, const Log& aLog) const {
     const DateTime& time = aLog.getTime();
 
+#ifndef LOGGERCPP_NO_CONSOLE_COLOR
+    // THIS IS THE ORIGINAL LOGGERCPP CODE
     // uses fprintf for atomic thread-safe operation
-#ifdef _WIN32
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), toWin32Attribute(aLog.getSeverity()));
+    #ifdef _WIN32
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), toWin32Attribute(aLog.getSeverity()));
+        fprintf(stdout, "%.4u-%.2u-%.2u %.2u:%.2u:%.2u.%.3u  %-12s %s %s\n",
+    #else  // _WIN32
+        fprintf(stdout, "\x1B[%02um%.4u-%.2u-%.2u %.2u:%.2u:%.2u.%.3u  %-12s %s %s\x1b[39m\n",
+                toEscapeCode(aLog.getSeverity()),
+    #endif // _WIN32
+                time.year, time.month, time.day,
+                time.hour, time.minute, time.second, time.ms,
+                aChannelPtr->getName().c_str(), Log::toString(aLog.getSeverity()), (aLog.getStream()).str().c_str());
+    #ifdef _WIN32
+        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+    #endif // _WIN32
+
+#else // LOGGERCPP_NO_CONSOLE_COLOR
+
+    // THIS MODIFICATION TO THE ORIGINAL LOGGERCPP CODE is meant to simply
+    // turn off text color on console output. Changing only linux builds
+    // since I cannot test Windows code at this time.
     fprintf(stdout, "%.4u-%.2u-%.2u %.2u:%.2u:%.2u.%.3u  %-12s %s %s\n",
-#else  // _WIN32
-    fprintf(stdout, "\x1B[%02um%.4u-%.2u-%.2u %.2u:%.2u:%.2u.%.3u  %-12s %s %s\x1b[39m\n",
-            toEscapeCode(aLog.getSeverity()),
-#endif // _WIN32
-            time.year, time.month, time.day,
-            time.hour, time.minute, time.second, time.ms,
-            aChannelPtr->getName().c_str(), Log::toString(aLog.getSeverity()), (aLog.getStream()).str().c_str());
-#ifdef _WIN32
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-#endif // _WIN32
+                    time.year, time.month, time.day,
+                    time.hour, time.minute, time.second, time.ms,
+                    aChannelPtr->getName().c_str(), Log::toString(aLog.getSeverity()), (aLog.getStream()).str().c_str());
+#endif // LOGGERCPP_NO_CONSOLE_COLOR
+
     fflush(stdout);
 }
 

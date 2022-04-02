@@ -2,9 +2,10 @@
 # Included from various ...linux-build.bash scripts
 
 export basepath="${basepath:=UNDEFINED_BASE_PATH}"
+export LOGGERCPP_NO_CONSOLE_COLOR="on"  # "off" means use color. "on" means do not use color.
 scriptname="linux-build.bash"
 loggercppdir="${basepath}/source/3rdparty/LoggerCpp"
-loggercppsrcdirname="SRombauts-LoggerCpp-a0868a8"
+loggercppsrcdirname="SRombauts-LoggerCpp-a0868a8-modified"
 LoggerCppSource_DIR="$loggercppdir/$loggercppsrcdirname"
 SampleRoot_DIR="$basepath"
 

@@ -42,7 +42,7 @@ fi
 # 3rdparty gets build regardless of whether --nobuild was invoked.
 echo "Building 3rdparty objects"
 #
-bash localbuild.sh
+bash localbuild.sh cleanall
 if [ $? -ne 0 ]
 then
     echo "ERROR: build of $loggercppdir failed.  Aborting..."
