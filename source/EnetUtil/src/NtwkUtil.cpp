@@ -214,7 +214,7 @@ int NtwkUtil::enet_send(Log::Logger& logger,
 
 // The socket read may throw an exception
 // recvbuf is assumed to have no data
-int NtwkUtil::enet_receive(    Log::Logger& logger,
+int NtwkUtil::enet_receive( Log::Logger& logger,
                             int fd,
                             arrayUint8 & array_element_buffer,    // data and length
                             size_t requestsize)   // requestsize can be smaller than the array<>::size()
@@ -241,8 +241,6 @@ int NtwkUtil::enet_receive(    Log::Logger& logger,
             throw std::runtime_error("NtwkUtil::enet_receive: got receive request with invalid socket file descriptor");
             return -1;  // Shouldn't get here...
         }
-
-        // signal(SIGPIPE, SIG_IGN);      // This affects all threads
 
 		int errnocopy = 0;
 

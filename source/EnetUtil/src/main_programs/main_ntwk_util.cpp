@@ -42,6 +42,11 @@
 // Change the initialized value of NtwkUtilBufferSize in NtwkUtil.hpp, and rebuild.
 // Results should be the same.
 
+///////////////////////////////////////////////////////////
+// NOTE:
+// THIS PROGRAM IS BUILT TO FAIL (testing objects)
+///////////////////////////////////////////////////////////
+
 using namespace EnetUtil;
 
 void writeData(Log::Logger& logger, datapairUint8_t& readypair)
@@ -56,29 +61,44 @@ void writeData(Log::Logger& logger, datapairUint8_t& readypair)
     }
 }
 
-const char *logChannelName = "main_ntwk_util";
+std::string logChannelName = "main_ntwk_util";
+Log::Log::Level logLevel = Log::Log::Level::eDebug;
 
 int main(int argc, char *argv[])
 {
     using namespace Util;
 
     Log::Config::Vector configList;
-    MainLogger::initializeLogManager(configList, Log::Log::Level::eNotice, "", Util::MainLogger::enableConsole, Util::MainLogger::disableLogFile);
-    MainLogger::configureLogManager( configList, logChannelName );
+    MainLogger::initialize( configList, logChannelName, logLevel, MainLogger::enableConsole, MainLogger::disableLogFile);
+    Log::Logger logger(logChannelName.c_str());
 
-    Log::Logger logger(logChannelName);
+    arrayUint8 ibuffer;                     // input buffer
+    datapairUint8_t pairdata(0,ibuffer);    // pairdata.first will hold the valid number elements in the std::array<>
 
-    arrayUint8 ibuffer;                      // input buffer
-    datapairUint8_t pairdata(0,ibuffer);  // pairdata.first will hold the valid number elements in the std::array<>
+    int ret = 0;
 
-    while ((pairdata.first = NtwkUtil::enet_receive(logger, 0, pairdata.second, pairdata.second.size())) > 0)
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    // The 0 parameter to enet_receive() is stdin - not a socket. This will cause an error.
+    ////////////////////////////////////////////////////////////////////////////////////////////
+    while (1)
     {
+        ret = NtwkUtil::enet_receive(logger, 0, pairdata.second, pairdata.second.size());
+        if (ret == -1)
+        {
+            ret = 1;    // ret becomes the return code for main()
+            break;
+        }
+        else if (ret == 0)
+        {
+            break;
+        }
+        pairdata.first = ret;
         writeData(logger, pairdata);
     }
 
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
 
-    return 0;
+    return ret;
 }
 
