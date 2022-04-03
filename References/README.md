@@ -29,6 +29,12 @@ The file here is in its raw form (unchanged) from:
 Please see the source file for the appropriate copyright information.     
      
      
+** Streaming Video To Browser**     
+     
+As part of the testing of the code, the H264 streaming module for Apache/Linux was used here.  Please see 
+http://h264.code-shop.com/trac for more information.     
+     
+     
 **LoggerCpp**     
      
 The logger used in this project comes from Github, courtesy of Sébastien Rombauts, who seems to write C++ code that
