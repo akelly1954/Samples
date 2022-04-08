@@ -117,7 +117,7 @@ int main(void)
     printf("---------------------------------------------------------\n");
 
     circular_buffer<uint32_t> ringbuf15(15);
-    printf("Obtaining members in ringbuf5 deque:\n");
+    printf("Obtaining members in ringbuf15 deque:\n");
 
     // Add members
     for(uint32_t i = 0; i < ringbuf15.capacity(); i++)

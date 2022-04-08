@@ -15,8 +15,20 @@ Not having a team of developers working on this at my disposal, I'm trying to ge
 I am not an expert with Java, Python, and cloud based infrastructures that helps large development teams for large corporate technical needs
 that one person (me) cannot possibly deal with.  Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
      
+## A collection of C++ objects (libraries), and some executable programs that utilize those objects.
 
-## Intetesting main programs: 
+The sources are organized in a source tree which is built using cmake (minimum version 3.10). There are (and will be) additional README files in the subdirectories going into more detail of how to use the build environment.  
+
+New work is checked into the **dev** branch. The **main** branch is fairly stable. 
+
+See the **source/README.md** file for detail about the file/directory structure, build tools, and how to build the sources. 
+
+This is an "out of source" build environment. Mostly.  Check the **./.gitignore** file to see what's ignored. The **build** directory can always be removed without affecting any source files.  
+
+Even though the IDE and build environment are set here as the defaults (eclipse, gnu toolchain), the Eclipse IDE is not required.     
+     
+      
+## Intetesting main programs:
 
 These programs are used to test objects, as well as to stress-test them.  They don't always have a useful purpose beyond that, except that 
 if the reader is looking for a focused project that can help them solve real problems they face, this is not a bad way to start.    
@@ -125,24 +137,17 @@ The CMake files set up **cmake** to create an **Eclipse IDE** progject using **m
     
     
 # Please Note:
-This is work in progress -- I'm uploading my sources to the repository while ensuring that the code is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators. Right now I only have some basic libraries and main programs that use/exercise them and there are more objects coming.  As soon as I introduce enough code that is stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.
+This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators. Right now I only have some basic libraries and main programs that use/exercise them and there are more objects coming.  As soon as I introduce enough code that is stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.
 
 Thank you.
 
-**SEE ALSO:** The README.md file in the **source** folder (./source/README.md).
-
-## A collection of C++ objects (libraries), and some executable programs that utilize those objects.
-
-The sources are organized in a source tree which is built using cmake (minimum version 3.10). There are (will be) additional README files in the subdirectories going into more detail of how to use the build environment.  
-
-New work is checked into the **dev** branch. The **main** branch is fairly stable. 
-
-See the **source/README.md** file for detail about the file/directory structure, build tools, and how to build the sources. 
-
-This is an "out of source" build environment. Mostly.  Check the **./.gitignore** file to see what's ignored. The **build** directory can always be removed without affecting any source files.  
-
-Even though the IDE and build environment are set here as the defaults (eclipse, gnu toolchain), the Eclipse IDE is not required. 
-
+**SEE ALSO:**    
+      
+The README.md file in the **source** folder (./source/README.md).    
+The file **./LICENSE** contains the legal language covering distribution and use of the sources in this project (that belong to me). 
+The software that does not belong to me, is covered by its own license which is clearly marked in the code and in the README files.     
+     
+     
 ### Current deficiencies:
 
 Currently the Windows' WIN32 configuration has not been built and tested yet. 
