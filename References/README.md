@@ -45,10 +45,10 @@ See the README under *...Samples/source/3rdparty/LoggerCpp/* for a link to the G
 The script to build the library and install header files in the *Samples* project (this one) is in:     
 *...Samples/source/3rdparty/LoggerCpp/localbuild.sh*.   
     
-The cloned LoggerCpp project from Github, as used is this project is here (unchanged):     
-*...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8/*   
+The cloned LoggerCpp project from Github, as used in this project is here (modified slightly):     
+*...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/*   
     
 Please see the source file 
-*...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8/LICENSE.txt* 
+*...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt* 
 for the appropriate copyright information for LoggerCpp.     
 

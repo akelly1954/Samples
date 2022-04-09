@@ -129,7 +129,7 @@ Util/CMakeLists.txt
 **The flow:**    
      
 The shell scripts create the file structure and shell environment for CMake to run.   
-The CMake files set up **cmake** to create an **Eclipse IDE** progject using **makefile** for building the code.   
+The CMake files set up **cmake** to create an **Eclipse IDE** project using **make** for building the code.   
 **Eclipse** does all the rest...   
    
    __________________   
