@@ -240,6 +240,26 @@ int main(int argc, char *argv[])
         ret = 1;
     }
 
+    // FINISHED:
+    //      One for the display
+    std::cerr << "\n"
+    		"To convert the output file to an mp4 file use: \n\n"
+    		"    $ ffmpeg -f h264 -i " << output_file << " -vcodec copy v4l2_raw_capture.mp4\n\n"
+    		"Then view the mp4 file (as an example) with: \n\n"
+    		"    $ vlc ./v4l2_raw_capture.mp4\n"
+			<< std::endl;
+
+    //    and one for the log file
+    logger.info() << "";
+    logger.info() << "To convert the output file to an mp4 file use: ";
+	logger.info() << "";
+	logger.info() << "    $ ffmpeg -f h264 -i " << output_file << " -vcodec copy v4l2_raw_capture.mp4";
+	logger.info() << "";
+	logger.info() << "Then view the mp4 file (as an example) with: ";
+	logger.info() << "";
+	logger.info() << "    $ vlc ./v4l2_raw_capture.mp4";
+	logger.info() << "";
+
     // CLEANUP
     ::set_v4l2capture_finished();
     video_capture_profiler::set_terminated(true);

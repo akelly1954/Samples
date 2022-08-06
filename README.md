@@ -12,8 +12,11 @@ Those serve as the rationale for basing the whole Samples project on CMake. whic
     
 Not having a team of developers working on this at my disposal, I'm trying to get to creating the code first, then testing, with documention in the README's and comments in the code.     
      
-I am not an expert with Java, Python, and cloud based infrastructures that helps large development teams for large corporate technical needs
-that one person (me) cannot possibly deal with.  Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
+I am not an expert with Java, Python, and cloud based infrastructures that help 
+large development teams for large corporate technical needs
+that one person (me) cannot possibly deal with.  
+    
+Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
      
 ## A collection of C++ objects (libraries), and some executable programs that utilize those objects.
 
@@ -51,13 +54,16 @@ callback functions to deliver each frame in YUYV format (Packed YUV 4:2:2, YUY2)
 I'm currently seeing frame sizes of up to 175Kb each using my webcam which 
 provides 1920x1080 pixels per frame. Most frames, though, are less than 50Kb each). The numbers will be exponentialy higher for cameras that have a higher resolution.    
         
-Each frame buffer is copied into a C++ std::array<> object (each element represented as a uint8_t character), an std::shared_ptr<> set up for it, and from that point, the data does not have to be copied again unless and until the frame has to be converted into a different video format.  Each std::shared_ptr<> object is added to a ring buffer (*Util/include/circular_buffer.hpp*) and handled, one by one, in a different std::thread (not the data itself, but the pointer object to it) - using an object which has an embedded condition variable, to avoid having to poll the ring buffer for newly available frame buffers (*Util/include/condition_data.hpp*).     
+Each frame buffer is copied into one or more C++ std::array<> objects (each element in the array represented as a uint8_t character); an std::shared_ptr<> set up for each std::array object, and from that point, the data does not have to be copied again unless and until the frame has to be converted into a different video format.  Each std::shared_ptr<> object is added to a ring buffer (*Util/include/circular_buffer.hpp*) and handled, one by one, in a different std::thread (not the data itself, but the pointer object to it) - using an object which has an embedded condition variable, to avoid having to poll the ring buffer for newly available frame buffers (*Util/include/condition_data.hpp*).     
     
 Currently all of this is implemented and working all the way up to and including the separate thread which peels off one frame at a time from the ring buffer, and appends each frame to a file until the process eventually exits.  This file can be viewed by any of several viewers that handle YUYV or H264 formats. In order to see the results from the file in a viewer, you can do this (for H264 format):
 
-    ffmpeg -f h264 -i v4l2_raw_capture.data -vcodec copy v4l2_raw_capture.mp4    
+    $ ffmpeg -f h264 -i v4l2_raw_capture.data -vcodec copy v4l2_raw_capture.mp4    
     
-Where the *v4l2_raw_capture.data* is the name of the raw data file created by **main_v4l2_raw_capture**, and the .mp4 file is the output from *ffmpeg*. Having done this, you can view the video with any viewer you normally use. 
+Where the *v4l2_raw_capture.data* is the name of the raw data file created by **main_v4l2_raw_capture**, and the .mp4 file is the output from *ffmpeg*. Having done this, you can view the video with any viewer you normally use:   
+    
+    $ vlc ./v4l2_raw_capture.mp4        
+    
 I use this to test the sanity of the layers below the thread which is handling the frame buffers.       
    
 Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being addressed at the moment).   
