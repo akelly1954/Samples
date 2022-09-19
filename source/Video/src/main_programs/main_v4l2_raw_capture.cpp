@@ -33,6 +33,7 @@
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <commandline.hpp>
+#include <cppglue.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>

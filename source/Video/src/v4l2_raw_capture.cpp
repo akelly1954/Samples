@@ -27,7 +27,7 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 
-#include <cppglue.h>
+#include <cppglue.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <linux/videodev2.h>
 #include <v4l2_raw_capture.hpp>
@@ -204,7 +204,6 @@ void v4l2capture_mainloop(void)
 
         if ((*v4l2capture_finished_function)())
         {
-            // LOGGER_STDERR("CAPTURE TERMINATION REQUESTED.");
             LOGGER("v4l2capture_mainloop: CAPTURE TERMINATION REQUESTED.");
         }
 }

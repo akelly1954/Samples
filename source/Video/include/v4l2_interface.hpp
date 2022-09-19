@@ -25,14 +25,11 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <Utility.hpp>
-#include <MainLogger.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
 #include <string>
-
-// #ifdef __cplusplus
 
 extern Log::Logger& global_logger;
 extern Log::Log::Level loglevel;
@@ -40,7 +37,6 @@ extern std::string log_level;
 
 extern std::string logFilelName;
 extern std::string logChannelName;
-
 
 extern size_t framecount;
 extern std::string frame_count;
@@ -51,31 +47,14 @@ extern bool capture_pause;
 extern std::string output_file;
 
 // C++ linkage for callback functions
-extern "C" bool v4l2capture_pause(void);
-extern "C" bool v4l2capture_finished(void);
-extern "C" void v4l2capture_terminate(int code, const char *logmessage);
-extern "C" void v4l2capture_logger(const char *logmessage);
-extern "C" void v4l2capture_stream_logger(const char *logmessage);
-extern "C" void v4l2capture_callback(void *p, size_t size);
-extern "C" void set_v4l2capture_finished(void);
-extern "C" void set_v4l2capture_pause(bool pause);
-
-// #else // __cplusplus
-
-// C linkage for callback functions
-// bool v4l2capture_pause(void);
-// bool v4l2capture_finished(void);
-// void v4l2capture_terminate(int code, const char *logmessage);
-// void v4l2capture_logger(const char *logmessage);
-// void v4l2capture_stream_logger(const char *logmessage);
-// void v4l2capture_callback(void *p, size_t size);
-// void set_v4l2capture_finished(void);
-// void set_v4l2capture_pause(bool pause);
-
-// #endif // __cplusplus
-
-// Pointers to all the C++ callback functions - passed to the C code using the
-// ::v4l2capture_set_callback_functions(...) routine.
+extern bool v4l2capture_pause(void);
+extern bool v4l2capture_finished(void);
+extern void v4l2capture_terminate(int code, const char *logmessage);
+extern void v4l2capture_logger(const char *logmessage);
+extern void v4l2capture_stream_logger(const char *logmessage);
+extern void v4l2capture_callback(void *p, size_t size);
+extern void set_v4l2capture_finished(void);
+extern void set_v4l2capture_pause(bool pause);
 
 extern bool (*pause_function)();
 extern bool (*finished_function)();

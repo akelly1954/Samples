@@ -74,43 +74,18 @@
         LOGGER_STDERR(sbuf);                                               \
     }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
     struct string_io_methods
     {
         const char *name[3];  // indexed by enum io_method
     };
 
-    extern struct string_io_methods string_methods;
-    extern bool (*v4l2capture_pause_function)();
-    extern bool (*v4l2capture_finished_function)();
-    extern void (*v4l2capture_callback_function)(void *, size_t);
-    extern void (*v4l2capture_logger_function)(const char *);
-    extern void (*v4l2capture_logger_stream_function)(const char *);
+extern struct string_io_methods string_methods;
+extern bool (*v4l2capture_pause_function)();
+extern bool (*v4l2capture_finished_function)();
+extern void (*v4l2capture_callback_function)(void *, size_t);
+extern void (*v4l2capture_logger_function)(const char *);
+extern void (*v4l2capture_logger_stream_function)(const char *);
 
-#ifdef __cplusplus
-}
-
-// This section is for CPP only, outside of the extern "C" block above.
-extern "C" void v4l2capture_errno_exit(const char *s);
-extern "C" void v4l2capture_exit(const char *s);
-extern "C" void v4l2capture_exit_code(int code, const char *s);
-
-// These functions serve as the "glue" between the C++ main and these C functions
-
-extern "C" void v4l2capture_set_callback_functions(
-                    bool (*pause_function)(),
-                    bool (*finished_function)(),
-                    void (*terminate_function)(int, const char *),
-                    void (*callback_function)(void *, size_t),
-                    void (*logger_function)(const char *),
-                    void (*logger_stream_function)(const char *)
-                   );
-#else  // __cplusplus
-
-// This section is for C only, no CPP
 void v4l2capture_errno_exit(const char *s);
 void v4l2capture_exit(const char *s);
 void v4l2capture_exit_code(int code, const char *s);
@@ -125,5 +100,5 @@ void v4l2capture_set_callback_functions(
                     void (*logger_function)(const char *),
                     void (*logger_stream_function)(const char *)
                     );
-#endif
+
 
