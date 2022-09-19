@@ -27,8 +27,9 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 
+#include <cppglue.h>
 #include <linux/videodev2.h>
-#include <v4l2_raw_capture.h>
+#include <v4l2_raw_capture.hpp>
 
 static char            *dev_name = NULL;
 static enum io_method   io = IO_METHOD_MMAP;
@@ -249,7 +250,7 @@ void v4l2capture_start_capturing(void)
                 }
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_STREAMON, &type))
-                        v4l2capture_errno_exit("VIDIOC_STREAMON");
+                        v4l2capture_exit_code(errno, "VIDIOC_STREAMON");
                 break;
 
         case IO_METHOD_USERPTR:
@@ -299,7 +300,7 @@ void v4l2capture_uninit_device(void)
 
 void v4l2capture_init_read(unsigned int buffer_size)
 {
-        buffers = calloc(1, sizeof(*buffers));
+        buffers = static_cast<buffer *>( calloc(1, sizeof(*buffers)));
 
         if (!buffers) {
             v4l2capture_exit("Out of memory");
@@ -337,7 +338,7 @@ void v4l2capture_init_mmap(void)
             v4l2capture_exit("init_mmap - reqcount");
         }
 
-        buffers = calloc(req.count, sizeof(*buffers));
+        buffers = static_cast<buffer *>(calloc(req.count, sizeof(*buffers)));
 
         if (!buffers) {
             v4l2capture_exit("Out of memory");
@@ -387,7 +388,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
             }
         }
 
-        buffers = calloc(4, sizeof(*buffers));
+        buffers = static_cast<buffer *>((calloc(4, sizeof(*buffers))));
 
         if (!buffers) {
                 v4l2capture_exit("Out of memory - nobuf");
@@ -615,7 +616,7 @@ long_options[] = {
 /* called directly by the C++ main() */
 int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
 {
-        dev_name = "/dev/video0";
+        dev_name = const_cast<char *>("/dev/video0");
 
         // NOTE:
         // The argv[0] string this function is called with is set to

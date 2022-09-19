@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <v4l2_raw_capture.h>
+#include <v4l2_raw_capture.hpp>
 
 bool    (*v4l2capture_pause_function)() = NULL;
 bool    (*v4l2capture_finished_function)() = NULL;
