@@ -18,6 +18,14 @@ that one person (me) cannot possibly deal with.
     
 Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
      
+     
+## Please Note:    
+    
+(Fall 2022): New work is being done on the Video projects. Getting rid of the C interface to **V4L2**, and replacing the previous kinda awkward C code with C++ objects.  This is being done in a step-wise fashion, and exists only in the **dev** branch (at the moment).    
+   
+The **README** files are currently behind reality by a bit.     
+    
+     
 ## A collection of C++ objects (libraries), and some executable programs that utilize those objects.
 
 The sources are organized in a source tree which is built using cmake (minimum version 3.10). There are (and will be) additional README files in the subdirectories going into more detail of how to use the build environment.  

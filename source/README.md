@@ -1,5 +1,11 @@
 # Samples
-
+     
+## Please Note:    
+    
+(Fall 2022): New work is being done on the Video projects. Getting rid of the C interface to **V4L2**, and replacing the previous kinda awkward C code with C++ objects.  This is being done in a step-wise fashion, and exists only in the **dev** branch (at the moment).    
+   
+The **README** files are currently behind reality by a bit.     
+    
 ## The Sources and How To Build Them
 
 This directory (**source/**) is where all the sources, build script(s) and CMake rlated source files are. (CMake runtime files are created mostly elsewhere - see the **../build/** directory mentioned below).
