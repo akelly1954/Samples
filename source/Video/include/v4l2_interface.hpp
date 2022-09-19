@@ -32,10 +32,9 @@
 #include <iostream>
 #include <string>
 
-#ifdef __cplusplus
+// #ifdef __cplusplus
 
-// These globals are exposed to C++ only
-extern Log::Logger *global_logger;
+extern Log::Logger& global_logger;
 extern Log::Log::Level loglevel;
 extern std::string log_level;
 
@@ -61,19 +60,19 @@ extern "C" void v4l2capture_callback(void *p, size_t size);
 extern "C" void set_v4l2capture_finished(void);
 extern "C" void set_v4l2capture_pause(bool pause);
 
-#else // __cplusplus
+// #else // __cplusplus
 
 // C linkage for callback functions
-bool v4l2capture_pause(void);
-bool v4l2capture_finished(void);
-void v4l2capture_terminate(int code, const char *logmessage);
-void v4l2capture_logger(const char *logmessage);
-void v4l2capture_stream_logger(const char *logmessage);
-void v4l2capture_callback(void *p, size_t size);
-void set_v4l2capture_finished(void);
-void set_v4l2capture_pause(bool pause);
+// bool v4l2capture_pause(void);
+// bool v4l2capture_finished(void);
+// void v4l2capture_terminate(int code, const char *logmessage);
+// void v4l2capture_logger(const char *logmessage);
+// void v4l2capture_stream_logger(const char *logmessage);
+// void v4l2capture_callback(void *p, size_t size);
+// void set_v4l2capture_finished(void);
+// void set_v4l2capture_pause(bool pause);
 
-#endif // __cplusplus
+// #endif // __cplusplus
 
 // Pointers to all the C++ callback functions - passed to the C code using the
 // ::v4l2capture_set_callback_functions(...) routine.

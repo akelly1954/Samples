@@ -58,9 +58,8 @@ bool capture_pause = false;
 // Interface to C language functions section
 //////////////////////////////////////////////////////////////////////////////////
 
-// Set up logging facility (for the C code) roughly equivalent to std::cerr...
-// Filthy code but I have to deal with C.
-Log::Logger *global_logger = NULL;
+// Set up logging facility (for the video code) roughly equivalent to std::cerr...
+Log::Logger& global_logger;
 
 bool (*pause_function)() = v4l2capture_pause;
 bool (*finished_function)() = v4l2capture_finished;
@@ -98,10 +97,7 @@ void set_v4l2capture_pause(bool pause)
 
 void v4l2capture_terminate(int code, const char *logmessage)
 {
-    if (global_logger != NULL)
-    {
-        global_logger->debug() << "terminate process: code=" << code << ": " << logmessage;
-    }
+	global_logger.debug() << "terminate process: code=" << code << ": " << logmessage;
     fprintf (stderr, "terminate process: code=%d: %s\n", code, logmessage);
     ::_exit(code);     // See man page for _exit(2)
 }
@@ -112,14 +108,8 @@ void v4l2capture_terminate(int code, const char *logmessage)
 
 void v4l2capture_logger(const char *logmessage)
 {
-    if (global_logger == NULL)
-    {
-        fprintf (stderr, "%s\n", logmessage);
-    }
-    else
-    {
-        global_logger->debug() << logmessage;
-    }
+    global_logger.debug() << logmessage;
+    fprintf (stderr, "%s\n", logmessage);
 }
 
 //////////////////////////////////////////////////////

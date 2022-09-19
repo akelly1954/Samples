@@ -28,6 +28,7 @@
 #include <sys/ioctl.h>
 
 #include <cppglue.h>
+#include <LoggerCpp/LoggerCpp.h>
 #include <linux/videodev2.h>
 #include <v4l2_raw_capture.hpp>
 

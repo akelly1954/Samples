@@ -143,9 +143,6 @@ int main(int argc, char *argv[])
     Util::MainLogger::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName.c_str());
 
-    // Setup of the logger callback function (from the C code).
-    global_logger = &logger;
-
     std::cerr << "Log level is: " << log_level << std::endl;
     if (video_capture_queue::s_write_frames_to_file)
     {
