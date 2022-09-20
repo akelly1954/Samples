@@ -19,7 +19,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include <linux/videodev2.h>
-#include <cppglue.hpp>
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 

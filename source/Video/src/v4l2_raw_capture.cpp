@@ -30,7 +30,6 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 
-#include <cppglue.hpp>
 #include <v4l2_interface.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <linux/videodev2.h>
@@ -72,7 +71,7 @@ void v4l2capture_process_image(void *p, int size)
             return;
         }
 
-        if (v4l2capture_callback_function != NULL) v4l2capture_callback_function(p, size);
+        v4l2capture_callback(p, size);
     }
 }
 
@@ -206,7 +205,7 @@ void v4l2capture_mainloop(void)
                 }
 
                 if (0 == r) {
-                        LOGGER_STDERR("select timeout")
+                        LOGGER_STDERR("select timeout");
                         v4l2capture_exit("select error");
                 }
 

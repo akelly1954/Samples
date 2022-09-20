@@ -33,7 +33,6 @@
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <commandline.hpp>
-#include <cppglue.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
@@ -194,16 +193,6 @@ int main(int argc, char *argv[])
         // this will pause/sleep/resume/sleep a bunch of times, then exit.
         trcc = std::thread (test_raw_capture_ctl, logger);
 #endif // TEST_RAW_CAPTURE_CTL
-
-        // This is glue for the C based code close to the hardware
-        ::v4l2capture_set_callback_functions(
-                            pause_function,
-                            finished_function,
-                            terminate_function,
-                            callback_function,
-                            logger_function,
-                            logger_stream_function
-                        );
 
         // The options desired here are the "-o" flag and "-c".
         char *fakeargv[] =

@@ -33,6 +33,8 @@
 #include <NtwkFixedArray.hpp>
 #include <MainLogger.hpp>
 #include <LoggerCpp/LoggerCpp.h>
+#include <errno.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
@@ -60,13 +62,6 @@ bool capture_pause = false;
 
 // Set up logging facility (for the video code) roughly equivalent to std::cerr...
 Log::Logger *global_logger = NULL;
-
-bool (*pause_function)() = v4l2capture_pause;
-bool (*finished_function)() = v4l2capture_finished;
-void (*terminate_function)(int code, const char *logmessage) = v4l2capture_terminate;
-void (*logger_function)(const char *logmessage) = v4l2capture_logger;
-void (*logger_stream_function)(const char *logmessage) = v4l2capture_stream_logger;
-void (*callback_function)(void *, size_t) = v4l2capture_callback;
 
 bool v4l2capture_finished(void)
 {
@@ -105,6 +100,34 @@ void v4l2capture_terminate(int code, const char *logmessage)
 
     ::_exit(code);     // See man page for _exit(2)
 }
+
+// Interface functions
+
+void v4l2capture_errno_exit(const char *s, int errnocopy)
+{
+	std::string msg = std::string(s) + " error, errno=" + std::to_string(errnocopy) + ": "
+			+ const_cast<const char *>(strerror(errnocopy));
+	LOGGER_STDERR(msg.c_str());
+	// LOGGER_STDERR_3Arg("%s error, errno=%d, %s", s, errnocopy, strerror(errnocopy));
+    v4l2capture_exit(msg.c_str());
+}
+
+void v4l2capture_exit_code(int code, const char *s)
+{
+	v4l2capture_terminate(code, s);
+    abort();
+}
+
+void v4l2capture_exit(const char *s)
+{
+   	v4l2capture_terminate(1, s);
+    abort();
+}
+
+// Use this struct like this:  string_methods.name[io] (see v4l2_raw_capture.c
+// for enum io_method io)
+struct string_io_methods string_methods = { "IO_METHOD_READ", "IO_METHOD_MMAP", "IO_METHOD_USERPTR" };
+
 
 //////////////////////////////////////////////////////
 // Log to log file if possible

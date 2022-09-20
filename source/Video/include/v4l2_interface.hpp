@@ -56,10 +56,63 @@ extern void v4l2capture_callback(void *p, size_t size);
 extern void set_v4l2capture_finished(void);
 extern void set_v4l2capture_pause(bool pause);
 
-extern bool (*pause_function)();
-extern bool (*finished_function)();
-extern void (*terminate_function)(int code, const char *logmessage);
-extern void (*logger_function)(const char *logmessage);
-extern void (*logger_stream_function)(const char *logmessage);
-extern void (*callback_function)(void *, size_t);
+struct string_io_methods
+{
+    const char *name[3];  // indexed by enum io_method
+};
+
+extern struct string_io_methods string_methods;
+void v4l2capture_errno_exit(const char *s, int errnocopy);
+void v4l2capture_exit(const char *s);
+void v4l2capture_exit_code(int code, const char *s);
+
+/*
+ * Use the LOGGER(x) or LOGGER_STDERR(x) macro like this:
+ *  {
+ *         char sbuf[128];
+ *         snprintf(sbuf, sizeof(sbuf), "Got frame with %ld bytes", buf.bytesused);
+ *         LOGGER(sbuf);  /* OR... LOGGER_STDERR(sbuf);
+ *  }
+ *
+ *  Don't add newlines at the end of the string.  The logger does that for you.
+ *  OR:  Use the LOGGER_3Arg... etc for a shortcut
+ */
+#define LOGGER(x) 			v4l2capture_logger(x)
+#define LOGGER_STDERR(x) 	v4l2capture_stream_logger(x)
+
+#define LOGGER_1Arg(fmtstr, arg)   {                \
+        char sbuf[512];                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg);  \
+        LOGGER(sbuf);                               \
+    }
+
+#define LOGGER_2Arg(fmtstr, arg1, arg2)   {                 \
+        char sbuf[512];                                     \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2);   \
+        LOGGER(sbuf);                                       \
+    }
+
+#define LOGGER_3Arg(fmtstr, arg1, arg2, arg3)   {                   \
+        char sbuf[512];                                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2, arg3);     \
+        LOGGER(sbuf);                                               \
+    }
+
+#define LOGGER_STDERR_1Arg(fmtstr, arg)   {         \
+        char sbuf[512];                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg);  \
+        LOGGER_STDERR(sbuf);                               \
+    }
+
+#define LOGGER_STDERR_2Arg(fmtstr, arg1, arg2)   {          \
+        char sbuf[512];                                     \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2);   \
+        LOGGER_STDERR(sbuf);                                       \
+    }
+
+#define LOGGER_STDERR_3Arg(fmtstr, arg1, arg2, arg3)   {            \
+        char sbuf[512];                                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2, arg3);     \
+        LOGGER_STDERR(sbuf);                                               \
+    }
 
