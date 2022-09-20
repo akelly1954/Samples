@@ -48,8 +48,8 @@ Log::Log::Level loglevel = Log::Log::Level::eDebug;
 std::string default_log_level = "debug";
 std::string log_level = default_log_level;
 size_t framecount = 200;
-std::string default_frame_count(std::to_string(framecount));
-std::string frame_count(default_frame_count);
+std::string default_str_frame_count(std::to_string(framecount));
+std::string str_frame_count(default_str_frame_count);
 bool profiling_enabled = false;
 bool capture_finished = false;
 bool capture_pause = false;
@@ -59,7 +59,7 @@ bool capture_pause = false;
 //////////////////////////////////////////////////////////////////////////////////
 
 // Set up logging facility (for the video code) roughly equivalent to std::cerr...
-Log::Logger& global_logger;
+Log::Logger *global_logger = NULL;
 
 bool (*pause_function)() = v4l2capture_pause;
 bool (*finished_function)() = v4l2capture_finished;
@@ -97,8 +97,12 @@ void set_v4l2capture_pause(bool pause)
 
 void v4l2capture_terminate(int code, const char *logmessage)
 {
-	global_logger.debug() << "terminate process: code=" << code << ": " << logmessage;
+	if (global_logger) global_logger->debug() << "terminate process: code=" << code << ": " << logmessage;
     fprintf (stderr, "terminate process: code=%d: %s\n", code, logmessage);
+
+    // Terminate the Log Manager (destroy the Output objects)
+    Log::Manager::terminate();
+
     ::_exit(code);     // See man page for _exit(2)
 }
 
@@ -108,7 +112,7 @@ void v4l2capture_terminate(int code, const char *logmessage)
 
 void v4l2capture_logger(const char *logmessage)
 {
-    global_logger.debug() << logmessage;
+	if (global_logger) global_logger->debug() << logmessage;
     fprintf (stderr, "%s\n", logmessage);
 }
 

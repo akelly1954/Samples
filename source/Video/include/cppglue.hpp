@@ -86,7 +86,7 @@ extern void (*v4l2capture_callback_function)(void *, size_t);
 extern void (*v4l2capture_logger_function)(const char *);
 extern void (*v4l2capture_logger_stream_function)(const char *);
 
-void v4l2capture_errno_exit(const char *s);
+void v4l2capture_errno_exit(const char *s, int errnocopy);
 void v4l2capture_exit(const char *s);
 void v4l2capture_exit_code(int code, const char *s);
 

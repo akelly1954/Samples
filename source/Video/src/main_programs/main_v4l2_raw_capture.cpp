@@ -144,6 +144,8 @@ int main(int argc, char *argv[])
     Util::MainLogger::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName.c_str());
 
+    ::global_logger = &logger;
+
     std::cerr << "Log level is: " << log_level << std::endl;
     if (video_capture_queue::s_write_frames_to_file)
     {
@@ -212,7 +214,7 @@ int main(int argc, char *argv[])
                 // OR: const_cast<char *>("-f"),  // force YUYV 640x480 format
                 // OR: nothing - default to whatever the video is set to (YUYV 640x320?)
                 const_cast<char *>("-c"),
-                const_cast<char *>(frame_count.c_str()),
+                const_cast<char *>(str_frame_count.c_str()),
                 NULL
             };
         int fakeargc = sizeof(fakeargv)/sizeof(fakeargv[0])-1;  // the -1 is for the NULL at the end
@@ -301,13 +303,13 @@ bool parse(std::ostream &strm, int argc, char *argv[])
             assert (argc == -668);   // Bug encountered. Will cause abnormal termination
     }
 
-    switch(getArg(cmdmap, "-fc", frame_count))
+    switch(getArg(cmdmap, "-fc", str_frame_count))
     {
         case Util::ParameterStatus::FlagNotProvided:
-            // for debugging:  strm << "-fc flag not provided. Using default " << frame_count << std::endl;
+            // for debugging:  strm << "-fc flag not provided. Using default " << str_frame_count << std::endl;
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
-            // for debugging:  strm << "-fc flag provided. Using " << frame_count << std::endl;
+            // for debugging:  strm << "-fc flag provided. Using " << str_frame_count << std::endl;
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             strm << "ERROR: \"-fc\" flag is missing its parameter." << std::endl;
@@ -316,7 +318,7 @@ bool parse(std::ostream &strm, int argc, char *argv[])
             assert (argc == -669);   // Bug encountered. Will cause abnormal termination
     }
 
-    switch(getArg(cmdmap, "-pr", frame_count))
+    switch(getArg(cmdmap, "-pr", str_frame_count))
     {
         case Util::ParameterStatus::FlagNotProvided:
             profiling_enabled = false;
@@ -364,7 +366,7 @@ bool parse(std::ostream &strm, int argc, char *argv[])
 
     // Assign the frame count (only after the command line parameters were applied)
     // Frame count set to 0 means stream non-stop.
-    framecount = strtoul(frame_count.c_str(), NULL, 10);
+    framecount = strtoul(str_frame_count.c_str(), NULL, 10);
 
     return true;
 }

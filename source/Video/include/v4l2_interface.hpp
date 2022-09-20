@@ -31,7 +31,7 @@
 #include <iostream>
 #include <string>
 
-extern Log::Logger& global_logger;
+extern Log::Logger *global_logger;
 extern Log::Log::Level loglevel;
 extern std::string log_level;
 
@@ -39,7 +39,7 @@ extern std::string logFilelName;
 extern std::string logChannelName;
 
 extern size_t framecount;
-extern std::string frame_count;
+extern std::string str_frame_count;
 
 extern bool profiling_enabled;
 extern bool capture_finished;

@@ -11,6 +11,9 @@
  * see https://linuxtv.org/docs.php for more information
  */
 
+// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,18 +31,23 @@
 #include <sys/ioctl.h>
 
 #include <cppglue.hpp>
+#include <v4l2_interface.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <linux/videodev2.h>
 #include <v4l2_raw_capture.hpp>
 
 static char            *dev_name = NULL;
+
+// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
 static enum io_method   io = IO_METHOD_MMAP;
 static int              fd = -1;
 struct buffer          *buffers = NULL;
 static unsigned int     n_buffers = 0;
 static int              out_buf = 0;
 static int              force_format = 0;
-static int              frame_count = 0;
+static int              int_frame_count = 0;
 
 int v4l2capture_xioctl(int fh, int request, void *arg)
 {
@@ -57,7 +65,7 @@ void v4l2capture_process_image(void *p, int size)
     // repurpose the -o flag to use callback instead of fwrite
     if (out_buf)
     {
-        if ((*v4l2capture_pause_function)())
+        if (v4l2capture_pause())
         {
             // if we're paused, continue the frame capture
             // but don't really do anything with it.
@@ -75,6 +83,9 @@ int v4l2capture_read_frame(void)
 
         switch (io) {
         case IO_METHOD_READ:
+        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
                 if (-1 == read(fd, buffers[0].start, buffers[0].length)) {
                         switch (errno) {
                         case EAGAIN:
@@ -86,7 +97,7 @@ int v4l2capture_read_frame(void)
                                 /* fall through */
 
                         default:
-                                v4l2capture_errno_exit("read");
+                                v4l2capture_errno_exit("read", errno);
                         }
                 }
 
@@ -110,7 +121,7 @@ int v4l2capture_read_frame(void)
                                 /* fall through */
 
                         default:
-                                v4l2capture_errno_exit("VIDIOC_DQBUF");
+                                v4l2capture_errno_exit("VIDIOC_DQBUF", errno);
                         }
                 }
 
@@ -119,10 +130,13 @@ int v4l2capture_read_frame(void)
                 v4l2capture_process_image(buffers[buf.index].start, buf.bytesused);
 
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_QBUF, &buf))
-                        v4l2capture_errno_exit("VIDIOC_QBUF");
+                        v4l2capture_errno_exit("VIDIOC_QBUF", errno);
                 break;
 
         case IO_METHOD_USERPTR:
+        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
                 CLEAR(buf);
 
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -139,7 +153,7 @@ int v4l2capture_read_frame(void)
                                 /* fall through */
 
                         default:
-                                v4l2capture_errno_exit("VIDIOC_DQBUF");
+                                v4l2capture_errno_exit("VIDIOC_DQBUF", errno);
                         }
                 }
 
@@ -153,7 +167,7 @@ int v4l2capture_read_frame(void)
                 v4l2capture_process_image((void *)buf.m.userptr, buf.bytesused);
 
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_QBUF, &buf))
-                        v4l2capture_errno_exit("VIDIOC_QBUF");
+                        v4l2capture_errno_exit("VIDIOC_QBUF", errno);
                 break;
         }
 
@@ -162,13 +176,13 @@ int v4l2capture_read_frame(void)
 
 void v4l2capture_mainloop(void)
 {
-        int count = frame_count;
+        int count = int_frame_count;
 
-        // Loop while not finished, and original frame_count was 0, or counter is not done counting
+        // Loop while not finished, and original int_frame_count was 0, or counter is not done counting
         // (Having a null finished callback() is an error checked for earlier).
         do
         {
-            if (frame_count != 0 && count-- <= 0) break;
+            if (int_frame_count != 0 && count-- <= 0) break;
 
             for (;;)
             {
@@ -188,7 +202,7 @@ void v4l2capture_mainloop(void)
                 if (-1 == r) {
                         if (EINTR == errno)
                                 continue;
-                        v4l2capture_errno_exit("select");
+                        v4l2capture_errno_exit("select", errno);
                 }
 
                 if (0 == r) {
@@ -200,9 +214,9 @@ void v4l2capture_mainloop(void)
                         break;
                 /* EAGAIN - continue select loop. */
             }
-        } while ((*v4l2capture_finished_function)() == false);
+        } while (v4l2capture_finished() == false);
 
-        if ((*v4l2capture_finished_function)())
+        if (v4l2capture_finished())
         {
             LOGGER("v4l2capture_mainloop: CAPTURE TERMINATION REQUESTED.");
         }
@@ -221,7 +235,7 @@ void v4l2capture_stop_capturing(void)
         case IO_METHOD_USERPTR:
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_STREAMOFF, &type))
-                        v4l2capture_errno_exit("VIDIOC_STREAMOFF");
+                        v4l2capture_errno_exit("VIDIOC_STREAMOFF", errno);
                 break;
         }
 }
@@ -233,6 +247,9 @@ void v4l2capture_start_capturing(void)
 
         switch (io) {
         case IO_METHOD_READ:
+        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
                 /* Nothing to do. */
                 break;
 
@@ -246,14 +263,17 @@ void v4l2capture_start_capturing(void)
                         buf.index = i;
 
                         if (-1 == v4l2capture_xioctl(fd, VIDIOC_QBUF, &buf))
-                                v4l2capture_errno_exit("VIDIOC_QBUF");
+                                v4l2capture_errno_exit("VIDIOC_QBUF", errno);
                 }
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_STREAMON, &type))
-                        v4l2capture_exit_code(errno, "VIDIOC_STREAMON");
+                        v4l2capture_errno_exit("VIDIOC_STREAMON", errno);
                 break;
 
         case IO_METHOD_USERPTR:
+        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
                 for (i = 0; i < n_buffers; ++i) {
                         struct v4l2_buffer buf;
 
@@ -265,15 +285,17 @@ void v4l2capture_start_capturing(void)
                         buf.length = buffers[i].length;
 
                         if (-1 == v4l2capture_xioctl(fd, VIDIOC_QBUF, &buf))
-                                v4l2capture_errno_exit("VIDIOC_QBUF");
+                                v4l2capture_errno_exit("VIDIOC_QBUF", errno);
                 }
                 type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_STREAMON, &type))
-                        v4l2capture_errno_exit("VIDIOC_STREAMON");
+                        v4l2capture_errno_exit("VIDIOC_STREAMON", errno);
                 break;
         }
 }
 
+// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 void v4l2capture_uninit_device(void)
 {
         unsigned int i;
@@ -286,7 +308,7 @@ void v4l2capture_uninit_device(void)
         case IO_METHOD_MMAP:
                 for (i = 0; i < n_buffers; ++i)
                         if (-1 == munmap(buffers[i].start, buffers[i].length))
-                                v4l2capture_errno_exit("munmap");
+                                v4l2capture_errno_exit("munmap", errno);
                 break;
 
         case IO_METHOD_USERPTR:
@@ -354,7 +376,7 @@ void v4l2capture_init_mmap(void)
                 buf.index       = n_buffers;
 
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_QUERYBUF, &buf))
-                        v4l2capture_errno_exit("VIDIOC_QUERYBUF");
+                        v4l2capture_errno_exit("VIDIOC_QUERYBUF", errno);
 
                 buffers[n_buffers].length = buf.length;
                 buffers[n_buffers].start =
@@ -365,7 +387,7 @@ void v4l2capture_init_mmap(void)
                               fd, buf.m.offset);
 
                 if (MAP_FAILED == buffers[n_buffers].start)
-                        v4l2capture_errno_exit("mmap");
+                        v4l2capture_errno_exit("mmap", errno);
         }
 }
 
@@ -384,7 +406,7 @@ void v4l2capture_init_userp(unsigned int buffer_size)
                 LOGGER_STDERR_1Arg("%s does not support user pointer i/o", dev_name);
                 v4l2capture_exit("init_userp - nouserp");
             } else {
-                v4l2capture_errno_exit("VIDIOC_REQBUFS");
+                v4l2capture_errno_exit("VIDIOC_REQBUFS", errno);
             }
         }
 
@@ -417,7 +439,7 @@ void v4l2capture_init_device(void)
                 LOGGER_STDERR_1Arg("%s is no V4L2 device", dev_name);
                 v4l2capture_exit("not a v4l2 device");
             } else {
-                v4l2capture_errno_exit("VIDIOC_QUERYCAP");
+                v4l2capture_errno_exit("VIDIOC_QUERYCAP", errno);
             }
         }
 
@@ -425,6 +447,9 @@ void v4l2capture_init_device(void)
             LOGGER_STDERR_1Arg("%s is no capture device", dev_name);
             v4l2capture_exit("device is not a capture device");
         }
+
+        // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+        // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
         switch (io) {
         case IO_METHOD_READ:
@@ -480,7 +505,7 @@ void v4l2capture_init_device(void)
             fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
             if (-1 == v4l2capture_xioctl(fd, VIDIOC_S_FMT, &fmt))
-                    v4l2capture_errno_exit("VIDIOC_S_FMT");
+                    v4l2capture_errno_exit("VIDIOC_S_FMT", errno);
 
             /* Note VIDIOC_S_FMT may change width and height. */
         } else if (force_format == 1) {
@@ -490,13 +515,13 @@ void v4l2capture_init_device(void)
                 fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_S_FMT, &fmt))
-                        v4l2capture_errno_exit("VIDIOC_S_FMT");
+                        v4l2capture_errno_exit("VIDIOC_S_FMT", errno);
 
                 /* Note VIDIOC_S_FMT may change width and height. */
         } else {
                 /* Preserve original settings as set by v4l2-ctl for example */
                 if (-1 == v4l2capture_xioctl(fd, VIDIOC_G_FMT, &fmt))
-                        v4l2capture_errno_exit("VIDIOC_G_FMT");
+                        v4l2capture_errno_exit("VIDIOC_G_FMT", errno);
         }
 
         /* Buggy driver paranoia. */
@@ -530,6 +555,9 @@ void v4l2capture_init_device(void)
         LOGGER_STDERR_1Arg("driver: bytes required: %lu", fmt.fmt.pix.sizeimage);
         LOGGER_STDERR_1Arg("driver: I/O METHOD: %s", string_methods.name[io]);
 
+        // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+        // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
         switch (io) {
         case IO_METHOD_READ:
                 v4l2capture_init_read(fmt.fmt.pix.sizeimage);
@@ -548,7 +576,7 @@ void v4l2capture_init_device(void)
 void v4l2capture_close_device(void)
 {
         if (-1 == close(fd))
-                v4l2capture_errno_exit("close");
+                v4l2capture_errno_exit("close", errno);
 
         fd = -1;
 }
@@ -594,7 +622,7 @@ void v4l2capture_usage(FILE *fp, int argc, char **argv)
                  "-F | --formatH264    Force format to 1920x1080 H264\n"
                  "-c | --count         Number of frames to grab [%i]\n"
                  "",
-                 argv[0], dev_name, frame_count);
+                 argv[0], dev_name, int_frame_count);
 }
 
 static const char short_options[] = "d:hmruofFc:";
@@ -649,10 +677,16 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
                         break;
 
                 case 'r':
+                	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+                	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
                         io = IO_METHOD_READ;
                         break;
 
                 case 'u':
+                	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+                	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+
                         io = IO_METHOD_USERPTR;
                         break;
 
@@ -670,25 +704,15 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
 
                 case 'c':
                         errno = 0;
-                        frame_count = strtol(optarg, NULL, 0);
-                        if (errno)
-                                v4l2capture_errno_exit(optarg);
+                        int_frame_count = strtol(optarg, NULL, 0);
+						if (errno)
+							v4l2capture_errno_exit(optarg, errno);
                         break;
 
                 default:
                         v4l2capture_usage(stderr, argc, argv);
                         v4l2capture_exit("usage");
                 }
-        }
-
-        if (v4l2capture_finished_function == NULL)
-        {
-            v4l2capture_exit("v4l2_raw_capture_main: Cannot have NULL v4l2capture_finished_function() callback.");
-        }
-
-        if (v4l2capture_pause_function == NULL)
-        {
-            v4l2capture_exit("v4l2_raw_capture_main: Cannot have NULL v4l2capture_pause_function.");
         }
 
         v4l2capture_open_device();

@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string>
+#include <v4l2_interface.hpp>
 #include <v4l2_raw_capture.hpp>
 
 bool    (*v4l2capture_pause_function)() = NULL;
@@ -57,25 +59,24 @@ void v4l2capture_set_callback_functions(
 
 // Interface functions
 
-void v4l2capture_errno_exit(const char *s)
+void v4l2capture_errno_exit(const char *s, int errnocopy)
 {
-    LOGGER_STDERR_3Arg("%s error %d, %s", s, errno, strerror(errno));
-    v4l2capture_exit("error");
+	std::string msg = std::string(s) + " error, errno=" + std::to_string(errnocopy) + ": "
+			+ const_cast<const char *>(strerror(errnocopy));
+	LOGGER_STDERR(msg.c_str());
+	// LOGGER_STDERR_3Arg("%s error, errno=%d, %s", s, errnocopy, strerror(errnocopy));
+    v4l2capture_exit(msg.c_str());
 }
 
 void v4l2capture_exit_code(int code, const char *s)
 {
-    if (v4l2capture_terminate_function) {
-        (*v4l2capture_terminate_function)(code, s);
-    }
+	v4l2capture_terminate(code, s);
     abort();
 }
 
 void v4l2capture_exit(const char *s)
 {
-    if (v4l2capture_terminate_function) {
-        (*v4l2capture_terminate_function)(1, s);
-    }
+   	v4l2capture_terminate(1, s);
     abort();
 }
 
