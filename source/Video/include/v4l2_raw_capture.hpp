@@ -35,20 +35,20 @@ struct buffer {
 
 
 // Interface functions
-extern int v4l2capture_xioctl(int fh, int request, void *arg);
-extern void v4l2capture_process_image(void *p, int size);
-extern int v4l2capture_read_frame(void);
-extern void v4l2capture_mainloop(void);
-extern void v4l2capture_stop_capturing(void);
-extern void v4l2capture_start_capturing(void);
-extern void v4l2capture_uninit_device(void);
-extern void v4l2capture_init_read(unsigned int buffer_size);
-extern void v4l2capture_init_mmap(void);
-extern void v4l2capture_init_userp(unsigned int buffer_size);
-extern void v4l2capture_init_device(void);
-extern void v4l2capture_close_device(void);
-extern void v4l2capture_open_device(void);
-extern int v4l2_raw_capture_main(int argc, char *argv[]);
+int v4l2capture_xioctl(int fh, int request, void *arg);
+void v4l2capture_process_image(void *p, int size);
+int v4l2capture_read_frame(void);
+void v4l2capture_mainloop(void);
+void v4l2capture_stop_capturing(void);
+void v4l2capture_start_capturing(void);
+void v4l2capture_uninit_device(void);
+void v4l2capture_init_read(unsigned int buffer_size);
+void v4l2capture_init_mmap(void);
+void v4l2capture_init_userp(unsigned int buffer_size);
+void v4l2capture_init_device(void);
+void v4l2capture_close_device(void);
+void v4l2capture_open_device(void);
+int v4l2_raw_capture_main(int argc, char *argv[]);
 
 #endif /*  _V4L2_RAW_CAPTURE_H_  */
 

@@ -47,14 +47,14 @@ extern bool capture_pause;
 extern std::string output_file;
 
 // C++ linkage for callback functions
-extern bool v4l2capture_pause(void);
-extern bool v4l2capture_finished(void);
-extern void v4l2capture_terminate(int code, const char *logmessage);
-extern void v4l2capture_logger(const char *logmessage);
-extern void v4l2capture_stream_logger(const char *logmessage);
-extern void v4l2capture_callback(void *p, size_t size);
-extern void set_v4l2capture_finished(void);
-extern void set_v4l2capture_pause(bool pause);
+bool v4l2capture_pause(void);
+bool v4l2capture_finished(void);
+void v4l2capture_terminate(int code, const char *logmessage);
+void v4l2capture_logger(const char *logmessage);
+void v4l2capture_stream_logger(const char *logmessage);
+void v4l2capture_callback(void *p, size_t size);
+void set_v4l2capture_finished(void);
+void set_v4l2capture_pause(bool pause);
 
 struct string_io_methods
 {
