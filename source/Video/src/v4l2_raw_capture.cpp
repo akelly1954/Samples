@@ -585,22 +585,20 @@ void v4l2capture_open_device(void)
         struct stat st;
 
         if (-1 == stat(dev_name, &st)) {
-                fprintf(stderr, "Cannot identify '%s': %d, %s\n",
-                         dev_name, errno, strerror(errno));
-                v4l2capture_exit("cannot identify device");
+        	LOGGER_3Arg("Cannot identify '%s': errno=%d, %s", dev_name, errno, strerror(errno));
+            v4l2capture_exit("cannot identify device");
         }
 
         if (!S_ISCHR(st.st_mode)) {
-                fprintf(stderr, "%s is no device\n", dev_name);
-                v4l2capture_exit("not a device");
+        	LOGGER_1Arg("%s is no device", dev_name);
+            v4l2capture_exit("not a device");
         }
 
         fd = open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
         if (-1 == fd) {
-                fprintf(stderr, "Cannot open '%s': %d, %s\n",
-                         dev_name, errno, strerror(errno));
-                v4l2capture_exit("cannot open device");
+        	LOGGER_3Arg("Cannot open '%s': errno=%d, %s", dev_name, errno, strerror(errno));
+            v4l2capture_exit("cannot open device");
         }
         LOGGER_STDERR_1Arg("device: %s", dev_name);
 }

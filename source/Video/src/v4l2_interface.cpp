@@ -92,8 +92,19 @@ void set_v4l2capture_pause(bool pause)
 
 void v4l2capture_terminate(int code, const char *logmessage)
 {
-	if (global_logger) global_logger->debug() << "terminate process: code=" << code << ": " << logmessage;
-    fprintf (stderr, "terminate process: code=%d: %s\n", code, logmessage);
+	if (global_logger)
+	{
+		if (code == 0)
+		{
+			global_logger->info() << "Terminate process: exit code=" << code << ": " << logmessage;
+		}
+		else
+		{
+			global_logger->error() << "Terminate process: exit code=" << code << ": " << logmessage;
+		}
+	}
+
+	fprintf (stderr, "Terminate process: exit code=%d: %s\n", code, logmessage);
 
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
@@ -108,7 +119,6 @@ void v4l2capture_errno_exit(const char *s, int errnocopy)
 	std::string msg = std::string(s) + " error, errno=" + std::to_string(errnocopy) + ": "
 			+ const_cast<const char *>(strerror(errnocopy));
 	LOGGER_STDERR(msg.c_str());
-	// LOGGER_STDERR_3Arg("%s error, errno=%d, %s", s, errnocopy, strerror(errnocopy));
     v4l2capture_exit(msg.c_str());
 }
 
@@ -135,8 +145,8 @@ struct string_io_methods string_methods = { "IO_METHOD_READ", "IO_METHOD_MMAP", 
 
 void v4l2capture_logger(const char *logmessage)
 {
-	if (global_logger) global_logger->debug() << logmessage;
-    fprintf (stderr, "%s\n", logmessage);
+	if (global_logger) global_logger->info() << logmessage;
+    std::cerr << logmessage << std::endl;
 }
 
 //////////////////////////////////////////////////////
@@ -144,7 +154,7 @@ void v4l2capture_logger(const char *logmessage)
 //////////////////////////////////////////////////////
 void v4l2capture_stream_logger(const char *logmessage)
 {
-    fprintf (stderr, "%s\n", logmessage);
+    std::cerr << logmessage << std::endl;
 }
 
 // Setup of the callback function (from the C code).
