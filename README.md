@@ -22,7 +22,11 @@ Yes, I am dating myself here - but please, do not waste your time if that is wha
     
 (Fall 2022): New work is being done on the Video projects. Getting rid of the C interface to **V4L2**, and replacing the previous kinda awkward C code with C++ objects.  This is being done in a step-wise fashion, and exists only in the **dev** branch (at the moment).    
    
-**Next Steps**:  Add **OpenCV** as the video frame pump as an alternative to **V4L2**.  The plan is to use opencv version 4.6.0 at this time.  It is already cloned and built from the **github** repository, but can only be integrated into this framework once all the C code is out of the Video project and has been replaced by C++ objects.     
+**Next Steps**:  
+    
+1. Add **JSON** support to the project.  Currently considering **JsonCpp**.  The library and associated files are already integrated into the **source/3rdpary/** directory.  Initial implementation of the all-C++ version of the Video project will include JSON based config file support.  Which answers the question of how to configure the video pumping of frames from a video source (camera).  There are many many configurable parameters for the video apps that will use either **opencv** or **v4l2** pumps for each application.   
+      
+2. Add **OpenCV** as the video frame pump as an alternative to **V4L2**.  The plan is to use opencv version 4.6.0 at this time.  It is already cloned and built from the **github** repository, but can only be integrated into this framework once all the C code is out of the Video project and has been replaced by C++ objects.     
         
 The **README** files are currently behind reality by a bit.     
      

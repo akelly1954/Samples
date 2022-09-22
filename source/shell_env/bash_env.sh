@@ -7,6 +7,11 @@ scriptname="linux-build.bash"
 loggercppdir="${basepath}/source/3rdparty/LoggerCpp"
 loggercppsrcdirname="SRombauts-LoggerCpp-a0868a8-modified"
 LoggerCppSource_DIR="$loggercppdir/$loggercppsrcdirname"
+
+jsoncppdir="${basepath}/source/3rdparty/JsonCpp"
+jsoncppsrcdirname="JsonCpp-8190e06-2022-07-15/jsoncpp"
+JsonCppSource_DIR="$jsoncppdir/$jsoncppsrcdirname"
+
 SampleRoot_DIR="$basepath"
 
 CMAKE_ECLIPSE_VERSION="4.22"
