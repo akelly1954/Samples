@@ -1,3 +1,13 @@
+#include <Utility.hpp>
+#include <MainLogger.hpp>
+
+// #include <map>
+// #include <utility>
+
+#include <iostream>
+#include <json/json.h>
+#include <fstream>
+
 //
 // main_jsoncpp_samplecfg.cpp
 // 
@@ -6,38 +16,49 @@
 // See MIT License for copyright for this code:
 //           https://github.com/sksodhi/CodeNuggets/blob/master/LICENSE
 //
-#include <iostream>
-#include <json/json.h>
-#include <fstream>
 
 void 
-displayCfg(const Json::Value &cfg_root);
+displayCfg(const Json::Value &cfg_root, Log::Logger logger);
 
 int
 main()
 {
+	using namespace Util;
+
+	std::string channelName = "main_jsoncpp_samplecfg";
+
+    Log::Config::Vector configList;
+    MainLogger::initialize( configList,
+                            channelName,
+                            Log::Log::Level::eDebug,
+                            MainLogger::enableConsole,
+                            MainLogger::disableLogFile
+                          );
+
+    Log::Logger logger(channelName.c_str());
+
     Json::Reader reader;
     Json::Value cfg_root;
     std::ifstream cfgfile("main_jsoncpp_samplecfg.json");
     cfgfile >> cfg_root;
 
-    std::cout << "______ cfg_root : start ______" << std::endl;
-    std::cout << cfg_root << std::endl;
-    std::cout << "______ cfg_root : end ________" << std::endl;
+    logger.notice() << "--------- cfg_root : start ---------";
+    logger.notice() << cfg_root;
+    logger.notice() << "--------- cfg_root : end ---------";
 
-    displayCfg(cfg_root);
+    displayCfg(cfg_root, logger);
 }       
 
 void 
-displayCfg(const Json::Value &cfg_root)
+displayCfg(const Json::Value &cfg_root, Log::Logger logger)
 {
     std::string serverIP = cfg_root["Config"]["server-ip"].asString();
     std::string serverPort = cfg_root["Config"]["server-port"].asString();
     unsigned int bufferLen = cfg_root["Config"]["buffer-length"].asUInt();
 
-    std::cout << "______ Configuration ______" << std::endl;
-    std::cout << "server-ip     :" << serverIP << std::endl;
-    std::cout << "server-port   :" << serverPort << std::endl;
-    std::cout << "buffer-length :" << bufferLen<< std::endl;
+    logger.notice() << "--------- Configuration ---------";
+    logger.notice() << "server-ip     :" << serverIP;
+    logger.notice() << "server-port   :" << serverPort;
+    logger.notice() << "buffer-length :" << bufferLen;
 }
 
