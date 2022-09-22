@@ -10,12 +10,6 @@ fi
 
 . "$envpath"
 
-if [ ! -n "${LoggerCppSource_DIR}" -o ! -d "${LoggerCppSource_DIR}" ]
-then
-    echo "ERROR: Could not find directory ${LoggerCppSource_DIR}"
-    exit 1
-fi
-
 bldpath="../../build"
 rootsrc="`realpath ..`"
 projectname=`basename "$PWD"`
@@ -23,6 +17,12 @@ projectname=`basename "$PWD"`
 if [ ! -n "${LoggerCppSource_DIR}" -o ! -d "${LoggerCppSource_DIR}" ]
 then
     echo ERROR: "LoggerCppSource_DIR is zero length or is not a directory. Aborting..."
+    exit 1
+fi
+
+if [ ! -n "${JsonCppSource_DIR}" -o ! -d "${JsonCppSource_DIR}" ]
+then
+    echo ERROR: "JsonCppSource_DIR is zero length or is not a directory. Aborting..."
     exit 1
 fi
 
@@ -222,6 +222,7 @@ do
     echo +       -D"\"${CMAKE_SET_D}\"" \\
     echo +       -DCMAKE_SKIP_RPATH=ON \\
     echo +       -DLoggerCppSource_DIR:PATH="\"${LoggerCppSource_DIR}\"" \\
+    echo +       -DJsonCppSource_DIR:PATH="\"${JsonCppSource_DIR}\"" \\
     echo +       -DCMAKE_INSTALL_PREFIX:PATH="\"${bldpath}\"" \\
     echo +       -DSampleRoot_DIR:PATH="\"${SampleRoot_DIR}\"" \\
     echo +       -DCMAKE_ECLIPSE_VERSION="\"${CMAKE_ECLIPSE_VERSION}\"" \\
@@ -245,6 +246,7 @@ do
           -DCMAKE_SKIP_RPATH=ON \
           -DCMAKE_SKIP_INSTALL_RPATH=ON \
           -DLoggerCppSource_DIR:PATH="${LoggerCppSource_DIR}" \
+          -DJsonCppSource_DIR:PATH="${JsonCppSource_DIR}" \
           -DCMAKE_INSTALL_PREFIX:PATH="${bldpath}" \
           -DSampleRoot_DIR:PATH="${SampleRoot_DIR}" \
           -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" \

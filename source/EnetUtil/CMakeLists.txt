@@ -6,11 +6,12 @@ include (${SampleRoot_DIR}/source/cmake/EnetUtil.cmake)
 
 file(GLOB MAIN_HEADERS "src/main_programs/include/ntwk_basic_sock_server/*.hpp")
 file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
+file(GLOB JSONCPP_HEADERS "${JsonCpp_HEADERS}/JsonCpp/*.h*")
 file(GLOB SOURCEFILES "src/*.cpp")
 file(GLOB HEADERS   "include/*.h*") 
 file(GLOB TEST_SCRIPTS "src/main_programs/*.bash")
     
-set( SOURCES ${SOURCEFILES} ${MAIN_HEADERS} ${HEADERS} ${LOGGER_HEADERS} )
+set( SOURCES ${SOURCEFILES} ${MAIN_HEADERS} ${HEADERS} ${LOGGER_HEADERS} ${JSONCPP_HEADERS} )
 
 set ( LIBTYPE "${Enet_LIBTYPE}" )
 # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
@@ -19,6 +20,7 @@ include_directories( ${EnetUtil_HEADERS}
                      src/main_programs/include
                      ../Util/include
                      ${LoggerCpp_HEADERS}
+                     ${JsonCpp_HEADERS}
                    )
 
 add_library( ${EnetUtil} ${LIBTYPE} ${SOURCES} )
@@ -31,6 +33,7 @@ install(TARGETS ${EnetUtil} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/EnetUtil)
 install(FILES ${MAIN_HEADERS} DESTINATION include/EnetUtil/ntwk_basic_sock_server)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
+install(FILES ${JSONCPP_HEADERS} DESTINATION include/JsonCpp)
 
 install(FILES ${TEST_SCRIPTS} 
         PERMISSIONS OWNER_EXECUTE OWNER_READ
@@ -49,6 +52,7 @@ target_link_libraries( main_enet_util
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
@@ -63,6 +67,7 @@ target_link_libraries( main_ntwk_fixed_array
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
@@ -77,6 +82,7 @@ target_link_libraries( main_ntwk_util
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
@@ -91,6 +97,7 @@ target_link_libraries( main_ntwk_basic_sock_server
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
@@ -105,6 +112,7 @@ target_link_libraries( main_client_for_basic_server
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT}
                             ${LINKOPTIONS}
                      )
@@ -116,5 +124,4 @@ add_dependencies (main_ntwk_fixed_array ${EnetUtil} ${Util} )
 add_dependencies (main_ntwk_util ${EnetUtil} ${Util} )
 add_dependencies (main_ntwk_basic_sock_server ${EnetUtil} ${Util} )
 add_dependencies (main_client_for_basic_server ${EnetUtil} ${Util} )
-
 

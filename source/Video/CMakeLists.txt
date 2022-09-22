@@ -8,7 +8,8 @@ file(GLOB TEST_SCRIPTS "src/main_programs/*.bash")
 file(GLOB SOURCEFILES "src/*.c" "src/*.cpp")
 file(GLOB HEADERS "include/*.h*")
 file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
-set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" )
+file(GLOB JSONCPP_HEADERS "${JsonCpp_HEADERS}/JsonCpp/*.h*")
+set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" ${JSONCPP_HEADERS} )
 
 set ( LIBTYPE "${Video_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
@@ -16,7 +17,8 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 include_directories( ${Video_HEADERS} 
                      ../Util/include
                      ../EnetUtil/include
-                     ${LoggerCpp_HEADERS} )
+                     ${LoggerCpp_HEADERS}
+                     ${JsonCpp_HEADERS}} )
 
 add_library( ${Video} ${LIBTYPE} ${SOURCES} )
 target_link_libraries( ${Video}
@@ -27,6 +29,7 @@ install(TARGETS ${Video} DESTINATION lib)
 install(TARGETS ${Video} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/Video)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
+install(FILES ${JSONCPP_HEADERS} DESTINATION include/JsonCpp)
 
 install(FILES ${TEST_SCRIPTS}
         PERMISSIONS OWNER_EXECUTE OWNER_READ
@@ -46,6 +49,7 @@ target_link_libraries( main_v4l2_raw_capture
                             ${EnetUtil_LIB}
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}
                      )

@@ -7,22 +7,26 @@ include (${SampleRoot_DIR}/source/cmake/Util.cmake)
 file(GLOB SOURCEFILES "src/*.cpp")
 file(GLOB HEADERS "include/*.h*")
 file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
-set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}")
+file(GLOB JSONCPP_HEADERS "${JsonCpp_HEADERS}/json/*.h*")
+set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" "${JSONCPP_HEADERS}")
 
 set ( LIBTYPE "${Util_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 
-include_directories( ${Util_HEADERS} ${LoggerCpp_HEADERS} )
+include_directories( ${Util_HEADERS} ${LoggerCpp_HEADERS} ${JsonCpp_HEADERS} )
 
 add_library( ${Util} ${LIBTYPE} ${SOURCES} )
 target_link_libraries( ${Util}
                        ${CMAKE_THREAD_LIBS_INIT} ${LINKOPTIONS}
                      )
 
+message (STATUS "JSONCPP HEADERS: ${JSONCPP_HEADERS}")
+
 install(TARGETS ${Util} DESTINATION lib)
 install(TARGETS ${Util} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/Util)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
+install(FILES ${JSONCPP_HEADERS} DESTINATION include/JsonCpp/json)
 
 #
 # Circular buffer main
@@ -32,6 +36,7 @@ add_executable (main_circular_buffer src/main_programs/main_circular_buffer.cpp)
 target_link_libraries( main_circular_buffer 
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}
                      )
@@ -45,6 +50,7 @@ add_executable (main_LoggerCpp_main_example src/main_programs/main_LoggerCpp_mai
 target_link_libraries( main_LoggerCpp_main_example 
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}
                      )
@@ -58,6 +64,7 @@ add_executable (main_commandline src/main_programs/main_commandline.cpp)
 target_link_libraries( main_commandline 
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}
                      )
@@ -71,6 +78,7 @@ add_executable (main_condition_data src/main_programs/main_condition_data.cpp)
 target_link_libraries( main_condition_data 
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}
                      )

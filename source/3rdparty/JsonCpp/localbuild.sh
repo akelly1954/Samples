@@ -30,12 +30,12 @@ fi
 mkdir -p build
 cd build
 
-CMAKE_VERBOSE_MAKEFILE:BOOL=ON
+CMAKE_VERBOSE_MAKEFILE=ON
 
-cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${jsoncppsrcdirname}
+cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=${CMAKE_VERBOSE_MAKEFILE} -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${jsoncppsrcdirname}
 if [ $? -ne 0 ]
 then
-    echo "ERROR: cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${jsoncppsrcdirname} failed.  Aborting..."
+    echo "ERROR: cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=${CMAKE_VERBOSE_MAKEFILE} -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${jsoncppsrcdirname} failed.  Aborting..."
     exit 1
 fi
 

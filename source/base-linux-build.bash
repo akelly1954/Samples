@@ -23,6 +23,10 @@ then
     nobuild="--nobuild"
 fi
 
+##########################################################
+# Check LoggerCpp
+##########################################################
+
 if [ ! -d "${LoggerCppSource_DIR}" ]
 then
     echo "ERROR: Could not find directory ${LoggerCppSource_DIR}"
@@ -39,13 +43,50 @@ then
     exit 1
 fi
 
-# 3rdparty gets build regardless of whether --nobuild was invoked.
-echo "Building 3rdparty objects"
+# 3rdparty gets built regardless of whether --nobuild was invoked.
+echo "Building 3rdparty package LoggerCpp"
 #
 bash localbuild.sh cleanall
 if [ $? -ne 0 ]
 then
     echo "ERROR: build of $loggercppdir failed.  Aborting..."
+    exit 1
+fi
+
+cd "$here"
+if [ $? -ne 0 ]
+then
+    echo "Could not change directory to $here"
+    exit 1
+fi
+
+##########################################################
+# Check JsonCpp
+##########################################################
+
+if [ ! -d "${JsonCppSource_DIR}" ]
+then
+    echo "ERROR: Could not find directory ${JsonCppSource_DIR}"
+    exit 1
+fi
+
+here="$PWD"
+echo + At: $PWD
+
+cd "$jsoncppdir"
+if [ $? -ne 0 ]
+then
+    echo "Could not change directory to $jsoncppdir for localbuild.sh"
+    exit 1
+fi
+
+# 3rdparty gets built regardless of whether --nobuild was invoked.
+echo "Building 3rdparty package JsonCpp"
+#
+bash localbuild.sh cleanall
+if [ $? -ne 0 ]
+then
+    echo "ERROR: build of $jsoncppdir failed.  Aborting..."
     exit 1
 fi
 
@@ -132,6 +173,7 @@ do
 
         echo + at: $PWD
         echo + "LoggerCppSource_DIR = ${LoggerCppSource_DIR}"
+        echo + "JsonCppSource_DIR = ${JsonCppSource_DIR}"
         echo + Running bash "$scriptname" -c $dflag gflag $nobuild 
         bash "$scriptname" -c $dflag $gflag $nobuild 
         if [ $? -ne 0 ]
@@ -171,6 +213,7 @@ echo + NOTE: YOU MAY GET INSTALL ERRORS IF THERE IS NOTHING TO INSTALL IN THIS P
 echo +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 echo + "LoggerCppSource_DIR = ${LoggerCppSource_DIR}"
+echo + "JsonCppSource_DIR = ${JsonCppSource_DIR}"
 cmake --build . --target install --config $buildtype
 ret=$?
 if [ $ret -ne 0 ]
