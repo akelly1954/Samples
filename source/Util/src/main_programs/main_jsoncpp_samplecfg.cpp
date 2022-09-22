@@ -1,9 +1,12 @@
-
+//
 // main_jsoncpp_samplecfg.cpp
-
+// 
+// Taken from https://github.com/sksodhi/CodeNuggets/tree/master/json/config_read
+// 
+// See MIT License for copyright for this code:
+//           https://github.com/sksodhi/CodeNuggets/blob/master/LICENSE
+//
 #include <iostream>
-// #include <json/value.h>
-// #include <jsoncpp/json/json.h>
 #include <json/json.h>
 #include <fstream>
 
