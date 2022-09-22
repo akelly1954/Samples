@@ -10,6 +10,8 @@ file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
 file(GLOB JSONCPP_HEADERS "${JsonCpp_HEADERS}/json/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" "${JSONCPP_HEADERS}")
 
+file(GLOB JSON_FILES "src/main_programs/*.json")
+
 set ( LIBTYPE "${Util_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
 
@@ -27,6 +29,22 @@ install(TARGETS ${Util} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/Util)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
 install(FILES ${JSONCPP_HEADERS} DESTINATION include/JsonCpp/json)
+install(FILES ${JSON_FILES} DESTINATION Util)
+install(FILES ${JSON_FILES} DESTINATION localrun)
+
+#
+# Json sample config main
+#
+set (main_jsoncpp_samplecfg "main_jsoncpp_samplecfg${DBG}")
+add_executable (main_jsoncpp_samplecfg src/main_programs/main_jsoncpp_samplecfg.cpp)
+target_link_libraries( main_jsoncpp_samplecfg 
+                            ${Util_LIB}
+                            ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
+                            ${CMAKE_THREAD_LIBS_INIT} 
+                            ${LINKOPTIONS}
+                     )
+install(TARGETS main_jsoncpp_samplecfg DESTINATION localrun)
 
 #
 # Circular buffer main
@@ -87,5 +105,6 @@ install(TARGETS main_condition_data DESTINATION localrun)
 # Dependencies
 add_dependencies (main_circular_buffer ${Util})
 add_dependencies (main_LoggerCpp_main_example ${Util})
+add_dependencies (main_jsoncpp_samplecfg ${Util})
 add_dependencies (main_commandline ${Util})
 add_dependencies (main_condition_data ${Util})
