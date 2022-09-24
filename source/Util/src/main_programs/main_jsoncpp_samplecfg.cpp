@@ -1,5 +1,5 @@
-#include <Utility.hpp>
-#include <MainLogger.hpp>
+// #include <Utility.hpp>
+// #include <MainLogger.hpp>
 
 // #include <map>
 // #include <utility>
@@ -18,26 +18,9 @@
 //           https://github.com/sksodhi/CodeNuggets/blob/master/LICENSE
 //
 
-void 
-displayCfg(const Json::Value &cfg_root, Log::Logger logger);
-
 int
 main()
 {
-	using namespace Util;
-
-	std::string channelName = "main_jsoncpp_samplecfg";
-
-    Log::Config::Vector configList;
-    MainLogger::initialize( configList,
-                            channelName,
-                            Log::Log::Level::eDebug,
-                            MainLogger::enableConsole,
-                            MainLogger::disableLogFile
-                          );
-
-    Log::Logger logger(channelName.c_str());
-
     std::string config_file_name = "main_jsoncpp_samplecfg.json";
 
     // TODO:  Have to continue developing this
@@ -57,17 +40,4 @@ main()
     cfgfile >> cfg_root;
     std::cerr << "\n" << cfg_root << std::endl;
 }       
-
-void 
-displayCfg(const Json::Value &cfg_root, Log::Logger logger)
-{
-    std::string serverIP = cfg_root["Config"]["server-ip"].asString();
-    std::string serverPort = cfg_root["Config"]["server-port"].asString();
-    unsigned int bufferLen = cfg_root["Config"]["buffer-length"].asUInt();
-
-    logger.notice() << "--------- Configuration ---------";
-    logger.notice() << "server-ip     :" << serverIP;
-    logger.notice() << "server-port   :" << serverPort;
-    logger.notice() << "buffer-length :" << bufferLen;
-}
 
