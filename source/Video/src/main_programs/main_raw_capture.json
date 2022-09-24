@@ -1,0 +1,18 @@
+{
+	"Config": {
+		"Logger": {
+			"channel-name": 	"v4l2_raw_capture",
+			"file-name": 		"v4l2_raw_capture_log.txt",
+			"log-level": 		"debug"
+		},
+		"App-options": {
+			"output-file": 		"v4l2_raw_capture.data",
+			"write-to-file": 	1,
+			"profiling": 		0
+		},
+		"Video": {
+			"frame-count": 		200
+		}
+	}
+}
+

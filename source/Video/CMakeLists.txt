@@ -11,6 +11,8 @@ file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
 file(GLOB JSONCPP_HEADERS "${JsonCpp_HEADERS}/JsonCpp/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" ${JSONCPP_HEADERS} )
 
+file(GLOB JSON_FILES "src/main_programs/*.json")
+
 set ( LIBTYPE "${Video_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
@@ -31,6 +33,9 @@ install(FILES ${HEADERS} DESTINATION include/Video)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
 install(FILES ${JSONCPP_HEADERS} DESTINATION include/JsonCpp)
 
+install(FILES ${JSON_FILES} DESTINATION Video)
+install(FILES ${JSON_FILES} DESTINATION localrun)
+
 install(FILES ${TEST_SCRIPTS}
         PERMISSIONS OWNER_EXECUTE OWNER_READ
                     GROUP_EXECUTE GROUP_READ
@@ -39,6 +44,7 @@ install(FILES ${TEST_SCRIPTS}
 
 set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
 set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
+
 #
 # v4l2_raw_capture main
 #

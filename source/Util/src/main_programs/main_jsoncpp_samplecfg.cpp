@@ -7,6 +7,7 @@
 #include <iostream>
 #include <json/json.h>
 #include <fstream>
+#include <JsonCppUtil.hpp>
 
 //
 // main_jsoncpp_samplecfg.cpp
@@ -37,16 +38,24 @@ main()
 
     Log::Logger logger(channelName.c_str());
 
+    std::string config_file_name = "main_jsoncpp_samplecfg.json";
+
+    // TODO:  Have to continue developing this
+	// TODO:  Just for now.
+	UtilJsonCpp::jsonsample(config_file_name);
+
     Json::Reader reader;
     Json::Value cfg_root;
     std::ifstream cfgfile("main_jsoncpp_samplecfg.json");
+    if (!cfgfile.is_open())
+    {
+        // JsonCpp does not check this, but will fail with a syntax error on the first read
+        std::cerr << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
+        return 1;
+    }
+
     cfgfile >> cfg_root;
-
-    logger.notice() << "--------- cfg_root : start ---------";
-    logger.notice() << cfg_root;
-    logger.notice() << "--------- cfg_root : end ---------";
-
-    displayCfg(cfg_root, logger);
+    std::cerr << "\n" << cfg_root << std::endl;
 }       
 
 void 

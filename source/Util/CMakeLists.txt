@@ -11,6 +11,7 @@ file(GLOB JSONCPP_HEADERS "${JsonCpp_HEADERS}/json/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" "${JSONCPP_HEADERS}")
 
 file(GLOB JSON_FILES "src/main_programs/*.json")
+file(GLOB SCRIPTS_FILES "src/scripts/*.bash")
 
 set ( LIBTYPE "${Util_LIBTYPE}" )
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++fs")
@@ -22,15 +23,26 @@ target_link_libraries( ${Util}
                        ${CMAKE_THREAD_LIBS_INIT} ${LINKOPTIONS}
                      )
 
-message (STATUS "JSONCPP HEADERS: ${JSONCPP_HEADERS}")
-
 install(TARGETS ${Util} DESTINATION lib)
 install(TARGETS ${Util} DESTINATION localrun)
 install(FILES ${HEADERS} DESTINATION include/Util)
 install(FILES ${LOGGER_HEADERS} DESTINATION include/LoggerCpp)
 install(FILES ${JSONCPP_HEADERS} DESTINATION include/JsonCpp/json)
+
 install(FILES ${JSON_FILES} DESTINATION Util)
 install(FILES ${JSON_FILES} DESTINATION localrun)
+
+install(FILES ${SCRIPTS_FILES} 
+        PERMISSIONS OWNER_EXECUTE OWNER_READ
+                    GROUP_EXECUTE GROUP_READ
+                    WORLD_EXECUTE WORLD_READ
+        DESTINATION Util)
+
+install(FILES ${SCRIPTS_FILES} DESTINATION 
+        PERMISSIONS OWNER_EXECUTE OWNER_READ
+                    GROUP_EXECUTE GROUP_READ
+                    WORLD_EXECUTE WORLD_READ
+        DESTINATION localrun)
 
 #
 # Json sample config main
