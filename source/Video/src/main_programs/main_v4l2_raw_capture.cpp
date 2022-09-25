@@ -128,10 +128,10 @@ void Usage(std::ostream &strm, std::string command)
             << std::endl;
 }
 
-void checkConfigurationJson(std::string filename)
+void checkConfigurationJson(std::ostream& strm, std::string filename)
 {
 	// TODO:  Just for now.
-	UtilJsonCpp::jsonsample(filename);
+	UtilJsonCpp::checkjsonsyntax(strm, filename);
 }
 
 int main(int argc, char *argv[])
@@ -165,10 +165,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // TODO: This is temporary. Need to check ofstream errors
     std::string config_file_name = "main_raw_capture.json";
+    std::ofstream ofs (logChannelName+"_json_log.txt", std::ofstream::trunc);
 
     // TODO:  Have to continue developing this
-    checkConfigurationJson(config_file_name);
+    checkConfigurationJson(ofs, config_file_name);
 
     Json::Reader reader;
     Json::Value cfg_root;
@@ -181,7 +183,8 @@ int main(int argc, char *argv[])
     }
 
     cfgfile >> cfg_root;
-    std::cerr << "\n" << cfg_root << std::endl;
+    ofs << "\n" << cfg_root << std::endl;
+    std::cerr << "JSON parsing log file: " << logChannelName+"_json_log.txt" << std::endl;
 
     /////////////////
     // Set up the logger

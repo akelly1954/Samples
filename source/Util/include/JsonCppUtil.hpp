@@ -33,9 +33,9 @@ namespace UtilJsonCpp
 
 	void indent(std::ostream& strm, int numspaces);
 
-	void printroot(Json::Value& root);
+	void streamroot(std::ostream& strm, Json::Value& root);
 
-	int jsonsample(std::string filename);
+	int checkjsonsyntax(std::ostream& strm, std::string filename);
 
 	// All Json Value objects can call getMemberNames() except nullptr and object
 	bool checkJsonValueHasGetMemberNames (const Json::Value::iterator &val_iterator);
