@@ -43,30 +43,6 @@
 #include <stdio.h>
 #include <thread>
 
-/////////////////////////////////////////////////////////////////////////////////
-// MIT License
-//
-// Copyright (c) 2022 Andrew Kelly
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-/////////////////////////////////////////////////////////////////////////////////
-
 //////////////////////////////////////////////////////////////////////////////////
 //
 // If the H264 encoding is used in this program, it will create an mp4 file out of it,
@@ -177,14 +153,21 @@ int main(int argc, char *argv[])
     std::ifstream cfgfile(config_file_name);
     if (!cfgfile.is_open())
     {
-        // JsonCpp does not check this, but will fail with a syntax error on the first read
+        // This message is for debugging help. JsonCpp does not check if the file stream is
+    	// valid, but will fail with a syntax error on the first read, which is not helpful.
         std::cerr << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
+        ofs.close();
         return 1;
     }
 
     cfgfile >> cfg_root;
     ofs << "\n" << cfg_root << std::endl;
+    cfgfile.close();
     std::cerr << "JSON parsing log file: " << logChannelName+"_json_log.txt" << std::endl;
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    // As of this point, cfg_root contains the root for the whole json tree.
+    ///////////////////////////////////////////////////////////////////////////////////
 
     /////////////////
     // Set up the logger
@@ -200,7 +183,7 @@ int main(int argc, char *argv[])
     std::cerr << "Log level is: " << log_level << std::endl;
     if (video_capture_queue::s_write_frames_to_file)
     {
-        std::cerr << "Ouput file: " << output_file << std::endl;
+        std::cerr << "Output file: " << output_file << std::endl;
     }
 
     std::cerr << (profiling_enabled? std::string("Profiling: enabled"): std::string("Profiling: disabled")) << std::endl;
@@ -218,8 +201,8 @@ int main(int argc, char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
 
-    // this can be turned on/off in ...Samples/source/Video/CMakeLists.txt
 #ifdef TEST_RAW_CAPTURE_CTL
+    // this can be turned on/off in ...Samples/source/Video/CMakeLists.txt
     std::thread trcc;
 #endif // TEST_RAW_CAPTURE_CTL
 
@@ -316,6 +299,7 @@ int main(int argc, char *argv[])
 
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
+    ofs.close();
 
     return ret;
 }
