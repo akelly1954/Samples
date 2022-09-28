@@ -49,7 +49,8 @@ ConfigSingletonShrdPtr ConfigSingleton::instance()
 
 	// Checking a second time because the lock wasn't in effect before.
 	// This means that the first check does not involve locking, which
-	// is faster for almost all calls to this function.
+	// is faster for just about all calls ( (just about means the vast
+	// majority) to this function.
 	if (!s_enabled)
 	{
 		ConfigSingleton::sp_Instance = ConfigSingleton::create();

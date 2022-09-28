@@ -1,8 +1,8 @@
 # Samples
      
-## Going on now:
+## Going on now:   
     
-Having started refactoring **main_v4l2_raw_capture.cpp** and its underlying set of objects, I stopped right in the middle of working on converting the **v4l2** interface into the linux driver from **C** to **C++**, when I realized (not for the first time) that handling configuration by using globals and command line parameters was not going to do it.
+Having started refactoring **main_v4l2_raw_capture.cpp** and its underlying set of objects, I stopped right in the middle of working on converting the **v4l2** interface into the hardware (the linux **v4l2** driver) from **C** to **C++**, when I realized (not for the first time) that handling configuration by using globals and command line parameters was not going to do it.    
     
 So now I'm right in the middle of integrating **JSON** into the code, and creating what should become decent facilities to manage configuration not only in the video section, but in some of the other executables as well.  I'm now working on a configuration facility which will run in its own thread as a singlton, and provide the json/configuration facilities a convenient set of methods which would allow programs that use the **Config** facilities to check configurations and (later on) modify them at run-time (that's why the separate thread).   
     

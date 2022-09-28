@@ -110,9 +110,10 @@ void UtilJsonCpp::streamroot(std::ostream& strm, Json::Value& root)
 		{
 			indent(strm, idnt); strm << "member: " << name << ", type: string, value=" << (*itr).asString() << std::endl;
 		}
+		// TODO: Not sure about this.
 		// else if ((*itr).type() == Json::ValueType::arrayValue)
 		// {
-		//	strm << itr.key().asInt() << std::endl;
+		//	strm << itr.key().asString() << std::endl;
 		// }
 		else if ((*itr).isObject())
 		{
@@ -152,21 +153,6 @@ int UtilJsonCpp::checkjsonsyntax(std::ostream& strm, std::string filename)
 	return EXIT_SUCCESS;
 }
 
-// From the JsonCpp source code:
-//
-//    enum ValueType
-//    {
-//       nullValue = 0,
-//       intValue,
-//       uintValue,
-//       realValue,
-//       stringValue,
-//       booleanValue,
-//       arrayValue,
-//       objectValue
-//    };
-//
-
 // All Json Value objects can call getMemberNames() except nullptr and object
 bool UtilJsonCpp::checkJsonValueHasGetMemberNames (const Json::Value::iterator &val_iterator)
 {
@@ -176,6 +162,21 @@ bool UtilJsonCpp::checkJsonValueHasGetMemberNames (const Json::Value::iterator &
 std::string UtilJsonCpp::ValueJsonTypeString(const Json::Value::iterator &val_iterator)
 {
 	std::string tname;
+
+	// From the JsonCpp source code:
+	//
+	//    enum ValueType
+	//    {
+	//       nullValue = 0,
+	//       intValue,
+	//       uintValue,
+	//       realValue,
+	//       stringValue,
+	//       booleanValue,
+	//       arrayValue,
+	//       objectValue
+	//    };
+	//
 
 	switch((*val_iterator).type())
 	{
