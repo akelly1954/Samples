@@ -48,10 +48,11 @@ ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename, Log:
 	}
 	std::lock_guard<std::mutex> lock(s_mutex);
 
-	ConfigSingleton::sp_Instance = std::shared_ptr<ConfigSingleton>(new ConfigSingleton(filename));
+	ConfigSingleton::sp_Instance = ConfigSingletonShrdPtr(new ConfigSingleton(filename));
 
 	if (!ConfigSingleton::initialize(logger))
 	{
+		throw std::runtime_error("Error initializing ConfigSingleton object");
 	}
 	ConfigSingleton::s_enabled = true;
 	return ConfigSingleton::sp_Instance;
@@ -76,13 +77,24 @@ bool ConfigSingleton::initialize(Log::Logger& logger)
 	// TODO:  Have to continue developing this
 	UtilJsonCpp::checkjsonsyntax(std::cout, s_jsonfilename);
 
+
+    std::ostringstream strm;
+    if (UtilJsonCpp::checkjsonsyntax(strm, s_jsonfilename) == EXIT_FAILURE)
+    {
+    	std::string errstr = strm.str();
+    	logger.error() << errstr;
+    	std::cerr << "\n" << errstr << std::endl;
+    	return false;
+    }
+
 	std::ifstream cfgfile(s_jsonfilename);
 	if (!cfgfile.is_open())
 	{
 		// JsonCpp does not check this, but will fail with a syntax error on the first read
 		logger.error() << "\nERROR: Could not find json file " << s_jsonfilename << ".  Exiting...\n";
+    	std::cerr << "\nERROR: Could not find json file " << s_jsonfilename << ".  Exiting...\n" << std::endl;
 		cfgfile.close();
-		return 1;
+		return false;
 	}
 
 	cfgfile >> Config::ConfigSingleton::s_configRoot;

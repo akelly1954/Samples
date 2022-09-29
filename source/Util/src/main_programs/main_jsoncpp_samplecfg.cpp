@@ -61,20 +61,20 @@ int main(int argc, char *argv[])
         // Set up the config
         /////////////////
 
-#define ONEWAY
+    	#define ONEWAY
 #ifdef ONEWAY
 
     std::stringstream theoutput;
     ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name, logger);
 
     logger.debug() << "\n\nParsed " << config_file_name << " contents: \n"
-			       << thesp->instance()->s_configRoot;
+			       << thesp->instance()->s_configRoot << "\n\nConfig shared_ptr<> use count = " << thesp.use_count() << "\n";
 
 #else // THE OTHER WAY
 
 	logger.debug() << "\n\nParsed " << config_file_name << " contents: \n"
-			       << ConfigSingleton::create(config_file_name, logger)->s_configRoot;
-
+			       << ConfigSingleton::create(config_file_name, logger)->s_configRoot
+				   << "\n\nConfig shared_ptr<> use count = " << thesp.use_count() << "\n";
 #endif // ONEWAY
 
     } catch (const std::exception& e) {
