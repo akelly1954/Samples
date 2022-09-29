@@ -28,6 +28,7 @@
 
 #include <mutex>
 #include <memory>
+#include <json/json.h>
 
 namespace Config
 {
@@ -38,36 +39,32 @@ namespace Config
 	{
 	private:
 		// No public access to constructor. Have to use ::create()
-		ConfigSingleton() = default;
-	    ConfigSingleton(const ConfigSingleton &) = delete;
+		explicit ConfigSingleton(const std::string& filename)
+		{
+			s_jsonfilename = filename;
+		}
+
+		ConfigSingleton(const ConfigSingleton &) = delete;
 	    ConfigSingleton &operator=(ConfigSingleton const &) = delete;
 	    ConfigSingleton(ConfigSingleton &&) = delete;
 	    ConfigSingleton &operator=(ConfigSingleton &&) = delete;
 
 	public:
 
-		[[nodiscard]] static std::shared_ptr<ConfigSingleton> create(void)
-		{
-			std::lock_guard<std::mutex> lock(s_mutex);
-			return std::shared_ptr<ConfigSingleton>(new ConfigSingleton());
-		}
-
-		ConfigSingletonShrdPtr get_shared_ptr()
-		{
-			std::lock_guard<std::mutex> lock(s_mutex);
-			return this->shared_from_this();
-		}
+	    [[nodiscard]] static ConfigSingletonShrdPtr create(const std::string& filename);
+		ConfigSingletonShrdPtr get_shared_ptr();
 
 	public:
 		static ConfigSingletonShrdPtr instance();
-		static bool initialize(void) { return true; }// TODO: right now nothing. Later on, something.
+		static bool initialize(void);
+		static Json::Value s_configRoot;    // TODO: This should be private
 
 	private:
 		// static members
 		static ConfigSingletonShrdPtr sp_Instance;
 		static std::mutex s_mutex;
 		static bool s_enabled;
-
+		static std::string s_jsonfilename;
 
 	private:
 		bool m_finished = false;

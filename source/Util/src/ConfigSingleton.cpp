@@ -26,48 +26,69 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <ConfigSingleton.hpp>
+#include <JsonCppUtil.hpp>
+#include <iostream>
+#include <fstream>
+#include <stdexcept>
 
 using namespace Config;
 
+Json::Value ConfigSingleton::s_configRoot;
 ConfigSingletonShrdPtr ConfigSingleton::sp_Instance;
 std::mutex ConfigSingleton::s_mutex;
 bool ConfigSingleton::s_enabled = false;
+std::string ConfigSingleton::s_jsonfilename;
 
-ConfigSingletonShrdPtr ConfigSingleton::instance()
+ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename)
 {
-	// No locking done here to make the code fast.
-	// if s_enabled is true, it's not going to change
-	// for the lifetime of the program, hence no locking
-	// necessary and it's fast.
 	if (ConfigSingleton::s_enabled)
 	{
-		return ConfigSingleton::sp_Instance;
+		throw std::runtime_error("ConfigSingleton object cannot be ::create()d more than once");
 	}
-
-	// The instance has not yet been created
 	std::lock_guard<std::mutex> lock(s_mutex);
 
-	// Checking a second time because the lock wasn't in effect before.
-	// This means that the first check does not involve locking, which
-	// is faster for just about all calls ( (just about means the vast
-	// majority) to this function.
-	if (!s_enabled)
-	{
-		ConfigSingleton::sp_Instance = ConfigSingleton::create();
+	ConfigSingleton::sp_Instance = std::shared_ptr<ConfigSingleton>(new ConfigSingleton(filename));
 
-		// TODO: Lots of initialization is yet to be done here... also, this shouldn't be static
-		if (!ConfigSingleton::initialize())
-		{
-			; // TODO: error code
-		}
-		s_enabled = true;
+	if (!ConfigSingleton::initialize())
+	{
 	}
-	return sp_Instance;
+	ConfigSingleton::s_enabled = true;
+	return ConfigSingleton::sp_Instance;
+}
+
+ConfigSingletonShrdPtr ConfigSingleton::get_shared_ptr()
+{
+	std::lock_guard<std::mutex> lock(ConfigSingleton::s_mutex);
+	return this->shared_from_this();
 }
 
 
 
+ConfigSingletonShrdPtr ConfigSingleton::instance()
+{
+	return ConfigSingleton::sp_Instance;
+}
 
+
+bool ConfigSingleton::initialize(void)
+{
+	// TODO:  Have to continue developing this
+	UtilJsonCpp::checkjsonsyntax(std::cout, s_jsonfilename);
+
+	Json::Reader reader;
+	std::ifstream cfgfile(s_jsonfilename);
+	if (!cfgfile.is_open())
+	{
+		// JsonCpp does not check this, but will fail with a syntax error on the first read
+		std::cout << "\nERROR: Could not find json file " << s_jsonfilename << ".  Exiting...\n" << std::endl;
+		cfgfile.close();
+		return 1;
+	}
+
+	cfgfile >> Config::ConfigSingleton::s_configRoot;
+	cfgfile.close();
+	return true;
+}
 
 
 

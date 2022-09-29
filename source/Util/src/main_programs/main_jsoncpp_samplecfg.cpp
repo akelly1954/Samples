@@ -26,29 +26,27 @@
 #include <iostream>
 #include <json/json.h>
 #include <fstream>
-#include <JsonCppUtil.hpp>
+#include <sstream>
+#include <ConfigSingleton.hpp>
 
 int main()
 {
+	using namespace Config;
+
     std::string config_file_name = "main_jsoncpp_samplecfg.json";
 
-    // TODO:  Have to continue developing this
-	// TODO:  Just for now.
-	UtilJsonCpp::checkjsonsyntax(std::cout, config_file_name);
+#ifdef ONEWAY
 
-    Json::Reader reader;
-    Json::Value cfg_root;
-    std::ifstream cfgfile("main_jsoncpp_samplecfg.json");
-    if (!cfgfile.is_open())
-    {
-        // JsonCpp does not check this, but will fail with a syntax error on the first read
-        std::cout << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
-        return 1;
-    }
+    std::stringstream theoutput;
+    ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name);
+	std::cout << thesp->instance()->s_configRoot;
 
-    cfgfile >> cfg_root;
-    std::cout << "\n" << cfg_root << std::endl;
+#else // THE OTHER WAY
 
-    return 0;
+	std::cout << ConfigSingleton::create(config_file_name)->s_configRoot;
+
+#endif
+
+	return 0;
 }       
 
