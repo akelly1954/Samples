@@ -26,6 +26,7 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <MainLogger.hpp>
 #include <mutex>
 #include <memory>
 #include <json/json.h>
@@ -51,12 +52,12 @@ namespace Config
 
 	public:
 
-	    [[nodiscard]] static ConfigSingletonShrdPtr create(const std::string& filename);
+	    [[nodiscard]] static ConfigSingletonShrdPtr create(const std::string& filename, Log::Logger& logger);
 		ConfigSingletonShrdPtr get_shared_ptr();
 
 	public:
 		static ConfigSingletonShrdPtr instance();
-		static bool initialize(void);
+		static bool initialize(Log::Logger& logger);
 		static Json::Value s_configRoot;    // TODO: This should be private
 
 	private:
@@ -69,17 +70,6 @@ namespace Config
 	private:
 		bool m_finished = false;
 	};
-
-
-
-
-
-
-
-
-
-
-
 
 } // end of namespace Config
 

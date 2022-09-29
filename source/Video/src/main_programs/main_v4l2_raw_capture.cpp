@@ -104,12 +104,6 @@ void Usage(std::ostream &strm, std::string command)
             << std::endl;
 }
 
-void checkConfigurationJson(std::ostream& strm, std::string filename)
-{
-	// TODO:  Just for now.
-	UtilJsonCpp::checkjsonsyntax(strm, filename);
-}
-
 int main(int argc, char *argv[])
 {
     using namespace VideoCapture;
@@ -141,34 +135,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // TODO: This is temporary. Need to check ofstream errors
-    std::string config_file_name = "main_raw_capture.json";
-    std::ofstream ofs (logChannelName+"_json_log.txt", std::ofstream::trunc);
-
-    // TODO:  Have to continue developing this
-    checkConfigurationJson(ofs, config_file_name);
-
-    Json::Reader reader;
-    Json::Value cfg_root;
-    std::ifstream cfgfile(config_file_name);
-    if (!cfgfile.is_open())
-    {
-        // This message is for debugging help. JsonCpp does not check if the file stream is
-    	// valid, but will fail with a syntax error on the first read, which is not helpful.
-        std::cerr << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
-        ofs.close();
-        return 1;
-    }
-
-    cfgfile >> cfg_root;
-    ofs << "\n" << cfg_root << std::endl;
-    cfgfile.close();
-    std::cerr << "JSON parsing log file: " << logChannelName+"_json_log.txt" << std::endl;
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    // As of this point, cfg_root contains the root for the whole json tree.
-    ///////////////////////////////////////////////////////////////////////////////////
-
     /////////////////
     // Set up the logger
     /////////////////
@@ -193,6 +159,55 @@ int main(int argc, char *argv[])
     {
         std::cerr << "\nWARNING: a high frame count can create a huge output file.\n" << std::endl;
     }
+
+
+    /////////////////
+    // Set up the Config
+    /////////////////
+
+    std::string config_file_name = "main_raw_capture.json";
+    std::ofstream ofs (logChannelName+"_json_log.txt", std::ofstream::trunc);
+
+    std::cerr << "JSON parsing log file: " << logChannelName+"_json_log.txt" << std::endl;
+    logger.debug() << "JSON parsing log file: " << logChannelName+"_json_log.txt";
+
+    std::ostringstream strm;
+    if (UtilJsonCpp::checkjsonsyntax(strm, config_file_name) == EXIT_FAILURE)
+    {
+    	std::string errstr = strm.str();
+    	logger.error() << errstr;
+    	ofs << "\n" << errstr << std::endl;
+    	std::cerr << "\n" << errstr << std::endl;
+    	ofs.close();
+    	return EXIT_FAILURE;
+    }
+
+    std::string parseoutput = strm.str();
+    logger.debug() << parseoutput;
+    ofs << parseoutput;
+
+    Json::Value cfg_root;
+    std::ifstream cfgfile(config_file_name);
+    if (!cfgfile.is_open())
+    {
+        // This message is for debugging help. JsonCpp does not check if the file stream is
+    	// valid, but will fail with a syntax error on the first read, which is not helpful.
+        std::cerr << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
+        ofs << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
+        logger.debug() << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n";
+
+        ofs.close();
+        return 1;
+    }
+
+    cfgfile >> cfg_root;
+    ofs << "\n" << cfg_root << std::endl;
+    logger.debug() << "\n\n" << cfg_root;
+    cfgfile.close();
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    // As of this point, cfg_root contains the root for the whole json tree.
+    ///////////////////////////////////////////////////////////////////////////////////
 
     /////////////////
     // Finally, get to work

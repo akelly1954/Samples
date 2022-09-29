@@ -33,13 +33,14 @@
 
 using namespace Config;
 
+// statics
 Json::Value ConfigSingleton::s_configRoot;
 ConfigSingletonShrdPtr ConfigSingleton::sp_Instance;
 std::mutex ConfigSingleton::s_mutex;
 bool ConfigSingleton::s_enabled = false;
 std::string ConfigSingleton::s_jsonfilename;
 
-ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename)
+ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename, Log::Logger& logger)
 {
 	if (ConfigSingleton::s_enabled)
 	{
@@ -49,7 +50,7 @@ ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename)
 
 	ConfigSingleton::sp_Instance = std::shared_ptr<ConfigSingleton>(new ConfigSingleton(filename));
 
-	if (!ConfigSingleton::initialize())
+	if (!ConfigSingleton::initialize(logger))
 	{
 	}
 	ConfigSingleton::s_enabled = true;
@@ -70,17 +71,16 @@ ConfigSingletonShrdPtr ConfigSingleton::instance()
 }
 
 
-bool ConfigSingleton::initialize(void)
+bool ConfigSingleton::initialize(Log::Logger& logger)
 {
 	// TODO:  Have to continue developing this
 	UtilJsonCpp::checkjsonsyntax(std::cout, s_jsonfilename);
 
-	Json::Reader reader;
 	std::ifstream cfgfile(s_jsonfilename);
 	if (!cfgfile.is_open())
 	{
 		// JsonCpp does not check this, but will fail with a syntax error on the first read
-		std::cout << "\nERROR: Could not find json file " << s_jsonfilename << ".  Exiting...\n" << std::endl;
+		logger.error() << "\nERROR: Could not find json file " << s_jsonfilename << ".  Exiting...\n";
 		cfgfile.close();
 		return 1;
 	}

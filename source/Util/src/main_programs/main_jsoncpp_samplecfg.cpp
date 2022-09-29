@@ -27,26 +27,60 @@
 #include <json/json.h>
 #include <fstream>
 #include <sstream>
+#include <MainLogger.hpp>
 #include <ConfigSingleton.hpp>
 
-int main()
+// Logger statics
+std::string logChannelName = "jsoncpp_samplecfg";
+std::string logFilelName = logChannelName + "_log.txt";
+Log::Log::Level loglevel = Log::Log::Level::eDebug;
+std::string default_log_level = "debug";
+std::string log_level = default_log_level;
+
+// Config statics
+std::string config_file_name = "main_jsoncpp_samplecfg.json";
+
+int main(int argc, char *argv[])
 {
 	using namespace Config;
 
-    std::string config_file_name = "main_jsoncpp_samplecfg.json";
+    /////////////////
+    // Set up the logger
+    /////////////////
 
+    Log::Config::Vector configList;
+    Util::MainLogger::initializeLogManager(configList, loglevel, logFilelName, Util::MainLogger::disableConsole, Util::MainLogger::enableLogFile);
+    Util::MainLogger::configureLogManager( configList, logChannelName );
+    Log::Logger logger(logChannelName.c_str());
+
+    std::cerr << "Log level is: " << log_level << std::endl;
+
+    try {
+
+        /////////////////
+        // Set up the config
+        /////////////////
+
+#define ONEWAY
 #ifdef ONEWAY
 
     std::stringstream theoutput;
-    ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name);
-	std::cout << thesp->instance()->s_configRoot;
+    ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name, logger);
+
+    logger.debug() << "\n\nParsed " << config_file_name << " contents: \n"
+			       << thesp->instance()->s_configRoot;
 
 #else // THE OTHER WAY
 
-	std::cout << ConfigSingleton::create(config_file_name)->s_configRoot;
+	logger.debug() << "\n\nParsed " << config_file_name << " contents: \n"
+			       << ConfigSingleton::create(config_file_name, logger)->s_configRoot;
 
-#endif
+#endif // ONEWAY
 
+    } catch (const std::exception& e) {
+    	logger.error() << "Exception while trying to create config singleton: " << e.what();
+    	return 1;
+    }
 	return 0;
 }       
 
