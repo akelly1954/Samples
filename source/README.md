@@ -1,12 +1,14 @@
 # Samples
      
 ## Going on now:   
-    
-Having started refactoring **main_v4l2_raw_capture.cpp** and its underlying set of objects, I stopped right in the middle of working on converting the **v4l2** interface into the hardware (the linux **v4l2** driver) from **C** to **C++**, when I realized (not for the first time) that handling configuration by using globals and command line parameters was not going to do it.    
-    
-So now I'm right in the middle of integrating **JSON** into the code, and creating what should become decent facilities to manage configuration not only in the video section, but in some of the other executables as well.  I'm now working on a configuration facility which will run in its own thread as a singlton, and provide the json/configuration facilities a convenient set of methods which would allow programs that use the **Config** facilities to check configurations and (later on) modify them at run-time (that's why the separate thread).   
-    
-This will not take me just a couple of days.  In the meantime, everything works properly, but the code is half-refactored.    
+
+Completed the initial integration of **JsonCpp** into the sources. The implementation can be found in objects related to **class ConfigSingleton** in the **Util** project.  The sample/test program **./source/Util/src/main_programs/main_jsoncpp_samplecfg.cpp** is a good starting point to look around (and try things out).   
+     
+The program **main_v4l2_raw_capture.cpp** and its underlying set of objects in the **Video** project is currently undergoing refactoring and replacing all **C** interfaces to the **V4L2** linux driver with **C++** code.  At the same time, JSON content (and code) will replace existing configuration options in the code as well.  
+     
+Next step in the configuration facilities for the **Samples** project will be a future implementation that will allow not only straight forward configuration using **JsonCpp** which is already integrated into the code, but also by running the **ConfigSingleton** object in its own thread, allowing for long running server type of programs to modify configuration on the fly, and save the changes to the configuration json file on diak.
+
+All this will not take just a couple of days.  In the meantime, everything works properly, but the code is obviously half-refactored.    
     
 **(Fall 2022)**: New work is being done on the Video projects. Getting rid of the C interface to **V4L2**, and replacing the previous kinda awkward C code with C++ objects.  This is being done in a step-wise fashion, and exists only in the **dev** branch (at the moment). I do merge into the **main** branch occasionally, but only when a feature is done, tested, and working well.   
      
