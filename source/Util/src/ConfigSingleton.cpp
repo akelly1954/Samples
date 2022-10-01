@@ -44,7 +44,7 @@ ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename, Log:
 {
 	if (ConfigSingleton::s_enabled)
 	{
-		throw std::runtime_error("ConfigSingleton object cannot be ::create()d more than once");
+		return ConfigSingleton::sp_Instance->shared_from_this();
 	}
 	std::lock_guard<std::mutex> lock(s_mutex);
 
@@ -61,7 +61,11 @@ ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename, Log:
 ConfigSingletonShrdPtr ConfigSingleton::get_shared_ptr()
 {
 	std::lock_guard<std::mutex> lock(ConfigSingleton::s_mutex);
-	return this->shared_from_this();
+	if (! ConfigSingleton::s_enabled)
+	{
+		throw std::runtime_error("ConfigSingleton::get_shared_ptr() called before ::create()");
+	}
+	return sp_Instance->shared_from_this();
 }
 
 ConfigSingletonShrdPtr ConfigSingleton::instance()
@@ -84,8 +88,8 @@ bool ConfigSingleton::initialize(Log::Logger& logger)
 	if (!cfgfile.is_open())
 	{
 		// JsonCpp does not check this, but will fail with a syntax error on the first read
-		logger.error() << "\nERROR: Could not find json file " << s_jsonfilename << ".  Exiting...\n";
-    	std::cerr << "\nERROR: Could not find json file " << s_jsonfilename << ".  Exiting...\n" << std::endl;
+		logger.error() << "\nERROR: Could not open json file " << s_jsonfilename << ".  Exiting...\n";
+    	std::cerr << "\nERROR: Could not open json file " << s_jsonfilename << ".  Exiting...\n" << std::endl;
 		cfgfile.close();
 		return false;
 	}

@@ -56,26 +56,16 @@ int main(int argc, char *argv[])
     std::cerr << "Log level is: " << log_level << std::endl;
 
     try {
-
         /////////////////
         // Set up the config
         /////////////////
 
-    	#define ONEWAY
-#ifdef ONEWAY
+		std::stringstream theoutput;
+		ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name, logger);
 
-    std::stringstream theoutput;
-    ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name, logger);
-
-    logger.debug() << "\n\nParsed " << config_file_name << " contents: \n"
-			       << thesp->instance()->s_configRoot << "\n\nConfig shared_ptr<> use count = " << thesp.use_count() << "\n";
-
-#else // THE OTHER WAY
-
-	logger.debug() << "\n\nParsed " << config_file_name << " contents: \n"
-			       << ConfigSingleton::create(config_file_name, logger)->s_configRoot
-				   << "\n\nConfig shared_ptr<> use count = " << thesp.use_count() << "\n";
-#endif // ONEWAY
+		logger.debug() << "\n\nConfig instance shared_ptr<> use count = " << thesp.use_count() << "\n"
+					   << "\nParsed " << config_file_name << " contents: \n"
+					   << thesp->instance()->s_configRoot << "\n\n";
 
     } catch (const std::exception& e) {
     	logger.error() << "Exception while trying to create config singleton: " << e.what();
@@ -83,18 +73,73 @@ int main(int argc, char *argv[])
     }
 
     // Do some access:
-    // TODO: This may not be safe.  Figure out a way (reference to a const does not ensure no corruption):
-    const Json::Value& ro_root = ConfigSingleton::instance()->JsonRoot();
+    Json::Value& ref_root = ConfigSingleton::instance()->JsonRoot();
 
-    std::string channel = ro_root["Config"]["Logger"]["channel-name"].asString();
-    bool write_to_file = (ro_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
-    int position2 = ro_root["Config"]["position"][1].asInt();
-    int frame_count = ro_root["Config"]["Video"]["frame-count"].asInt();
+    std::string channel = ref_root["Config"]["Logger"]["channel-name"].asString();
+    bool write_to_file = (ref_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
+    int position2 = ref_root["Config"]["position"][1].asInt();
+    int frame_count = ref_root["Config"]["Video"]["frame-count"].asInt();
 
     logger.info() << "\nChannel-name = " << channel << "\n"
     			  << "write-to-file = " << write_to_file << "\n"
 				  << "position array index 1 = " << position2 << "\n"
 				  << "frame-count = " << frame_count << "\n";
+
+    logger.info() << "\n\nAfter modifications:\n";
+    ref_root["Config"]["Logger"]["channel-name"] = std::string("newChannelName");
+    ref_root["Config"]["App-options"]["write-to-file"] = 0;
+    ref_root["Config"]["position"][1] = 1246;
+    ref_root["Config"]["Video"]["frame-count"] = 305;
+
+    channel = ref_root["Config"]["Logger"]["channel-name"].asString();
+    write_to_file = (ref_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
+    position2 = ref_root["Config"]["position"][1].asInt();
+    frame_count = ref_root["Config"]["Video"]["frame-count"].asInt();
+
+    logger.info() << "\nChannel-name = " << channel << "\n"
+    			  << "write-to-file = " << write_to_file << "\n"
+				  << "position array index 1 = " << position2 << "\n"
+				  << "frame-count = " << frame_count << "\n";
+
+    // Write out a new file with the modified root.
+
+    std::string newfilename = std::string("new_") + ConfigSingleton::JsonFileName();
+	std::ofstream newcfgfile(newfilename, std::ofstream::trunc | std::ifstream::out);
+	if (!newcfgfile.is_open())
+	{
+		// JsonCpp does not check this, but will fail with a syntax error on the first read
+		logger.error() << "\nERROR: Could not open the new json file " << newfilename << ".  Exiting...\n";
+    	std::cerr << "\nERROR: Could not open the new json file " << newfilename << ".  Exiting...\n" << std::endl;
+		newcfgfile.close();
+		return 1;
+	}
+
+	newcfgfile << ref_root;
+	newcfgfile.close();
+	return 0;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	return 0;
 }       

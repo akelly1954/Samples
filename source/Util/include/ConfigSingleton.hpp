@@ -51,21 +51,24 @@ namespace Config
 	    ConfigSingleton &operator=(ConfigSingleton &&) = delete;
 
 	public:
-
 	    [[nodiscard]] static ConfigSingletonShrdPtr create(const std::string& filename, Log::Logger& logger);
+
+	    // This cannot be static (std::shared_from_this() needs "this->")
 		ConfigSingletonShrdPtr get_shared_ptr();
-		static const Json::Value& JsonRoot() 		{ return static_cast<const Json::Value &>(s_configRoot); }
+		static Json::Value& JsonRoot() 					{ return s_configRoot; }
+		static std::string JsonFileName() 				{ return s_jsonfilename; }
 		static ConfigSingletonShrdPtr instance();
 		static bool initialize(Log::Logger& logger);
 
+	public:
 		static Json::Value s_configRoot;
+		static std::string s_jsonfilename;
 
 	private:
 		// static members
 		static ConfigSingletonShrdPtr sp_Instance;
 		static std::mutex s_mutex;
 		static bool s_enabled;
-		static std::string s_jsonfilename;
 
 	private:
 		bool m_finished = false;
