@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 
 		logger.debug() << "\n\nConfig instance shared_ptr<> use count = " << thesp.use_count() << "\n"
 					   << "\nParsed " << config_file_name << " contents: \n"
-					   << thesp->instance()->s_configRoot << "\n\n";
+					   << thesp->instance()->JsonRoot() << "\n\n";
 
     } catch (const std::exception& e) {
     	logger.error() << "Exception while trying to create config singleton: " << e.what();
