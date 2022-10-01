@@ -60,7 +60,6 @@ int main(int argc, char *argv[])
         // Set up the config
         /////////////////
 
-		std::stringstream theoutput;
 		ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name, logger);
 
 		logger.debug() << "\n\nConfig instance shared_ptr<> use count = " << thesp.use_count() << "\n"
@@ -116,31 +115,38 @@ int main(int argc, char *argv[])
 
 	newcfgfile << ref_root;
 	newcfgfile.close();
+
+
+	// Checking out some object methods
+
+	logger.info() << "      ****** CHECKING OUT SOME OBJECT METHODS ******";
+
+	std::stringstream root_strm;
+    root_strm << ref_root;
+    std::string newroot = root_strm.str();
+
+    logger.info() << "\n\nStreamed existing ref_root to strstream: \n\n" << newroot << "\n\n";
+
+	Json::Value new_root = ref_root;
+
+	std::stringstream newroot_strm;
+    newroot_strm << new_root;
+    newroot = newroot_strm.str();
+
+    logger.info() << "\n\nStreamed the new root to strstream: \n\n" << newroot << "\n\n";
+
+    channel = new_root["Config"]["Logger"]["channel-name"].asString();
+    write_to_file = (new_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
+    position2 = new_root["Config"]["position"][1].asInt();
+    frame_count = new_root["Config"]["Video"]["frame-count"].asInt();
+
+    logger.info() << "Values from copied root:\n\n"
+    			  << "Channel-name = " << channel << "\n"
+    			  << "write-to-file = " << write_to_file << "\n"
+				  << "position array index 1 = " << position2 << "\n"
+				  << "frame-count = " << frame_count << "\n";
+
 	return 0;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	return 0;
-}       
 

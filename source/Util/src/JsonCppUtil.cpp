@@ -128,10 +128,26 @@ void UtilJsonCpp::streamroot(std::ostream& strm, Json::Value& root)
 	}
 }
 
-int UtilJsonCpp::checkjsonsyntax(std::ostream& strm, std::string filename)
+int UtilJsonCpp::checkjsonsyntax(std::ostream& strm, std::istream& istrm)
 {
 	Json::Value root;
 
+	Json::CharReaderBuilder builder;
+	builder["collectComments"] = true;
+	JSONCPP_STRING errs;
+	if (!parseFromStream(builder, istrm, &root, &errs)) {
+		strm << "JsonCpp parse errors: " << errs << std::endl;
+		return EXIT_FAILURE;
+	}
+
+    strm << "\n\nCHECKING JSON FILE\n" << std::endl;
+	UtilJsonCpp::streamroot(strm, root);
+	return EXIT_SUCCESS;
+}
+
+// this overload calls the previous overloaded method after opening the file
+int UtilJsonCpp::checkjsonsyntax(std::ostream& strm, std::string filename)
+{
 	// Add the code to check if file can be opened
 	// std::string filename = argv[1];
 	std::ifstream ifs(filename, std::ios::in);
@@ -140,17 +156,7 @@ int UtilJsonCpp::checkjsonsyntax(std::ostream& strm, std::string filename)
 		strm << "Failed to open Json file " << filename.c_str() << " " << errorStr << std::endl;
 		return EXIT_FAILURE;
 	}
-	Json::CharReaderBuilder builder;
-	builder["collectComments"] = true;
-	JSONCPP_STRING errs;
-	if (!parseFromStream(builder, ifs, &root, &errs)) {
-		strm << "JsonCpp parse errors: " << errs << std::endl;
-		return EXIT_FAILURE;
-	}
-
-    strm << "\n\nCHECKING JSON FILE\n" << std::endl;
-	UtilJsonCpp::streamroot(strm, root);
-	return EXIT_SUCCESS;
+	return UtilJsonCpp::checkjsonsyntax(strm, ifs);
 }
 
 // All Json Value objects can call getMemberNames() except nullptr and object

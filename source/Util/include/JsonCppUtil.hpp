@@ -35,7 +35,9 @@ namespace UtilJsonCpp
 
 	void streamroot(std::ostream& strm, Json::Value& root);
 
+	// this overload calls the next method after opening the file
 	int checkjsonsyntax(std::ostream& strm, std::string filename);
+	int checkjsonsyntax(std::ostream& strm, std::istream& istrm);
 
 	// All Json Value objects can call getMemberNames() except nullptr and object
 	bool checkJsonValueHasGetMemberNames (const Json::Value::iterator &val_iterator);
