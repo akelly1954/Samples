@@ -81,6 +81,21 @@ int main(int argc, char *argv[])
     	logger.error() << "Exception while trying to create config singleton: " << e.what();
     	return 1;
     }
+
+    // Do some access:
+    // TODO: This may not be safe.  Figure out a way (reference to a const does not ensure no corruption):
+    const Json::Value& ro_root = ConfigSingleton::instance()->JsonRoot();
+
+    std::string channel = ro_root["Config"]["Logger"]["channel-name"].asString();
+    bool write_to_file = (ro_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
+    int position2 = ro_root["Config"]["position"][1].asInt();
+    int frame_count = ro_root["Config"]["Video"]["frame-count"].asInt();
+
+    logger.info() << "\nChannel-name = " << channel << "\n"
+    			  << "write-to-file = " << write_to_file << "\n"
+				  << "position array index 1 = " << position2 << "\n"
+				  << "frame-count = " << frame_count << "\n";
+
 	return 0;
 }       
 

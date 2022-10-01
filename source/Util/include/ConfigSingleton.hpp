@@ -54,11 +54,11 @@ namespace Config
 
 	    [[nodiscard]] static ConfigSingletonShrdPtr create(const std::string& filename, Log::Logger& logger);
 		ConfigSingletonShrdPtr get_shared_ptr();
-
-	public:
+		static const Json::Value& JsonRoot() 		{ return static_cast<const Json::Value &>(s_configRoot); }
 		static ConfigSingletonShrdPtr instance();
 		static bool initialize(Log::Logger& logger);
-		static Json::Value s_configRoot;    // TODO: This should be private
+
+		static Json::Value s_configRoot;
 
 	private:
 		// static members

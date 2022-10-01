@@ -64,20 +64,13 @@ ConfigSingletonShrdPtr ConfigSingleton::get_shared_ptr()
 	return this->shared_from_this();
 }
 
-
-
 ConfigSingletonShrdPtr ConfigSingleton::instance()
 {
 	return ConfigSingleton::sp_Instance;
 }
 
-
 bool ConfigSingleton::initialize(Log::Logger& logger)
 {
-	// TODO:  Have to continue developing this
-	UtilJsonCpp::checkjsonsyntax(std::cout, s_jsonfilename);
-
-
     std::ostringstream strm;
     if (UtilJsonCpp::checkjsonsyntax(strm, s_jsonfilename) == EXIT_FAILURE)
     {
@@ -101,8 +94,6 @@ bool ConfigSingleton::initialize(Log::Logger& logger)
 	cfgfile.close();
 	return true;
 }
-
-
 
 
 
