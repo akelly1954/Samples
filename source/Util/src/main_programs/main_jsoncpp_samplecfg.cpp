@@ -71,13 +71,16 @@ int main(int argc, char *argv[])
     	return 1;
     }
 
+    /////////////////
     // Do some access:
-    Json::Value& ref_root = ConfigSingleton::instance()->JsonRoot();
+    /////////////////
 
-    std::string channel = ref_root["Config"]["Logger"]["channel-name"].asString();
-    bool write_to_file = (ref_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
-    int position2 = ref_root["Config"]["position"][1].asInt();
-    int frame_count = ref_root["Config"]["Video"]["frame-count"].asInt();
+    Json::Value& ref_root_copy = ConfigSingleton::GetJsonRootCopyRef();
+
+    std::string channel = ref_root_copy["Config"]["Logger"]["channel-name"].asString();
+    bool write_to_file = (ref_root_copy["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
+    int position2 = ref_root_copy["Config"]["position"][1].asInt();
+    int frame_count = ref_root_copy["Config"]["Video"]["frame-count"].asInt();
 
     logger.info() << "\nChannel-name = " << channel << "\n"
     			  << "write-to-file = " << write_to_file << "\n"
@@ -85,15 +88,15 @@ int main(int argc, char *argv[])
 				  << "frame-count = " << frame_count << "\n";
 
     logger.info() << "\n\nAfter modifications:\n";
-    ref_root["Config"]["Logger"]["channel-name"] = std::string("newChannelName");
-    ref_root["Config"]["App-options"]["write-to-file"] = 0;
-    ref_root["Config"]["position"][1] = 1246;
-    ref_root["Config"]["Video"]["frame-count"] = 305;
+    ref_root_copy["Config"]["Logger"]["channel-name"] = std::string("newChannelName");
+    ref_root_copy["Config"]["App-options"]["write-to-file"] = 0;
+    ref_root_copy["Config"]["position"][1] = 1246;
+    ref_root_copy["Config"]["Video"]["frame-count"] = 305;
 
-    channel = ref_root["Config"]["Logger"]["channel-name"].asString();
-    write_to_file = (ref_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
-    position2 = ref_root["Config"]["position"][1].asInt();
-    frame_count = ref_root["Config"]["Video"]["frame-count"].asInt();
+    channel = ref_root_copy["Config"]["Logger"]["channel-name"].asString();
+    write_to_file = (ref_root_copy["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
+    position2 = ref_root_copy["Config"]["position"][1].asInt();
+    frame_count = ref_root_copy["Config"]["Video"]["frame-count"].asInt();
 
     logger.info() << "\nChannel-name = " << channel << "\n"
     			  << "write-to-file = " << write_to_file << "\n"
@@ -103,48 +106,69 @@ int main(int argc, char *argv[])
     // Write out a new file with the modified root.
 
     std::string newfilename = std::string("new_") + ConfigSingleton::JsonFileName();
-	std::ofstream newcfgfile(newfilename, std::ofstream::trunc | std::ifstream::out);
+	std::ofstream newcfgfile(newfilename, std::ofstream::trunc | std::ofstream::out);
 	if (!newcfgfile.is_open())
 	{
 		// JsonCpp does not check this, but will fail with a syntax error on the first read
-		logger.error() << "\nERROR: Could not open the new json file " << newfilename << ".  Exiting...\n";
-    	std::cerr << "\nERROR: Could not open the new json file " << newfilename << ".  Exiting...\n" << std::endl;
+		logger.error() << "\nERROR: Could not open/create the new json file " << newfilename << ".  Exiting...\n";
+    	std::cerr << "\nERROR: Could not open/create the new json file " << newfilename << ".  Exiting...\n" << std::endl;
 		newcfgfile.close();
 		return 1;
 	}
 
-	newcfgfile << ref_root;
+	newcfgfile << ref_root_copy;
 	newcfgfile.close();
 
-
+	//////////////////////////////////////////
 	// Checking out some object methods
+	//////////////////////////////////////////
 
 	logger.info() << "      ****** CHECKING OUT SOME OBJECT METHODS ******";
 
 	std::stringstream root_strm;
-    root_strm << ref_root;
+    root_strm << ref_root_copy;
     std::string newroot = root_strm.str();
 
-    logger.info() << "\n\nStreamed existing ref_root to strstream: \n\n" << newroot << "\n\n";
+    logger.info() << "\n\nStreamed existing ref_root_copy to strstream: \n\n" << newroot << "\n\n";
 
-	Json::Value new_root = ref_root;
+	Json::Value new_root = ref_root_copy;
 
 	std::stringstream newroot_strm;
     newroot_strm << new_root;
     newroot = newroot_strm.str();
 
-    logger.info() << "\n\nStreamed the new root to strstream: \n\n" << newroot << "\n\n";
+    logger.info() << "\n\nStreamed the new root to stringstream: \n\n" << newroot << "\n\n";
 
     channel = new_root["Config"]["Logger"]["channel-name"].asString();
     write_to_file = (new_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
     position2 = new_root["Config"]["position"][1].asInt();
     frame_count = new_root["Config"]["Video"]["frame-count"].asInt();
 
-    logger.info() << "Values from copied root:\n\n"
+    logger.info() << "Values from copied editable root reference:\n\n"
     			  << "Channel-name = " << channel << "\n"
     			  << "write-to-file = " << write_to_file << "\n"
 				  << "position array index 1 = " << position2 << "\n"
 				  << "frame-count = " << frame_count << "\n";
+
+	//////////////////////////////////////////
+	// Checking out UpdateJsonConfigFile()
+	//////////////////////////////////////////
+
+	logger.info() << "      ****** CHECKING OUT UpdateJsonConfigFile() ******";
+
+	// At this point new_root has a version of the modified root json node
+	// Copy it to our reference to the singleton's s_editRoot member.
+	ref_root_copy = new_root;
+
+	Json::Value& edit_root_ref = ConfigSingleton::GetJsonRootCopyRef();
+	logger.info() << "\n\nContents of s_editRoot:\n" << edit_root_ref << "\n";
+
+	if (! ConfigSingleton::instance()->UpdateJsonConfigFile(logger))
+	{
+		logger.error() << "\nERROR: UpdateJsonConfigFile() failed.  Exiting... ";
+    	std::cerr << "\nERROR: UpdateJsonConfigFile() failed.  Exiting... " << std::endl;
+		return 1;
+	}
 
 	return 0;
 }

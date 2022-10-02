@@ -57,9 +57,21 @@ namespace Config
 	    // This cannot be static (std::shared_from_this() needs "this->")
 		ConfigSingletonShrdPtr get_shared_ptr();
 		static Json::Value& JsonRoot() 					{ return s_configRoot; }
+		static Json::Value& GetJsonRootCopyRef()		{ return s_editRoot; }
 		static std::string JsonFileName() 				{ return s_jsonfilename; }
 		static ConfigSingletonShrdPtr instance();
 		static bool initialize(Log::Logger& logger);
+
+	public:
+		// The caller can make changes to the internal copy of the JsonRoot
+		// Node (the s_editRoot member is the editable copy). Once the changes
+		// are done, this method - UpdateJsonConfigFile() is used to notify the
+		// ConfigSingleton object that these changes are now ready to write to
+		// disk (into the real json file - ::s_jsonfilename). After this operation
+		// is finished, the caller can (should) restart their operation so that
+		// the new values can take effect.
+		bool UpdateJsonConfigFile(Log::Logger& logger,
+				                  std::string UseTempFileName = std::string("tmp_") + s_jsonfilename);
 
 	private:
 		// static members
@@ -69,7 +81,18 @@ namespace Config
 		static std::mutex s_mutex;
 		static bool s_enabled;
 
+		// This is a copy of the s_configRoot node (which is used for the
+		// actual configuration by the calling app). The initial copy is made
+		// during object construction (see ::create(). This s_editRoot node should
+		// be used for making changes stepwise, and when ready, the using app will
+		// call ::UpdateJsonConfigFile() which is to be used to update the json
+		// file on disk, at which point the caller should "reset" their operation
+		// to allow for their new values to take effect.
+		static Json::Value s_editRoot;
+
 	private:
+		// This caller is requesting for this object to be done.
+		// TODO: This member might go away if there are no child threads.
 		bool m_finished = false;
 	};
 
