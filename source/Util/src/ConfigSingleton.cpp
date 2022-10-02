@@ -147,16 +147,6 @@ bool ConfigSingleton::UpdateJsonConfigFile(Log::Logger& logger, std::string temp
 	// fail appropriately.
 	::unlink(tempfilename.c_str());
 
-#if 0
-	if (::unlink(tempfilename.c_str()) != 0)
-	{
-		errnocopy = errno;
-		logger.error() << "ERROR: UpdateJsonConfigFile() could not ::unlink() file " << tempfilename
-				       << ": " << strerror(errnocopy);
-		return false;
-	}
-#endif // 0
-
 	// Now, write out the current copy of the json file to a temp file
     std::ofstream tmpcfgfile(tempfilename, std::ofstream::trunc | std::ofstream::out);
 	if ( ! tmpcfgfile.is_open())

@@ -1,20 +1,20 @@
 # Samples
      
 ## Going on now:   
-
+     
 Completed the initial integration of **JsonCpp** into the sources. The implementation can be found in objects related to **class ConfigSingleton** in the **Util** project.  The sample/test program **./source/Util/src/main_programs/main_jsoncpp_samplecfg.cpp** is a good starting point to look around (and try things out).   
      
-The program **main_v4l2_raw_capture.cpp** and its underlying set of objects in the **Video** project is currently undergoing refactoring and replacing of all **C** interfaces to the **V4L2** linux driver with **C++** code.  At the same time, JSON content (and code) will replace existing configuration options in the code as well.  
+At runtime, each json value in the file can be accessed like this, for example: **rootNode["object1"]["numbers-list"][23]** where the individual strings and numbers come from the json file.  The same notation can be used to modify the json object itself by assigning a value to the expression above.  More details to come in the README's in each project.   
      
-Next step in the configuration facilities for the **Samples** project will be a future implementation that will allow not only straight forward configuration using **JsonCpp** which is already integrated into the code, but also by running the **ConfigSingleton** object in its own thread, allowing for long running server type of programs to modify configuration on the fly, and save the changes to the configuration json file on diak.
-
+The program **main_v4l2_raw_capture.cpp** and its underlying set of objects in the **Video** project is currently undergoing refactoring and replacing of all **C** interfaces to the **V4L2** linux driver with **C++** code.  At the same time, JSON content (and code) is being used to replace existing configuration options in the code as well.   
+     
 All this will not take just a couple of days.  In the meantime, everything works properly, but the code is obviously half-refactored.    
     
 **(Fall 2022)**: New work is being done on the Video projects. Getting rid of the C interface to **V4L2**, and replacing the previous kinda awkward C code with C++ objects.  This is being done in a step-wise fashion, and exists only in the **dev** branch (at the moment). I do merge into the **main** branch occasionally, but only when a feature is done, tested, and working well.   
      
 **Next Steps**:    
     
-1. Add **JSON** support to the project.  Currently using **JsonCpp**.  The library and associated files are already integrated into the **source/3rdpary/** directory.  Initial implementation of the all-C++ version of the Video project will include JSON based config file support.  Which answers the question of how to configure the video pumping of frames from a video source (camera).  There are many many configurable parameters for the video apps that will use either **opencv** or **v4l2** video pumps for each application.   
+1. Initial implementation of the all-C++ version of the Video project will include JSON based config file support.  Which answers the question of how to configure the video pumping of frames from a video source (camera).  There are many many configurable parameters for the video apps that will use either **opencv** or **v4l2** video pumps for each application.   
       
 2. Add **OpenCV** as the video frame pump so the user can use it as an alternative to **V4L2** (which will still be there as an alternative).  The plan is to use **opencv version 4.6.0** at this time.  It is already cloned and built from the **github** repository, but can only be integrated into this framework once all the C code is out of the Video project and has been replaced by C++ objects.     
         
