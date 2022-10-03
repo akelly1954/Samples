@@ -127,11 +127,11 @@ std::vector<std::string> Utility::split_and_trim(const std::string& str, const s
 
     for (auto& e : vs)
     {
-    	e = Utility::trim(e);
-    	if (e.size() > 0)
-    	{
-    		result.push_back(e);
-    	}
+        e = Utility::trim(e);
+        if (e.size() > 0)
+        {
+            result.push_back(e);
+        }
     }
 
     return result;

@@ -77,8 +77,8 @@ void v4l2capture_exit_code(int code, const char *s);
  *  Don't add newlines at the end of the string.  The logger does that for you.
  *  OR:  Use the LOGGER_3Arg... etc for a shortcut
  */
-#define LOGGER(x) 			v4l2capture_logger(x)
-#define LOGGER_STDERR(x) 	v4l2capture_stream_logger(x)
+#define LOGGER(x)             v4l2capture_logger(x)
+#define LOGGER_STDERR(x)     v4l2capture_stream_logger(x)
 
 #define LOGGER_1Arg(fmtstr, arg)   {                \
         char sbuf[512];                             \

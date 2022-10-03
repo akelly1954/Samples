@@ -82,8 +82,8 @@ int v4l2capture_read_frame(void)
 
         switch (io) {
         case IO_METHOD_READ:
-        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
-        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+            // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+            // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
                 if (-1 == read(fd, buffers[0].start, buffers[0].length)) {
                         switch (errno) {
@@ -133,8 +133,8 @@ int v4l2capture_read_frame(void)
                 break;
 
         case IO_METHOD_USERPTR:
-        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
-        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+            // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+            // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
                 CLEAR(buf);
 
@@ -246,8 +246,8 @@ void v4l2capture_start_capturing(void)
 
         switch (io) {
         case IO_METHOD_READ:
-        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
-        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+            // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+            // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
                 /* Nothing to do. */
                 break;
@@ -270,8 +270,8 @@ void v4l2capture_start_capturing(void)
                 break;
 
         case IO_METHOD_USERPTR:
-        	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
-        	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+            // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+            // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
                 for (i = 0; i < n_buffers; ++i) {
                         struct v4l2_buffer buf;
@@ -585,19 +585,19 @@ void v4l2capture_open_device(void)
         struct stat st;
 
         if (-1 == stat(dev_name, &st)) {
-        	LOGGER_3Arg("Cannot identify '%s': errno=%d, %s", dev_name, errno, strerror(errno));
+            LOGGER_3Arg("Cannot identify '%s': errno=%d, %s", dev_name, errno, strerror(errno));
             v4l2capture_exit("cannot identify device");
         }
 
         if (!S_ISCHR(st.st_mode)) {
-        	LOGGER_1Arg("%s is no device", dev_name);
+            LOGGER_1Arg("%s is no device", dev_name);
             v4l2capture_exit("not a device");
         }
 
         fd = open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
         if (-1 == fd) {
-        	LOGGER_3Arg("Cannot open '%s': errno=%d, %s", dev_name, errno, strerror(errno));
+            LOGGER_3Arg("Cannot open '%s': errno=%d, %s", dev_name, errno, strerror(errno));
             v4l2capture_exit("cannot open device");
         }
         LOGGER_STDERR_1Arg("device: %s", dev_name);
@@ -674,15 +674,15 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
                         break;
 
                 case 'r':
-                	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
-                	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+                    // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+                    // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
                         io = IO_METHOD_READ;
                         break;
 
                 case 'u':
-                	// PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
-                	// tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
+                    // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
+                    // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
                         io = IO_METHOD_USERPTR;
                         break;
@@ -702,8 +702,8 @@ int v4l2_raw_capture_main(int argc, char *argv[])  /* ,  */
                 case 'c':
                         errno = 0;
                         int_frame_count = strtol(optarg, NULL, 0);
-						if (errno)
-							v4l2capture_errno_exit(optarg, errno);
+                        if (errno)
+                            v4l2capture_errno_exit(optarg, errno);
                         break;
 
                 default:

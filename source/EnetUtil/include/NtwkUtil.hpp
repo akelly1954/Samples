@@ -140,14 +140,14 @@ public:
                             size_t requestsize);
 
     // Get a string message from a remote network connection.
-	// retstring is an existing std::string - contents overwritten
-	// socket_fd - open connection to the remote system
+    // retstring is an existing std::string - contents overwritten
+    // socket_fd - open connection to the remote system
     // Returns true if successful - restring contains the message from the remote connection.
     // Returns false if failure - retstring contains text about the error.
-	static bool get_ntwk_message(Log::Logger& logger, int socket_fd, std::string& retstring);
+    static bool get_ntwk_message(Log::Logger& logger, int socket_fd, std::string& retstring);
 
-	// Send the string message to remote connection socket_fd (already open).
-	static bool send_ntwk_message(Log::Logger& logger, int socket_fd, std::string& message);
+    // Send the string message to remote connection socket_fd (already open).
+    static bool send_ntwk_message(Log::Logger& logger, int socket_fd, std::string& message);
 
 };  // end of class NtwkUtil
 

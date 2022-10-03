@@ -92,19 +92,19 @@ void set_v4l2capture_pause(bool pause)
 
 void v4l2capture_terminate(int code, const char *logmessage)
 {
-	if (global_logger)
-	{
-		if (code == 0)
-		{
-			global_logger->info() << "Terminate process: exit code=" << code << ": " << logmessage;
-		}
-		else
-		{
-			global_logger->error() << "Terminate process: exit code=" << code << ": " << logmessage;
-		}
-	}
+    if (global_logger)
+    {
+        if (code == 0)
+        {
+            global_logger->info() << "Terminate process: exit code=" << code << ": " << logmessage;
+        }
+        else
+        {
+            global_logger->error() << "Terminate process: exit code=" << code << ": " << logmessage;
+        }
+    }
 
-	fprintf (stderr, "Terminate process: exit code=%d: %s\n", code, logmessage);
+    fprintf (stderr, "Terminate process: exit code=%d: %s\n", code, logmessage);
 
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
@@ -116,21 +116,21 @@ void v4l2capture_terminate(int code, const char *logmessage)
 
 void v4l2capture_errno_exit(const char *s, int errnocopy)
 {
-	std::string msg = std::string(s) + " error, errno=" + std::to_string(errnocopy) + ": "
-			+ const_cast<const char *>(strerror(errnocopy));
-	LOGGER_STDERR(msg.c_str());
+    std::string msg = std::string(s) + " error, errno=" + std::to_string(errnocopy) + ": "
+            + const_cast<const char *>(strerror(errnocopy));
+    LOGGER_STDERR(msg.c_str());
     v4l2capture_exit(msg.c_str());
 }
 
 void v4l2capture_exit_code(int code, const char *s)
 {
-	v4l2capture_terminate(code, s);
+    v4l2capture_terminate(code, s);
     abort();
 }
 
 void v4l2capture_exit(const char *s)
 {
-   	v4l2capture_terminate(1, s);
+       v4l2capture_terminate(1, s);
     abort();
 }
 
@@ -145,7 +145,7 @@ struct string_io_methods string_methods = { "IO_METHOD_READ", "IO_METHOD_MMAP", 
 
 void v4l2capture_logger(const char *logmessage)
 {
-	if (global_logger) global_logger->info() << logmessage;
+    if (global_logger) global_logger->info() << logmessage;
     std::cerr << logmessage << std::endl;
 }
 

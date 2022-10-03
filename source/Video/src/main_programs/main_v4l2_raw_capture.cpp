@@ -174,12 +174,12 @@ int main(int argc, char *argv[])
     std::ostringstream strm;
     if (UtilJsonCpp::checkjsonsyntax(strm, config_file_name) == EXIT_FAILURE)
     {
-    	std::string errstr = strm.str();
-    	logger.error() << errstr;
-    	ofs << "\n" << errstr << std::endl;
-    	std::cerr << "\n" << errstr << std::endl;
-    	ofs.close();
-    	return EXIT_FAILURE;
+        std::string errstr = strm.str();
+        logger.error() << errstr;
+        ofs << "\n" << errstr << std::endl;
+        std::cerr << "\n" << errstr << std::endl;
+        ofs.close();
+        return EXIT_FAILURE;
     }
 
     std::string parseoutput = strm.str();
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     if (!cfgfile.is_open())
     {
         // This message is for debugging help. JsonCpp does not check if the file stream is
-    	// valid, but will fail with a syntax error on the first read, which is not helpful.
+        // valid, but will fail with a syntax error on the first read, which is not helpful.
         std::cerr << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
         ofs << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
         logger.debug() << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n";

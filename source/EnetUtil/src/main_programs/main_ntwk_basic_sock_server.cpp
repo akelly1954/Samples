@@ -72,19 +72,19 @@ void Usage(std::ostream& strm, std::string command)
     strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
     strm << "Or:       " << command << "\n"
             "                  [ -ip server-ip-address ] (listen ip address (default is \"IADDR_ANY\" same as \"\") \n" <<
-			"                  [ -pn port-number ]       (listen port number, default is the port number defined \n" <<
-			"                                            during the build - see NOTE below)\n" <<
+            "                  [ -pn port-number ]       (listen port number, default is the port number defined \n" <<
+            "                                            during the build - see NOTE below)\n" <<
             "                  [ -bl connections ]       (maximum number of connection requests queued before \n" <<
             "                                            requests are dropped - default is 50) \n" <<
-			"                  [ -lg log-level ]         (see below, default is \"notice\"\n" <<
-			"\n" <<
-			"log-level can be one of: {\"debug\", \"info\", \"notice\", \"warning\", \"error\", \"critical\"}\n" <<
-			"\n"
-			"NOTE: the default port numbers that both client and server use match up at the time the sources were built.\n" <<
-			"      If the port number is set on the command line, it should be done for both client and server.\n" <<
-			"      The server always reports the port number it is listening on in the first few lines of its log file.\n" <<
-			"\n" <<
-			std::endl;
+            "                  [ -lg log-level ]         (see below, default is \"notice\"\n" <<
+            "\n" <<
+            "log-level can be one of: {\"debug\", \"info\", \"notice\", \"warning\", \"error\", \"critical\"}\n" <<
+            "\n"
+            "NOTE: the default port numbers that both client and server use match up at the time the sources were built.\n" <<
+            "      If the port number is set on the command line, it should be done for both client and server.\n" <<
+            "      The server always reports the port number it is listening on in the first few lines of its log file.\n" <<
+            "\n" <<
+            std::endl;
 }
 
 bool parse(int argc, char *argv[])
@@ -96,7 +96,7 @@ bool parse(int argc, char *argv[])
     specified["-ip"] = getArg(cmdmap, "-ip", server_listen_ip);
     specified["-pn"] = getArg(cmdmap, "-pn", server_listen_port_number);
     specified["-bl"] = getArg(cmdmap, "-bl", server_listen_max_backlog);
-	specified["-lg"] = getArg(cmdmap, "-lg", log_level);
+    specified["-lg"] = getArg(cmdmap, "-lg", log_level);
 
     bool ret = true;  // Currently all flags have default values, so it's always good.
     std::for_each(specified.begin(), specified.end(), [&ret](auto member) { if (member.second) { ret = true; }});
@@ -130,24 +130,24 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-	/////////////////
-	// Check out specified log level
-	/////////////////
+    /////////////////
+    // Check out specified log level
+    /////////////////
 
     Log::Log::Level loglevel = Log::Log::eNotice;
 
-	if (log_level == "debug") loglevel = Log::Log::eDebug;
-	else if (log_level == "info") loglevel = Log::Log::eInfo;
-	else if (log_level == "notice") loglevel = Log::Log::eNotice;
-	else if (log_level == "warning") loglevel = Log::Log::eWarning;
-	else if (log_level == "error") loglevel = Log::Log::eError;
-	else if (log_level == "critical") loglevel = Log::Log::eCritic;
-	else
-	{
-		std::cerr << "\nIncorrect use of the \"-lg\" flag." << std::endl;
-		Usage(std::cerr, argv0);
-		return 1;
-	}
+    if (log_level == "debug") loglevel = Log::Log::eDebug;
+    else if (log_level == "info") loglevel = Log::Log::eInfo;
+    else if (log_level == "notice") loglevel = Log::Log::eNotice;
+    else if (log_level == "warning") loglevel = Log::Log::eWarning;
+    else if (log_level == "error") loglevel = Log::Log::eError;
+    else if (log_level == "critical") loglevel = Log::Log::eCritic;
+    else
+    {
+        std::cerr << "\nIncorrect use of the \"-lg\" flag." << std::endl;
+        Usage(std::cerr, argv0);
+        return 1;
+    }
 
     /////////////////
     // Set up logger
