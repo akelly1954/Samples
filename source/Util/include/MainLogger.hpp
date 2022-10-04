@@ -132,7 +132,7 @@ namespace Util
         LoggerSPtr getLoggerPtr();
 
         // This can be called with std::cout, std::cerr, std::stringstream mystream, etc
-        void displayLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);
+        void streamLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);
 
     private:
         std::mutex m_UtilLogger_mutex;

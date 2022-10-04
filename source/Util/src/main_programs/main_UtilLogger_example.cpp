@@ -53,14 +53,14 @@ int main()
     {   // braces so we can reuse ostr
         std::stringstream ostr;
         logopt = ulogger.getLoggerOptions();
-        ulogger.displayLoggerOptions(ostr, logopt, "-- after construction of UtilLogger from defaults");
+        ulogger.streamLoggerOptions(ostr, logopt, "-- after construction of UtilLogger from defaults");
         std::cerr << ostr.str() << std::endl;
     }
     {   // braces so we can reuse ostr
         std::stringstream ostr;
         ulogger.setLoggerOptions(localopt);
         logopt = ulogger.getLoggerOptions();
-        ulogger.displayLoggerOptions(ostr, logopt, "after setting new options with local values");
+        ulogger.streamLoggerOptions(ostr, logopt, "after setting new options with local values");
         std::cerr << ostr.str() << std::endl;
     }
 
@@ -71,7 +71,7 @@ int main()
     {   // braces so we can reuse ostr
         std::stringstream ostr;
         logopt = ulogger.getLoggerOptions();
-        ulogger.displayLoggerOptions(ostr, logopt, "after getting shared_ptr<> to Log::Logger");
+        ulogger.streamLoggerOptions(ostr, logopt, "after getting shared_ptr<> to Log::Logger");
         splogger->debug() << ostr.str();
     }
 

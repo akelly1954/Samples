@@ -196,7 +196,7 @@ Util::LoggerOptions& UtilLogger::setLoggerOptions(Util::LoggerOptions& logopt)
     return logopt;
 }
 
-void UtilLogger::displayLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label)
+void UtilLogger::streamLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label)
 {
     using namespace Util;
 
