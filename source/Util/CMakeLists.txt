@@ -59,6 +59,20 @@ target_link_libraries( main_jsoncpp_samplecfg
 install(TARGETS main_jsoncpp_samplecfg DESTINATION localrun)
 
 #
+# sample UtilLogger main
+#
+set (main_UtilLogger_example "main_UtilLogger_example${DBG}")
+add_executable (main_UtilLogger_example src/main_programs/main_UtilLogger_example.cpp)
+target_link_libraries( main_UtilLogger_example 
+                            ${Util_LIB}
+                            ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
+                            ${CMAKE_THREAD_LIBS_INIT} 
+                            ${LINKOPTIONS}
+                     )
+install(TARGETS main_UtilLogger_example DESTINATION localrun)
+
+#
 # Circular buffer main
 #
 set (main_circular_buffer "main_circular_buffer${DBG}")
@@ -117,6 +131,7 @@ install(TARGETS main_condition_data DESTINATION localrun)
 # Dependencies
 add_dependencies (main_circular_buffer ${Util})
 add_dependencies (main_LoggerCpp_main_example ${Util})
+add_dependencies (main_UtilLogger_example ${Util})
 add_dependencies (main_jsoncpp_samplecfg ${Util})
 add_dependencies (main_commandline ${Util})
 add_dependencies (main_condition_data ${Util})

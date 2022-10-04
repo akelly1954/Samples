@@ -30,8 +30,8 @@
 #include <memory>
 #include <mutex>
 
-namespace Util {
-
+namespace Util
+{
     class MainLogger
     {
     public:
@@ -70,6 +70,69 @@ namespace Util {
         static Log::Log::Level loglevel;
         static std::string default_log_level;
         static std::string log_level;
+    };
+
+    //////////////////////////////////////////////////////////////////////
+    // class UtilLogger
+    //
+    // PLEASE NOTE: The class UtilLogger helps with configuring the LoggerCpp options
+    // affecting the Log::Logger object during creation (see LoggerCpp 3rd party project),
+    // up to the point where the object is initially created (during the very first call
+    // made to getLoggerPtr()). Past that point, no more calls to setLoggerOptions() are
+    // allowed, and an exception is thrown (if setLoggerOptions() is called).
+    //
+    // For other LoggerCpp operations on the Log::Logger object, the getLoggerPtr() method
+    // can be used to obtain a shared_ptr<Log::Logger> to the Log::Logger object directly,
+    // For example:
+    //
+    // Util::LoggerSPtr myLoggerCppPtr = myUtilLogger_object.getLoggerOptions();
+    //
+    // which is the equivalent of:
+    //
+    // std::shared_ptr<Log::Logger> myLoggerCppPtr = myUtilLogger_object.getLoggerOptions();
+    //
+    // From that point, simply using this as a reference allows the caller to use all of the
+    // many facilities of class Log::Logger (*myLoggerCppPtr).whatever()... directly.
+    //
+    //////////////////////////////////////////////////////////////////////
+
+    // Shared_ptr to class Log::Logger
+    using LoggerSPtr = std::shared_ptr<Log::Logger>;
+
+    struct LoggerOptions
+    {
+        Log::Log::Level loglevel;
+        std::string log_level;
+        std::string logChannelName;
+        std::string logFilelName;
+    };
+
+    class UtilLogger
+    {
+    public:
+        UtilLogger(void);
+        UtilLogger(const Util::LoggerOptions& logopt);
+
+    private:
+        // None of these methods are allowed
+        UtilLogger(const UtilLogger &) = delete;
+        UtilLogger &operator=(UtilLogger const &) = delete;
+        UtilLogger(UtilLogger &&) = delete;
+        UtilLogger &operator=(UtilLogger &&) = delete;
+
+    public:
+        const Util::LoggerOptions getLoggerOptions() const                  { return m_runtimeLogOpt; }
+        static Util::LoggerOptions& getDefaultLoggerOptions()               { return UtilLogger::m_defaultLogOpt; }
+        Util::LoggerOptions& setLoggerOptions(Util::LoggerOptions& logopt);
+        std::string getLoggerLevelEnumString(Log::Log::Level llevel)        { return std::string(Log::Log::toString(llevel)); }
+        LoggerSPtr getLoggerPtr();
+
+    private:
+        std::mutex m_UtilLogger_mutex;
+        bool m_NoMoreConfig = false;
+        LoggerSPtr sp_Logger;
+        static Util::LoggerOptions m_defaultLogOpt;
+        Util::LoggerOptions m_runtimeLogOpt;
     };
 
 } // end of namespace Util

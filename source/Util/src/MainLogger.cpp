@@ -1,6 +1,7 @@
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <iostream>
+#include <stdexcept>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -32,7 +33,7 @@ std::string MainLogger::logChannelName = "application";
 std::string MainLogger::logFilelName = logChannelName + "_log.txt";
 Log::Log::Level MainLogger::loglevel = Log::Log::Level::eDebug;
 
-std::string MainLogger::default_log_level = "debug";
+std::string MainLogger::default_log_level = Log::Log::toString(MainLogger::loglevel);
 std::string MainLogger::log_level = default_log_level;
 std::mutex MainLogger::s_logger_mutex;
 
@@ -112,5 +113,79 @@ void Util::MainLogger::configureLogManager( Log::Config::Vector& configList, std
     }
 }
 
+//////////////////////////////////////////////////////////////////////
+// class UtilLogger members - please see large comment in MainLogger.hpp.
+//////////////////////////////////////////////////////////////////////
 
+// static
+
+Util::LoggerOptions UtilLogger::m_defaultLogOpt = {
+                                        // loglevel (above)
+                                        Log::Log::Level::eInfo,
+
+                                        // log_level (above)
+                                        std::string((Log::Log::toString(Log::Log::Level::eInfo))),
+
+                                        // logChannelName (above)
+                                        std::string("app"),
+
+                                        // logFileName (above)
+                                        m_defaultLogOpt.logChannelName + "_log.txt"
+                                    };
+// methods
+
+UtilLogger::UtilLogger(const Util::LoggerOptions& logopt)
+{
+    // use your own object to initialise the logger
+    m_runtimeLogOpt = logopt;
+}
+
+UtilLogger::UtilLogger()
+{
+    // use the default settings for the logger
+    m_runtimeLogOpt = UtilLogger::m_defaultLogOpt;
+}
+
+LoggerSPtr UtilLogger::getLoggerPtr()
+{
+    if (sp_Logger != nullptr)
+    {
+        return sp_Logger;
+    }
+
+    std::lock_guard<std::mutex> lock(m_UtilLogger_mutex);
+
+    // the first check above wasn't locked (for speed). So we check again
+    // now that this code path is locked.
+    if (sp_Logger != nullptr)
+    {
+        return sp_Logger;
+    }
+
+    // Set up the new logger
+    Log::Config::Vector configList;
+    Util::MainLogger::initializeLogManager( configList,
+                                            m_runtimeLogOpt.loglevel,
+                                            m_runtimeLogOpt.logFilelName,
+                                            Util::MainLogger::disableConsole,
+                                            Util::MainLogger::enableLogFile);
+
+    Util::MainLogger::configureLogManager( configList, m_runtimeLogOpt.logChannelName);
+
+    sp_Logger = std::make_shared<Log::Logger>(m_runtimeLogOpt.logChannelName.c_str());
+    m_NoMoreConfig = true;
+
+    return sp_Logger;
+}
+
+Util::LoggerOptions& UtilLogger::setLoggerOptions(Util::LoggerOptions& logopt)
+{
+    if (m_NoMoreConfig)
+    {
+        throw std::runtime_error("Cannot set additional options after Log::Logger object creation.");
+    }
+    m_runtimeLogOpt = logopt;
+    m_runtimeLogOpt.log_level = getLoggerLevelEnumString(m_runtimeLogOpt.loglevel);
+    return logopt;
+}
 

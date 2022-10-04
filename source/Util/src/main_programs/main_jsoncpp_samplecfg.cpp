@@ -34,7 +34,7 @@
 std::string logChannelName = "jsoncpp_samplecfg";
 std::string logFilelName = logChannelName + "_log.txt";
 Log::Log::Level loglevel = Log::Log::Level::eDebug;
-std::string default_log_level = "debug";
+std::string default_log_level = Log::Log::toString(loglevel);
 std::string log_level = default_log_level;
 
 // Config statics

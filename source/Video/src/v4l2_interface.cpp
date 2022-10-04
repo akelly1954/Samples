@@ -56,7 +56,7 @@ std::string logChannelName = "v4l2_raw_capture";
 std::string logFilelName = logChannelName + "_log.txt";
 std::string output_file = logChannelName + ".data";  // Name of file intended for the video frames
 Log::Log::Level loglevel = Log::Log::Level::eDebug;
-std::string default_log_level = "debug";
+std::string default_log_level = Log::Log::toString(loglevel);
 std::string log_level = default_log_level;
 size_t framecount = 200;
 std::string default_str_frame_count(std::to_string(framecount));
