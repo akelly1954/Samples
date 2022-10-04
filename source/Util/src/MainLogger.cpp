@@ -120,17 +120,23 @@ void Util::MainLogger::configureLogManager( Log::Config::Vector& configList, std
 // static
 
 Util::LoggerOptions UtilLogger::m_defaultLogOpt = {
-                                        // loglevel (above)
+                                        // loglevel (in LoggerOptions)
                                         Log::Log::Level::eInfo,
 
-                                        // log_level (above)
+                                        // log_level (in LoggerOptions)
                                         std::string((Log::Log::toString(Log::Log::Level::eInfo))),
 
-                                        // logChannelName (above)
+                                        // logChannelName (in LoggerOptions)
                                         std::string("app"),
 
-                                        // logFileName (above)
-                                        m_defaultLogOpt.logChannelName + "_log.txt"
+                                        // logFileName (in LoggerOptions)
+                                        m_defaultLogOpt.logChannelName + "_log.txt",
+
+                                        // useConsole  (in LoggerOptions)
+                                        MainLogger::enableConsole,
+
+                                        // useLogFile (in LoggerOptions)
+                                        MainLogger::enableLogFile
                                     };
 // methods
 
@@ -167,8 +173,9 @@ LoggerSPtr UtilLogger::getLoggerPtr()
     Util::MainLogger::initializeLogManager( configList,
                                             m_runtimeLogOpt.loglevel,
                                             m_runtimeLogOpt.logFilelName,
-                                            Util::MainLogger::disableConsole,
-                                            Util::MainLogger::enableLogFile);
+                                            m_runtimeLogOpt.useConsole,
+                                            m_runtimeLogOpt.useLogFile
+                                          );
 
     Util::MainLogger::configureLogManager( configList, m_runtimeLogOpt.logChannelName);
 
@@ -188,4 +195,19 @@ Util::LoggerOptions& UtilLogger::setLoggerOptions(Util::LoggerOptions& logopt)
     m_runtimeLogOpt.log_level = getLoggerLevelEnumString(m_runtimeLogOpt.loglevel);
     return logopt;
 }
+
+void UtilLogger::displayLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label)
+{
+    using namespace Util;
+
+    strm << "Current option values " << label << ":\n"
+          << "     Log Level " << logopt.loglevel << "\n"
+          << "     Log level string " << logopt.log_level << "\n"
+          << "     Log channel name " << logopt.logChannelName << "\n"
+          << "     Log file name " << logopt.logFilelName << "\n"
+          << "     Output to console " << (logopt.useConsole == Util::MainLogger::enableConsole? "enabled": "disabled")  << "\n"
+          << "     Output to log file " << (logopt.useLogFile == Util::MainLogger::enableLogFile? "enabled": "disabled") << "\n";
+}
+
+
 

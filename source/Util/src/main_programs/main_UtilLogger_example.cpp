@@ -35,18 +35,6 @@
 
 std::string logChannelName = "main_UtilLogger_example";
 
-void displayLoggerOptions(Util::LoggerOptions logopt, std::string label)
-{
-    using namespace Util;
-
-    std::cerr << "Current option values " << label << ":\n"
-              << "     Log Level " << logopt.loglevel << "\n"
-              << "     Log level string " << logopt.log_level << "\n"
-              << "     Log channel name " << logopt.logChannelName << "\n"
-              << "     Log file name " << logopt.logFilelName << "\n"
-              << std::endl;
-}
-
 int main()
 {
     // Get initial values into localopt (this does a copy of the LoggerOptions object).
@@ -56,20 +44,36 @@ int main()
     localopt.loglevel = Log::Log::Level::eDebug;
     localopt.logChannelName = logChannelName;
     localopt.logFilelName = logChannelName + "_log.txt";
+    localopt.useConsole = Util::MainLogger::disableConsole;
 
     // This will get us the default set of options from UtilLogger.
     Util::UtilLogger ulogger;
+    Util::LoggerOptions logopt;
 
-    Util::LoggerOptions logopt = ulogger.getLoggerOptions();
-    displayLoggerOptions(logopt, "-- after construction of UtilLogger from defaults");
-
-    ulogger.setLoggerOptions(localopt);
-    logopt = ulogger.getLoggerOptions();
-    displayLoggerOptions(logopt, "after setting new options with local values");
+    {   // braces so we can reuse ostr
+        std::stringstream ostr;
+        logopt = ulogger.getLoggerOptions();
+        ulogger.displayLoggerOptions(ostr, logopt, "-- after construction of UtilLogger from defaults");
+        std::cerr << ostr.str() << std::endl;
+    }
+    {   // braces so we can reuse ostr
+        std::stringstream ostr;
+        ulogger.setLoggerOptions(localopt);
+        logopt = ulogger.getLoggerOptions();
+        ulogger.displayLoggerOptions(ostr, logopt, "after setting new options with local values");
+        std::cerr << ostr.str() << std::endl;
+    }
 
     // Please note: No additional calls to ulogger.setLoggerOptions() are
     // allowed past this point (an exception will be thrown).
     Util::LoggerSPtr splogger = ulogger.getLoggerPtr();
+
+    {   // braces so we can reuse ostr
+        std::stringstream ostr;
+        logopt = ulogger.getLoggerOptions();
+        ulogger.displayLoggerOptions(ostr, logopt, "after getting shared_ptr<> to Log::Logger");
+        splogger->debug() << ostr.str();
+    }
 
     std::string sret = "FAILED";
     try {

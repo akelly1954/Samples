@@ -102,9 +102,13 @@ namespace Util
     struct LoggerOptions
     {
         Log::Log::Level loglevel;
+        // this member (log_level) does not need to be set.
+        // It's set by setLoggerOptions() according to loglevel.
         std::string log_level;
         std::string logChannelName;
         std::string logFilelName;
+        MainLogger::ConsoleOutput useConsole;
+        MainLogger::UseLogFile useLogFile;
     };
 
     class UtilLogger
@@ -126,6 +130,9 @@ namespace Util
         Util::LoggerOptions& setLoggerOptions(Util::LoggerOptions& logopt);
         std::string getLoggerLevelEnumString(Log::Log::Level llevel)        { return std::string(Log::Log::toString(llevel)); }
         LoggerSPtr getLoggerPtr();
+
+        // This can be called with std::cout, std::cerr, std::stringstream mystream, etc
+        void displayLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);
 
     private:
         std::mutex m_UtilLogger_mutex;
