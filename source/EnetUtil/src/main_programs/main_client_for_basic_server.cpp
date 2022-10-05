@@ -90,7 +90,7 @@ void Usage(std::ostream &strm, std::string command)
 }
 
 // See the end of this source file for this function
-bool parse(std::ostream &strm, int argc, char *argv[]);
+bool parse(std::ostream &strm, int argc, const char *argv[]);
 
 bool check_input_file(std::ostream &strm, std::string input_filename, struct stat *sb, size_t & numbytesinfile)
 {
@@ -121,7 +121,7 @@ bool check_input_file(std::ostream &strm, std::string input_filename, struct sta
     return true;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
     using namespace Util;
 
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
     // Parse command line
     /////////////////
 
-    std::string argv0 = const_cast<const char*>(argv[0]);
+    std::string argv0 = argv[0];
 
     // If no parameters were supplied, or help was requested:
     // (since the -fn flag is mandatory).
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
     return ret;
 }
 
-bool parse(std::ostream &strm, int argc, char *argv[])
+bool parse(std::ostream &strm, int argc, const char *argv[])
 {
     using namespace Util;
     const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv);

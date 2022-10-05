@@ -26,7 +26,7 @@
 
 // Currently hard-coded to deal with the first command line argument being
 // in the form of -xx.
-std::map<std::string,std::string> Util::getCLMap(int argc, char *argv[])
+std::map<std::string,std::string> Util::getCLMap(int argc, const char *argv[])
 {
     std::map<std::string,std::string> cmdmap;
 
@@ -70,6 +70,11 @@ std::map<std::string,std::string> Util::getCLMap(int argc, char *argv[])
 
 
 Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var)
+{
+    return get_template_arg(cmdmap, flag, var);
+}
+
+Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, bool& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }

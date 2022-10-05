@@ -97,7 +97,7 @@ namespace Util {
 // straight forward.  MHO.
 // 
 
-std::map<std::string,std::string> getCLMap(int argc, char *argv[]);
+std::map<std::string,std::string> getCLMap(int argc, const char *argv[]);
 
 // Command line parsing
 enum ParameterStatus
@@ -122,6 +122,14 @@ bool get_param_value<unsigned short>(std::string data, unsigned short& var)
 {
     if (data.length() == 0) return false;
     var = static_cast<unsigned short>(strtoul(data.c_str(), NULL, 10) & 0xFFFF);
+    return true;
+}
+
+template <>
+bool get_param_value<bool>(std::string data, bool& var)
+{
+    if (data.length() == 0) return false;
+    var = static_cast<bool>((strtol(data.c_str(), NULL, 10) == 0)? false : true);
     return true;
 }
 
@@ -212,6 +220,7 @@ Util::ParameterStatus get_template_arg(const std::map<std::string,std::string>& 
 // signifies error is 0 - same as false. That's why you don't have to change anything in the code if it still
 // accepts the value of getArg() as a bool.
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var);
+Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, bool& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var);
 Util::ParameterStatus getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned long& var);

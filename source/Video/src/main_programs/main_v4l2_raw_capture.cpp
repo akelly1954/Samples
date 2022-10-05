@@ -53,7 +53,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 // See the end of this source file for this function
-bool parse(std::ostream &strm, int argc, char *argv[]);
+bool parse(std::ostream &strm, int argc, const char *argv[]);
 
 ////////////////////////////////////////////////////////////////////////////////
 // This is a debug-only short-lived thread which exercises pause/resume capture
@@ -104,7 +104,7 @@ void Usage(std::ostream &strm, std::string command)
             << std::endl;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
     using namespace VideoCapture;
 
@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
     return ret;
 }
 
-bool parse(std::ostream &strm, int argc, char *argv[])
+bool parse(std::ostream &strm, int argc, const char *argv[])
 {
     using namespace Util;
     const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv);

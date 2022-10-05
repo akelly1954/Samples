@@ -87,7 +87,7 @@ void Usage(std::ostream& strm, std::string command)
             std::endl;
 }
 
-bool parse(int argc, char *argv[])
+bool parse(int argc, const char *argv[])
 {
     using namespace Util;
     const std::map<std::string,std::string> cmdmap = getCLMap(argc, argv);
@@ -103,11 +103,11 @@ bool parse(int argc, char *argv[])
     return ret;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
     using namespace Util;
 
-    std::string argv0 = const_cast<const char *>(argv[0]);
+    std::string argv0 = argv[0];
 
     /////////////////
     // Parse command line
