@@ -35,7 +35,6 @@
 #include <commandline.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
-#include <LoggerCpp/LoggerCpp.h>
 #include <JsonCppUtil.hpp>
 #include <iostream>
 #include <fstream>

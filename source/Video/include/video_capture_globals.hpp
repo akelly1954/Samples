@@ -47,6 +47,7 @@ namespace Video
         static bool profiling_enabled;
         static bool capture_finished;
         static bool capture_pause;
+        static std::string config_file_name;
     };
 
 } // end of namespace Video

@@ -57,6 +57,7 @@ std::string     Video::vcGlobals::str_frame_count(default_str_frame_count);
 bool            Video::vcGlobals::profiling_enabled =  false;
 bool            Video::vcGlobals::capture_finished =   false;
 bool            Video::vcGlobals::capture_pause =      false;
+std::string     Video::vcGlobals::config_file_name =   Video::vcGlobals::logChannelName + ".json";
 
 
 

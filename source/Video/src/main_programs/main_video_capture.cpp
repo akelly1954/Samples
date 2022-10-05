@@ -27,6 +27,7 @@
 
 #include <video_capture_commandline.hpp>
 #include <video_capture_globals.hpp>
+#include <JsonCppUtil.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,10 +35,8 @@
 #include <iostream>
 #include <vector>
 
-// This is the basis for the default logger, log file name, etc.
 
-
-// statics
+// static definitions
 
 static Util::LoggerOptions defaultLogOptions = {
                 // loglevel (in LoggerOptions)
@@ -58,6 +57,39 @@ static Util::LoggerOptions defaultLogOptions = {
                 // useLogFile (in LoggerOptions)
                 Util::MainLogger::enableLogFile
             };
+
+
+////////////////////////////////////////////////////////////////////////////////
+// This is a debug-only short-lived thread which exercises pause/resume capture
+// If used, set frame count from the command line ("-fc 0").
+// Un-comment-out this #define if a low-level test of pause/resume/finish capture is needed.
+//
+// #define TEST_RAW_CAPTURE_CTL
+
+#ifdef TEST_RAW_CAPTURE_CTL
+
+void test_raw_capture_ctl(Log::Logger logger)
+{
+    logger.debug() << "In test_raw_capture_ctl: thread running";
+
+    for (int i = 1; i <= 3; i++)
+    {
+        ::sleep(3);
+        logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
+        ::set_v4l2capture_pause(true);
+
+        ::sleep(3);
+        logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
+        ::set_v4l2capture_pause(false);
+    }
+
+    ::sleep(3);
+    logger.debug() << "test_raw_capture_ctl: FINISH CAPTURE REQUEST...";
+    ::set_v4l2capture_finished();
+}
+
+#endif // TEST_RAW_CAPTURE_CTL
+
 
 int main(int argc, const char *argv[])
 {
@@ -91,6 +123,37 @@ int main(int argc, const char *argv[])
     }
 
     /////////////////
+    // Set up the application configuration
+    /////////////////
+
+    std::ostringstream strm;
+    if (UtilJsonCpp::checkjsonsyntax(strm, Video::vcGlobals::config_file_name) == EXIT_FAILURE)
+    {
+        std::string errstr = strm.str();
+        std::cerr << "\nERROR in file " << Video::vcGlobals::config_file_name << ":\n\n" << errstr << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // We will log this as soon as the logger is configured and operational.
+    std::string parseoutput = strm.str();
+
+    Json::Value cfg_root;
+    std::ifstream cfgfile(Video::vcGlobals::config_file_name);
+    if (!cfgfile.is_open())
+    {
+        // This message is for debugging help. JsonCpp does not check if the file stream is
+        // valid, but will fail with a syntax error on the first read, which is not helpful.
+        std::cerr << "\nERROR: Could not find json file " << Video::vcGlobals::config_file_name << ".  Exiting...\n" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    cfgfile >> cfg_root;    // json operator>>()
+
+    ///////////////////////////////////////////////////////////////////////////////////
+    // As of this point, cfg_root contains the root for the whole json tree.
+    ///////////////////////////////////////////////////////////////////////////////////
+
+    /////////////////
     // Set up the logger
     /////////////////
 
@@ -119,6 +182,13 @@ int main(int argc, const char *argv[])
 
     // The logger is now set up.
     splogger->info() << "Logger setup is complete.";
+
+    splogger->info() << "\n\nParsed JSON nodes:" << parseoutput;
+    splogger->debug() << "\n\nParsed JSON file " << Video::vcGlobals::config_file_name << " successfully.  Contents: \n\n"
+                      << cfg_root << "\n";
+    cfgfile.close();
+
+
 
     return 0;
 }

@@ -1,0 +1,18 @@
+{
+	"Config": {
+		"Logger": {
+			"channel-name": 	"video_capture",
+			"file-name": 		"video_capture_log.txt",
+			"log-level": 		"debug"
+		},
+		"App-options": {
+			"output-file": 		"video_capture.data",
+			"write-to-file": 	1,
+			"profiling": 		0
+		},
+		"Video": {
+			"frame-count": 		200
+		}
+	}
+}
+
