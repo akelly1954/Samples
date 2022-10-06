@@ -28,6 +28,7 @@
 #include <video_capture_commandline.hpp>
 #include <video_capture_globals.hpp>
 #include <JsonCppUtil.hpp>
+#include <Utility.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,7 +97,7 @@ int main(int argc, const char *argv[])
     using namespace Video;
 
     /////////////////
-    // Parse the command line
+    // Parse the command line part 1 (print out the --help info asap)
     /////////////////
 
     std::string argv0 = argv[0];
@@ -116,14 +117,11 @@ int main(int argc, const char *argv[])
         return EXIT_SUCCESS;
     }
 
-    if (! Video::CommandLine::parse(std::cerr, argc, argv))
-    {
-        Video::CommandLine::Usage(std::cerr, argv0);  std::cerr << std::endl;
-        return EXIT_FAILURE;
-    }
-
     /////////////////
-    // Set up the application configuration
+    // Set up the application configuration:
+    //
+    // Before we do the actual parsing of the command line, the initial json/config
+    // has to be done so that the command line can override its values in the following step.
     /////////////////
 
     std::ostringstream strm;
@@ -137,7 +135,9 @@ int main(int argc, const char *argv[])
     // We will log this as soon as the logger is configured and operational.
     std::string parseoutput = strm.str();
 
+    // This is the actual root node in the internal json tree.
     Json::Value cfg_root;
+
     std::ifstream cfgfile(Video::vcGlobals::config_file_name);
     if (!cfgfile.is_open())
     {
@@ -146,12 +146,61 @@ int main(int argc, const char *argv[])
         std::cerr << "\nERROR: Could not find json file " << Video::vcGlobals::config_file_name << ".  Exiting...\n" << std::endl;
         return EXIT_FAILURE;
     }
-
     cfgfile >> cfg_root;    // json operator>>()
 
     ///////////////////////////////////////////////////////////////////////////////////
     // As of this point, cfg_root contains the root for the whole json tree.
     ///////////////////////////////////////////////////////////////////////////////////
+
+    try {
+#if 0
+        "Config": {
+            "Logger": {
+                "channel-name":     "video_capture",
+                "file-name":        "video_capture_log.txt",
+                "log-level":        "debug"
+            },
+            "App-options": {
+                "output-file":      "video_capture.data",
+                "write-to-file":    1,
+                "profiling":        0
+            },
+            "Video": {
+                "frame-count":      200
+            }
+        }
+    }
+#endif
+        std::cerr << "Getting config values from JSON file << Video::vcGlobals::config_file_name << std::endl;
+
+
+        std::string jsonLogFileName = Util::Utility::trim(cfg_root["Config"]["Logger"]["file-name"].asString());
+        Video::vcGlobals::logFilelName = jsonLogFileName; // json file values override config defaults.
+        std::cerr << "Setting default log file-name to: " << jsonLogFileName << std::endl;
+
+
+
+
+
+
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error:  Exception caught while getting json values from "
+                  << Video::vcGlobals::config_file_name << ": "
+                  << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    /////////////////
+    // Parse the command line part 2 (print out the --help info asap)
+    /////////////////
+
+    if (! Video::CommandLine::parse(std::cerr, argc, argv))
+    {
+        Video::CommandLine::Usage(std::cerr, argv0);  std::cerr << std::endl;
+        return EXIT_FAILURE;
+    }
 
     /////////////////
     // Set up the logger
