@@ -130,6 +130,7 @@ namespace Util
         Util::LoggerOptions& setLoggerOptions(Util::LoggerOptions& logopt);
         std::string getLoggerLevelEnumString(Log::Log::Level llevel)        { return std::string(Log::Log::toString(llevel)); }
         LoggerSPtr getLoggerPtr();
+        static int stringToEnumLoglevel(const std::string& slog_level);     // returns -1 on error, or (>= 0) value for enum value
 
         // This can be called with std::cout, std::cerr, std::stringstream mystream, etc
         void streamLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);

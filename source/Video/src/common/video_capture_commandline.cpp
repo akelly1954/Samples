@@ -37,8 +37,8 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        the default name \"" << Video::vcGlobals::output_file << "\" will be used.\n"
             << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << Video::vcGlobals::framecount << ")\n"
             << "              [ -pr ]                   Enable profiler stats\n"
-            << "              [ -lg log-level ]         Can be one of: {\"debug\", \"info\", \"notice\", \"warning\",\n"
-            << "                                        \"error\", \"critical\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n";
+            << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\",\n"
+            << "                                        \"EROR\", \"CRIT\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n";
 }
 
 bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
@@ -113,16 +113,14 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     /////////////////
     // Check out specified log level
     /////////////////
-
-    if (Video::vcGlobals::log_level == "debug") Video::vcGlobals::loglevel = Log::Log::eDebug;
-    else if (Video::vcGlobals::log_level == "info") Video::vcGlobals::loglevel = Log::Log::eInfo;
-    else if (Video::vcGlobals::log_level == "notice") Video::vcGlobals::loglevel = Log::Log::eNotice;
-    else if (Video::vcGlobals::log_level == "warning") Video::vcGlobals::loglevel = Log::Log::eWarning;
-    else if (Video::vcGlobals::log_level == "error") Video::vcGlobals::loglevel = Log::Log::eError;
-    else if (Video::vcGlobals::log_level == "critical") Video::vcGlobals::loglevel = Log::Log::eCritic;
+    int level = UtilLogger::stringToEnumLoglevel(Video::vcGlobals::log_level);
+    if (level >= 0)
+    {
+        Video::vcGlobals::loglevel = static_cast<Log::Log::Level>(level);
+    }
     else
     {
-        strm << "ERROR: Incorrect use of the \"-lg\" flag." << std::endl;
+        strm << "\nERROR: Invalid log_level (" << Video::vcGlobals::loglevel << ") " <<  " after checking the \"-lg\" flag." << std::endl;
         return false;
     }
 

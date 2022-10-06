@@ -96,6 +96,8 @@ int main(int argc, const char *argv[])
 {
     using namespace Video;
 
+    std::vector<std::string> delayedLinesForLogger;
+
     /////////////////
     // Parse the command line part 1 (print out the --help info asap)
     /////////////////
@@ -108,7 +110,8 @@ int main(int argc, const char *argv[])
                     || std::string(const_cast<const char*>(argv[1])) == "help")
             )
     {
-        Video::CommandLine::Usage(std::cerr, argv0); std::cerr << std::endl;
+        Video::CommandLine::Usage(std::cerr, argv0);
+        std::cerr << std::endl;
         if (argc > 2)
         {
             std::cerr << "WARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
@@ -121,7 +124,7 @@ int main(int argc, const char *argv[])
     // Set up the application configuration:
     //
     // Before we do the actual parsing of the command line, the initial json/config
-    // has to be done so that the command line can override its values in the following step.
+    // has to be done so that the command line can overwrite its values in the following step.
     /////////////////
 
     std::ostringstream strm;
@@ -133,7 +136,11 @@ int main(int argc, const char *argv[])
     }
 
     // We will log this as soon as the logger is configured and operational.
-    std::string parseoutput = strm.str();
+    std::string parseoutput = std::string("\n\nParsed JSON nodes:") + strm.str();
+
+    // Everything in the vector will be written to the log file
+    // as soon as the logger is initialized.
+    delayedLinesForLogger.push_back(parseoutput);
 
     // This is the actual root node in the internal json tree.
     Json::Value cfg_root;
@@ -148,57 +155,55 @@ int main(int argc, const char *argv[])
     }
     cfgfile >> cfg_root;    // json operator>>()
 
+    std::stringstream configstrm;
+    configstrm << "\n\nParsed JSON file " << Video::vcGlobals::config_file_name << " successfully.  Contents: \n\n"
+                      << cfg_root << "\n";
+
+    // Everything in the vector will be written to the log file
+    // as soon as the logger is initialized.
+    delayedLinesForLogger.push_back(configstrm.str());
+
+    cfgfile.close();
+
     ///////////////////////////////////////////////////////////////////////////////////
     // As of this point, cfg_root contains the root for the whole json tree.
     ///////////////////////////////////////////////////////////////////////////////////
 
     try {
-#if 0
-        "Config": {
-            "Logger": {
-                "channel-name":     "video_capture",
-                "file-name":        "video_capture_log.txt",
-                "log-level":        "debug"
-            },
-            "App-options": {
-                "output-file":      "video_capture.data",
-                "write-to-file":    1,
-                "profiling":        0
-            },
-            "Video": {
-                "frame-count":      200
-            }
+
+        std::stringstream strm;
+        if (! Video::updateInternalConfigsWithJsonValues(strm, cfg_root))
+        {
+            std::cerr << strm.str() << std::endl;
+            std::cerr << "\nError while accessing json values read from " << Video::vcGlobals::config_file_name << "." << std::endl;
+            return EXIT_FAILURE;
         }
-    }
-#endif
-        std::cerr << "Getting config values from JSON file << Video::vcGlobals::config_file_name << std::endl;
+        // Everything in the vector will be written to the log file
+        // as soon as the logger is initialized.
 
+        std::string constring = strm.str();
+        std::cerr << constring << std::endl;
 
-        std::string jsonLogFileName = Util::Utility::trim(cfg_root["Config"]["Logger"]["file-name"].asString());
-        Video::vcGlobals::logFilelName = jsonLogFileName; // json file values override config defaults.
-        std::cerr << "Setting default log file-name to: " << jsonLogFileName << std::endl;
-
-
-
-
-
-
+        // Everything in the vector will be written to the log file
+        // as soon as the logger is initialized.
+        delayedLinesForLogger.push_back(constring);
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error:  Exception caught while getting json values from "
+        std::cerr << "Error:  Exception caught while accessing json values read from "
                   << Video::vcGlobals::config_file_name << ": "
                   << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 
     /////////////////
-    // Parse the command line part 2 (print out the --help info asap)
+    // Parse the command line part 2
     /////////////////
 
     if (! Video::CommandLine::parse(std::cerr, argc, argv))
     {
-        Video::CommandLine::Usage(std::cerr, argv0);  std::cerr << std::endl;
+        Video::CommandLine::Usage(std::cerr, argv0);
+        std::cerr << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -212,7 +217,7 @@ int main(int argc, const char *argv[])
     // Get initial values into localopt (this does a copy of the LoggerOptions object).
     Util::LoggerOptions localopt = Util::UtilLogger::getDefaultLoggerOptions();
 
-    // the default values set by class Util::UtilLogger are now overriden by
+    // the default values set by class Util::UtilLogger are now overwritten by
     // the defaultLogOptions struct declared above.
     localopt = defaultLogOptions;
 
@@ -232,12 +237,11 @@ int main(int argc, const char *argv[])
     // The logger is now set up.
     splogger->info() << "Logger setup is complete.";
 
-    splogger->info() << "\n\nParsed JSON nodes:" << parseoutput;
-    splogger->debug() << "\n\nParsed JSON file " << Video::vcGlobals::config_file_name << " successfully.  Contents: \n\n"
-                      << cfg_root << "\n";
-    cfgfile.close();
-
-
+    // Empty out the delayed-lines' vector...
+    for(auto line : delayedLinesForLogger)
+    {
+        splogger->info() << line;
+    }
 
     return 0;
 }

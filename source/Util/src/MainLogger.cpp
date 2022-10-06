@@ -209,5 +209,16 @@ void UtilLogger::streamLoggerOptions(std::ostream& strm, Util::LoggerOptions log
           << "     Output to log file " << (logopt.useLogFile == Util::MainLogger::enableLogFile? "enabled": "disabled") << "\n";
 }
 
-
+// returns -1 on error, or (>= 0) value for enum value
+int UtilLogger::stringToEnumLoglevel(const std::string& slog_level)
+{
+    int ret = -1;
+    if      (slog_level == "DBUG") ret = Log::Log::eDebug;
+    else if (slog_level == "INFO") ret = Log::Log::eInfo;
+    else if (slog_level == "NOTE") ret = Log::Log::eNotice;
+    else if (slog_level == "WARN") ret = Log::Log::eWarning;
+    else if (slog_level == "EROR") ret = Log::Log::eError;
+    else if (slog_level == "CRIT") ret = Log::Log::eCritic;
+    return ret;
+}
 

@@ -3,7 +3,7 @@
 		"Logger": {
 			"channel-name": 	"video_capture",
 			"file-name": 		"video_capture_log.txt",
-			"log-level": 		"debug"
+			"log-level": 		"DBUG"
 		},
 		"App-options": {
 			"output-file": 		"video_capture.data",

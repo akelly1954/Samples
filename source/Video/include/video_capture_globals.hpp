@@ -24,11 +24,14 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <json/json.h>
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <unistd.h>
 #include <stdio.h>
 #include <iostream>
+#include <ostream>
+#include <sstream>
 #include <string>
 
 namespace Video
@@ -50,7 +53,13 @@ namespace Video
         static std::string config_file_name;
     };
 
+// This function overwrites values in Video::vcGlobals with content from
+// the json config file.
+bool updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::Value& cfg_root);
+
 } // end of namespace Video
+
+
 
 // TODO: get rid of no-build ifdefs
 #ifdef SKIP_BUILD
