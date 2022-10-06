@@ -91,6 +91,54 @@ void test_raw_capture_ctl(Log::Logger logger)
 
 #endif // TEST_RAW_CAPTURE_CTL
 
+// CONFIGURATION
+//
+// Configuration of this program is affected by the initial (compiled) defaults of certain
+// specific objects that can at run time be overwritten with values obtained from json configuration
+// file, as well as command line parameters.
+//
+// The order of precedence is simple:  If nothing else, the compiled static default values of
+// objects will take effect.  Next, values of json config parameters will overwite whatever
+// is in effect when they are read in.  Next, values of command line parameters overwrite whatever
+// is in effect after the json values are read in.
+//
+// Once the json config is read in at run time, any value which comes from the json file,
+// will overwrite the default value that the program was compiled with for the specific object
+// being handled (lets say, the logger debug level - "DEBG", "INFO", etc).
+//
+// After the json config values have been written into the specifc objects they are meant
+// for, command line parameters are parsed and updated into these same objects for those
+// objects that are configurable from the command line.
+//
+// As an example:
+//
+//         The logger's log-level starts out in video_capture_globals.cpp defined as
+//         Video::vcGlobals::loglevel, and initialized to some Log::Log::Level value, such
+//         as Log::Log::Level::eDebug.
+//
+//         Next comes the json config file.  If the following section exists, and contains
+//         a valid value, it will overwrite the object Video::vcGlobals::loglevel:
+//
+//         {
+//             "Config": {
+//                  . . . . . .
+//                     "Logger": {
+//                        . . . . . .
+//                         "log-level":        "INFO"
+//                        . . . . . .
+//                     },
+//                  . . . . . .
+//             }
+//         }
+//
+//         As a result of the above section, the variable Video::vcGlobals::loglevel will be
+//         assigned the value Log::Log::Level::eInfo replacing compiled static value.
+//
+//         At the end, if the command line option "-lg NOTE" is specified, the same variable -
+//         Video::vcGlobals::loglevel will finally be set to Log::Log::Level::eNotice, erasing
+//         the effects of all previous values.
+//
+
 
 int main(int argc, const char *argv[])
 {
