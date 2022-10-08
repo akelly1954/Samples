@@ -56,107 +56,98 @@ void UtilJsonCpp::streamroot(std::ostream& strm, Json::Value& root)
     idnt += 4;  // this function is recursive
 
     // DEBUG:
-    // strm << "\n-----------------------------------------------------" << std::endl;
-    // strm << "Got:\n" << root << std::endl;
-    // strm << "\n-----------------------------------------------------" << std::endl;
+    // strm << "\n-----------------------------------------------------\n";
+    // strm << "Got:\n" << root << "\n";
+    // strm << "\n-----------------------------------------------------\n\n";
 
     for (itr = root.begin(); itr != root.end(); itr++)
     {
         name = itr.key().asString();
-        strm << "---- key string is:" << name << std::endl;
-        strm << "---- has member names? " << (UtilJsonCpp::checkJsonValueHasGetMemberNames(itr)? "YES": "NO") << std::endl;
-        strm << "---- object type: " << (UtilJsonCpp::ValueJsonTypeString(itr)) << std::endl;
+        strm << "---- key string is:" << name << "\n";
+        strm << "---- has member names? " << (UtilJsonCpp::checkJsonValueHasGetMemberNames(itr)? "YES": "NO") << "\n";
+        strm << "---- object type: " << (UtilJsonCpp::ValueJsonTypeString(itr)) << "\n";
 
         if ((*itr).isInt())
         {
-            indent(strm, idnt); strm << "member: " << name << ", type: int, value=" << (*itr).asInt() << std::endl;
+            indent(strm, idnt); strm << "member: " << name << ", type: int, value=" << (*itr).asInt() << "\n";
         }
         else if ((*itr).isDouble())
         {
             indent(strm, idnt); strm << "member: " << name << ", type: double, value="
-                      << (*itr).asDouble() << std::endl;
+                      << (*itr).asDouble() << "\n";
         }
         else if ((*itr).isBool())
         {
             indent(strm, idnt); strm << "member: " << name << ", type: bool, value="
-                      << (*itr).asBool() << std::endl;
+                      << (*itr).asBool() << "\n";
         }
         else if ((*itr).isArray())
         {
             Json::Value::iterator innerItr = (*itr).begin();
 
             int size = (*itr).size();
-            indent(strm, idnt); strm << "member: " << name << ", array size: " << size << ", type: object, value = " << std::endl;
+            indent(strm, idnt); strm << "member: " << name << ", array size: " << size << ", type: object, value = " << "\n";
 
             for (innerItr = (*itr).begin(); innerItr != (*itr).end(); innerItr++)
             {
                 if (itr->type() == Json::ValueType::arrayValue)
                 {
                     indent(strm, idnt+4); strm << "array member[" << innerItr.key().asString() << "] = "
-                                                         << (*innerItr).asString() << std::endl;
+                                                         << (*innerItr).asString() << "\n";
                 }
                 else
                 {
                     UtilJsonCpp::streamroot(strm,(*innerItr));
-                    strm << std::endl; idnt -= 4;
+                    strm << "\n"; idnt -= 4;
                 }
             }
         }
         else if ((*itr).isInt64())
         {
-            indent(strm, idnt); strm << "member: " << name << ", type: int64, value=" << (*itr).asInt64() << std::endl;
+            indent(strm, idnt); strm << "member: " << name << ", type: int64, value=" << (*itr).asInt64() << "\n";
         }
         else if ((*itr).isString())
         {
-            indent(strm, idnt); strm << "member: " << name << ", type: string, value=" << (*itr).asString() << std::endl;
+            indent(strm, idnt); strm << "member: " << name << ", type: string, value=" << (*itr).asString() << "\n";
         }
         // TODO: Not sure about this.
         // else if ((*itr).type() == Json::ValueType::arrayValue)
         // {
-        //    strm << itr.key().asString() << std::endl;
+        //    strm << itr.key().asString() << "\n";
         // }
         else if ((*itr).isObject())
         {
-            indent(strm, idnt); strm << "member: " << name << ", type: object, values:" << std::endl;
+            indent(strm, idnt); strm << "member: " << name << ", type: object, values:" << "\n";
             UtilJsonCpp::streamroot(strm,(*itr));
-            strm << std::endl; idnt -= 4;
+            strm << "\n"; idnt -= 4;
         }
         else
         {
-            indent(strm, idnt); strm << "member: " << name << ", type: unknown type " << std::endl;
+            indent(strm, idnt); strm << "member: " << name << ", type: unknown type " << "\n";
         }
     }
 }
 
-int UtilJsonCpp::checkjsonsyntax(std::ostream& strm, std::istream& istrm)
+int UtilJsonCpp::checkjsonsyntax(std::ostream& logstream, std::istream& istrm, Json::Value& root)
 {
-    Json::Value root;
+    if (istrm.bad()|| istrm.eof())
+    {
+        // JsonCpp does not check this, but will fail with a syntax error on the first read
+        throw std::runtime_error("Error initializing ConfigSingleton object: json stream is bad or at eof.\n");
+        // and exit()
+    }
 
     Json::CharReaderBuilder builder;
     builder["collectComments"] = true;
     JSONCPP_STRING errs;
-    if (!parseFromStream(builder, istrm, &root, &errs)) {
-        strm << "JsonCpp parse errors: " << errs << std::endl;
+    if (! parseFromStream(builder, istrm, &root, &errs)) {
+        logstream << "JsonCpp parse errors: " << errs << "\n";
         return EXIT_FAILURE;
     }
 
-    strm << "\n\nCHECKING JSON FILE\n" << std::endl;
-    UtilJsonCpp::streamroot(strm, root);
+    logstream << "\n\nCHECKING JSON FILE\n" << "\n";
+    UtilJsonCpp::streamroot(logstream, root);
     return EXIT_SUCCESS;
-}
-
-// this overload calls the previous overloaded method after opening the file
-int UtilJsonCpp::checkjsonsyntax(std::ostream& strm, std::string filename)
-{
-    // Add the code to check if file can be opened
-    // std::string filename = argv[1];
-    std::ifstream ifs(filename, std::ios::in);
-    if (!ifs.is_open() || !ifs.good()) {
-        const char *errorStr = strerror(errno);
-        strm << "Failed to open Json file " << filename.c_str() << " " << errorStr << std::endl;
-        return EXIT_FAILURE;
-    }
-    return UtilJsonCpp::checkjsonsyntax(strm, ifs);
 }
 
 // All Json Value objects can call getMemberNames() except nullptr and object

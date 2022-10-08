@@ -69,22 +69,43 @@ Json::Value ConfigSingleton::s_editRoot;      // Editable copy of the root JSON 
 ConfigSingletonShrdPtr ConfigSingleton::sp_Instance;
 std::mutex ConfigSingleton::s_mutex;
 bool ConfigSingleton::s_enabled = false;
-std::string ConfigSingleton::s_jsonfilename;
+std::string ConfigSingleton::s_jsonfilename = std::string("default_config_filename.json");
 
-ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename, Log::Logger& logger)
+ConfigSingletonShrdPtr ConfigSingleton::create(const std::string& filename, std::ostream& logstream)
 {
     if (ConfigSingleton::s_enabled)
     {
         return ConfigSingleton::sp_Instance->shared_from_this();
     }
-    std::lock_guard<std::mutex> lock(s_mutex);
 
-    ConfigSingleton::sp_Instance = ConfigSingletonShrdPtr(new ConfigSingleton(filename));
+    std::lock_guard<std::mutex> lock(ConfigSingleton::s_mutex);
 
-    if (!ConfigSingleton::initialize(logger))
+    // second identical check in case of race condition (because we're locked now)
+    if (ConfigSingleton::s_enabled)
+    {
+        return ConfigSingleton::sp_Instance->shared_from_this();
+    }
+
+    std::ifstream ifs(filename);
+    ConfigSingleton::s_jsonfilename = filename;
+
+    ifs.open(filename);
+    if (! ifs.is_open())
+    {
+        // JsonCpp does not check this, but will fail with a syntax error on the first read
+        std::string excpstr = std::string("Error initializing ConfigSingleton object: Could not open json file ") +
+                                          ConfigSingleton::s_jsonfilename;
+        throw std::runtime_error(excpstr);
+        // and exit()
+    }
+
+    ConfigSingleton::sp_Instance = ConfigSingletonShrdPtr(new ConfigSingleton());
+
+    if (!ConfigSingleton::initialize(logstream))
     {
         throw std::runtime_error("Error initializing ConfigSingleton object");
     }
+
     ConfigSingleton::s_enabled = true;
     return ConfigSingleton::sp_Instance;
 }
@@ -104,37 +125,40 @@ ConfigSingletonShrdPtr ConfigSingleton::instance()
     return ConfigSingleton::sp_Instance;
 }
 
-bool ConfigSingleton::initialize(Log::Logger& logger)
+bool ConfigSingleton::initialize(std::ostream& logstream)
 {
-    std::ostringstream strm;
-    if (UtilJsonCpp::checkjsonsyntax(strm, s_jsonfilename) == EXIT_FAILURE)
-    {
-        std::string errstr = strm.str();
-        logger.error() << errstr;
-        std::cerr << "\n" << errstr << std::endl;
-        return false;
-    }
+    // temporary root
+    Json::Value root;
 
-    std::ifstream cfgfile(s_jsonfilename);
-    if (!cfgfile.is_open())
+    std::ifstream ifs(ConfigSingleton::s_jsonfilename);
+    if (! ifs.is_open())
     {
         // JsonCpp does not check this, but will fail with a syntax error on the first read
-        logger.error() << "\nERROR: Could not open json file " << s_jsonfilename << ".  Exiting...\n";
-        std::cerr << "\nERROR: Could not open json file " << s_jsonfilename << ".  Exiting...\n" << std::endl;
-        cfgfile.close();
+        std::string excpstr = std::string("Error initializing ConfigSingleton object: Could not open json file ") +
+                                          ConfigSingleton::s_jsonfilename;
+        throw std::runtime_error(excpstr);
+        // and exit()
+    }
+
+    std::ostringstream strm;
+    if (UtilJsonCpp::checkjsonsyntax(strm, ifs, root) == EXIT_FAILURE)
+    {
+        logstream << strm.str();
+        ifs.close();
         return false;
     }
 
-    cfgfile >> Config::ConfigSingleton::s_configRoot;
-    cfgfile.close();
+    // store the temporary root into the real one
+    ConfigSingleton::s_configRoot = root;
 
     // Make the initial copy of the JSON root object to make the editable copy.
     ConfigSingleton::s_editRoot = Config::ConfigSingleton::s_configRoot;
 
+    ifs.close();
     return true;
 }
 
-bool ConfigSingleton::UpdateJsonConfigFile(Log::Logger& logger, std::string tempfilename)
+bool ConfigSingleton::UpdateJsonConfigFile(std::ostream& logstream, std::string tempfilename)
 {
     std::lock_guard<std::mutex> lock(ConfigSingleton::s_mutex);
 
@@ -154,8 +178,8 @@ bool ConfigSingleton::UpdateJsonConfigFile(Log::Logger& logger, std::string temp
         errnocopy = errno;
 
         // JsonCpp does not check this, but will fail with a syntax error on the first read
-        logger.error() << "ERROR: UpdateJsonConfigFile() could not open/create the new json file " << tempfilename
-                       << ": " << strerror(errnocopy) << ", aborted...";
+        logstream << "ERROR: UpdateJsonConfigFile() could not open/create the new json file " << tempfilename
+                       << ": " << strerror(errnocopy) << ", aborted...\n";
         tmpcfgfile.close();
         return false;
     }
@@ -171,56 +195,56 @@ bool ConfigSingleton::UpdateJsonConfigFile(Log::Logger& logger, std::string temp
     // Get rid of the old/existing copy.
     if (checkFileExists(savejsonfilename))
     {
-        logger.info() << "File exists: " << savejsonfilename;
-        logger.info() << "Unlinking " << savejsonfilename;
+        logstream << "File exists: " << savejsonfilename << "\n";
+        logstream << "Unlinking " << savejsonfilename;
         ::unlink(savejsonfilename.c_str());
     }
     else
     {
-        logger.info() << "File does not exist: " << savejsonfilename;
+        logstream << "File does not exist: " << savejsonfilename << "\n";
     }
 
     if (checkFileExists(savejsonfilename))
     {
-        logger.info() << "File still exists: " << savejsonfilename << ". Aborted.";
+        logstream << "File still exists: " << savejsonfilename << ". Aborted.\n";
         return false;
     }
 
     // Save the existing json file by linking it (hard link) to the now, non-existent save_ file.
-    logger.info() << "Linking (::link()) the original json file "
+    logstream << "Linking (::link()) the original json file "
                   << ConfigSingleton::s_jsonfilename << " to the new saved copy "
-                  << savejsonfilename << ".";
+                  << savejsonfilename << ".\n";
     if (::link(ConfigSingleton::s_jsonfilename.c_str(), savejsonfilename.c_str()) != 0)
     {
         errnocopy = errno;
-        logger.error() << "ERROR: UpdateJsonConfigFile() could not ::link() the original json file "
+        logstream << "ERROR: UpdateJsonConfigFile() could not ::link() the original json file "
                        << ConfigSingleton::s_jsonfilename << " to the new saved copy "
-                       << savejsonfilename << ": " << strerror(errnocopy) << ", aborted...";
+                       << savejsonfilename << ": " << strerror(errnocopy) << ", aborted...\n";
         return false;
     }
 
     // Original json config file saved successfully. Now, unlink it (the original):
-    logger.info() << "Unlinking (removing) the original file " << ConfigSingleton::s_jsonfilename << " so that "
-                   << "the new json file " << tempfilename << " can replace it.";
+    logstream << "Unlinking (removing) the original file " << ConfigSingleton::s_jsonfilename << " so that "
+                   << "the new json file " << tempfilename << " can replace it.\n";
     if (::unlink(ConfigSingleton::s_jsonfilename.c_str()) != 0)
     {
         errnocopy = errno;
-        logger.error() << "ERROR: UpdateJsonConfigFile() could not ::unlink() file " << ConfigSingleton::s_jsonfilename
-                       << ": " << strerror(errnocopy);
+        logstream << "ERROR: UpdateJsonConfigFile() could not ::unlink() file " << ConfigSingleton::s_jsonfilename
+                       << ": " << strerror(errnocopy) << "\n";
         return false;
     }
 
     // Now link the new json file - tempfilename - to the original filename:
     // Save the existing json file by linking it (hard link) to the now, non-existent permanent json file.
-    logger.info() << "UpdateJsonConfigFile() linking (hard link) the new json file "
+    logstream << "UpdateJsonConfigFile() linking (hard link) the new json file "
                    << tempfilename << " to the correct permanent location "
-                   << ConfigSingleton::s_jsonfilename << ".";
+                   << ConfigSingleton::s_jsonfilename << ".\n";
     if (::link(tempfilename.c_str(), ConfigSingleton::s_jsonfilename.c_str()) != 0)
     {
         errnocopy = errno;
-        logger.error() << "ERROR: UpdateJsonConfigFile() could not ::link() the new json file "
+        logstream << "ERROR: UpdateJsonConfigFile() could not ::link() the new json file "
                        << tempfilename << " to the correct permanent location "
-                       << ConfigSingleton::s_jsonfilename << ": " << strerror(errnocopy) << ", aborted...";
+                       << ConfigSingleton::s_jsonfilename << ": " << strerror(errnocopy) << ", aborted...\n";
         return false;
     }
 
@@ -228,8 +252,8 @@ bool ConfigSingleton::UpdateJsonConfigFile(Log::Logger& logger, std::string temp
     if (! checkFileIsNotEmpty(ConfigSingleton::s_jsonfilename))
     {
         errnocopy = errno;
-        logger.error() << "ERROR: UpdateJsonConfigFile(): after update, found file "
-                       << ConfigSingleton::s_jsonfilename << " is non-existent or empty. Aborted...";
+        logstream << "ERROR: UpdateJsonConfigFile(): after update, found file "
+                       << ConfigSingleton::s_jsonfilename << " is non-existent or empty. Aborted...\n";
         return false;
     }
 

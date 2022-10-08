@@ -36,13 +36,29 @@ std::string logFilelName = logChannelName + "_log.txt";
 Log::Log::Level loglevel = Log::Log::Level::eDebug;
 std::string default_log_level = Log::Log::toString(loglevel);
 std::string log_level = default_log_level;
-
-// Config statics
-std::string config_file_name = "main_jsoncpp_samplecfg.json";
+std::string jsonFileName = "main_jsoncpp_samplecfg.json";
 
 int main(int argc, char *argv[])
 {
     using namespace Config;
+
+    std::stringstream loggerStream;
+
+    // declaring this outside the scope of try/catch so it can be used later
+    ConfigSingletonShrdPtr thesp;
+
+    try {
+        /////////////////
+        // Set up the config
+        /////////////////
+
+        thesp = ConfigSingleton::create(jsonFileName, loggerStream);
+
+    } catch (const std::exception& e) {
+        std::cerr << "ERROR: Exception while trying to create config singleton: \n    " << e.what() << std::endl;
+        std::cerr << "Previously logged info: " << loggerStream.str() << std::endl;
+        return EXIT_FAILURE;
+    }
 
     /////////////////
     // Set up the logger
@@ -55,21 +71,12 @@ int main(int argc, char *argv[])
 
     std::cerr << "Log level is: " << log_level << std::endl;
 
-    try {
-        /////////////////
-        // Set up the config
-        /////////////////
+    logger.debug() << "Config instance shared_ptr<> use count = " << thesp.use_count()
+                     << "\nParsed " << jsonFileName << " contents: \n"
+                     << thesp->instance()->JsonRoot();
 
-        ConfigSingletonShrdPtr thesp = ConfigSingleton::create(config_file_name, logger);
-
-        logger.debug() << "\n\nConfig instance shared_ptr<> use count = " << thesp.use_count() << "\n"
-                       << "\nParsed " << config_file_name << " contents: \n"
-                       << thesp->instance()->JsonRoot() << "\n\n";
-
-    } catch (const std::exception& e) {
-        logger.error() << "Exception while trying to create config singleton: " << e.what();
-        return 1;
-    }
+    logger.notice() << "Items logged before logger initialization:\n";
+    logger.notice() << loggerStream.str();
 
     /////////////////
     // Do some access:
@@ -82,12 +89,12 @@ int main(int argc, char *argv[])
     int position2 = ref_root_copy["Config"]["position"][1].asInt();
     int frame_count = ref_root_copy["Config"]["Video"]["frame-count"].asInt();
 
-    logger.info() << "\nChannel-name = " << channel << "\n"
+    logger.info()  << "\nChannel-name = " << channel << "\n"
                   << "write-to-file = " << write_to_file << "\n"
                   << "position array index 1 = " << position2 << "\n"
                   << "frame-count = " << frame_count << "\n";
 
-    logger.info() << "\n\nAfter modifications:\n";
+    logger.info() << "After modifications:\n";
     ref_root_copy["Config"]["Logger"]["channel-name"] = std::string("newChannelName");
     ref_root_copy["Config"]["App-options"]["write-to-file"] = 0;
     ref_root_copy["Config"]["position"][1] = 1246;
@@ -98,7 +105,7 @@ int main(int argc, char *argv[])
     position2 = ref_root_copy["Config"]["position"][1].asInt();
     frame_count = ref_root_copy["Config"]["Video"]["frame-count"].asInt();
 
-    logger.info() << "\nChannel-name = " << channel << "\n"
+    logger.info()  << "\nChannel-name = " << channel << "\n"
                   << "write-to-file = " << write_to_file << "\n"
                   << "position array index 1 = " << position2 << "\n"
                   << "frame-count = " << frame_count << "\n";
@@ -110,7 +117,7 @@ int main(int argc, char *argv[])
     if (!newcfgfile.is_open())
     {
         // JsonCpp does not check this, but will fail with a syntax error on the first read
-        logger.error() << "\nERROR: Could not open/create the new json file " << newfilename << ".  Exiting...\n";
+        logger.error() << "ERROR: Could not open/create the new json file " << newfilename << ".  Exiting...\n";
         std::cerr << "\nERROR: Could not open/create the new json file " << newfilename << ".  Exiting...\n" << std::endl;
         newcfgfile.close();
         return 1;
@@ -123,13 +130,13 @@ int main(int argc, char *argv[])
     // Checking out some object methods
     //////////////////////////////////////////
 
-    logger.info() << "      ****** CHECKING OUT SOME OBJECT METHODS ******";
+    logger.info() << "      ****** CHECKING OUT SOME OBJECT METHODS ******\n";
 
     std::stringstream root_strm;
     root_strm << ref_root_copy;
     std::string newroot = root_strm.str();
 
-    logger.info() << "\n\nStreamed existing ref_root_copy to strstream: \n\n" << newroot << "\n\n";
+    logger.info() << "Streamed existing ref_root_copy to strstream:\n" << newroot ;
 
     Json::Value new_root = ref_root_copy;
 
@@ -137,14 +144,14 @@ int main(int argc, char *argv[])
     newroot_strm << new_root;
     newroot = newroot_strm.str();
 
-    logger.info() << "\n\nStreamed the new root to stringstream: \n\n" << newroot << "\n\n";
+    logger.info() << "Streamed the new root to stringstream:" << "\n" << newroot ;
 
     channel = new_root["Config"]["Logger"]["channel-name"].asString();
     write_to_file = (new_root["Config"]["App-options"]["write-to-file"].asBool()) == 0? false: true;
     position2 = new_root["Config"]["position"][1].asInt();
     frame_count = new_root["Config"]["Video"]["frame-count"].asInt();
 
-    logger.info() << "Values from copied editable root reference:\n\n"
+    logger.info() << "Values from copied editable root reference:\n"
                   << "Channel-name = " << channel << "\n"
                   << "write-to-file = " << write_to_file << "\n"
                   << "position array index 1 = " << position2 << "\n"
@@ -161,15 +168,19 @@ int main(int argc, char *argv[])
     ref_root_copy = new_root;
 
     Json::Value& edit_root_ref = ConfigSingleton::GetJsonRootCopyRef();
-    logger.info() << "\n\nContents of s_editRoot:\n" << edit_root_ref << "\n";
+    logger.info() << "Contents of s_editRoot:\n" << edit_root_ref ;
 
-    if (! ConfigSingleton::instance()->UpdateJsonConfigFile(logger))
+    std::stringstream log2Stream;
+    if (! ConfigSingleton::instance()->UpdateJsonConfigFile(log2Stream))
     {
-        logger.error() << "\nERROR: UpdateJsonConfigFile() failed.  Exiting... ";
-        std::cerr << "\nERROR: UpdateJsonConfigFile() failed.  Exiting... " << std::endl;
+        std::string previousLog = log2Stream.str();
+        logger.error() << "ERROR: UpdateJsonConfigFile() failed.  Exiting... \n";
+        logger.error() << "Contents of UpdateJsonConfigFile() logging:\n" << previousLog << "\n";
+        std::cerr << "\nERROR: UpdateJsonConfigFile() failed.  Exiting... " << previousLog << std::endl;
         return 1;
     }
 
+    logger.debug() << "Contents of UpdateJsonConfigFile() logging:\n" << log2Stream.str() << "\n";
     return 0;
 }
 

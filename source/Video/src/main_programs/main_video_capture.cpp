@@ -151,12 +151,10 @@ int main(int argc, const char *argv[])
     /////////////////
 
     std::string argv0 = argv[0];
+    std::string argv1 = argv[1];
 
     // If no parameters were supplied, or help was requested:
-    if (argc > 1 && (std::string(const_cast<const char*>(argv[1])) == "--help"
-                    || std::string(const_cast<const char*>(argv[1])) == "-h"
-                    || std::string(const_cast<const char*>(argv[1])) == "help")
-            )
+    if (argc > 1 && (argv1 == "--help" || argv1 == "-h" || argv1 == "help"))
     {
         Video::CommandLine::Usage(std::cerr, argv0);
         std::cerr << std::endl;
@@ -175,23 +173,32 @@ int main(int argc, const char *argv[])
     // has to be done so that the command line can overwrite its values in the following step.
     /////////////////
 
-    std::ostringstream strm;
-    if (UtilJsonCpp::checkjsonsyntax(strm, Video::vcGlobals::config_file_name) == EXIT_FAILURE)
-    {
-        std::string errstr = strm.str();
-        std::cerr << "\nERROR in file " << Video::vcGlobals::config_file_name << ":\n\n" << errstr << std::endl;
+    // This is the actual root node in the internal json tree.
+    Json::Value cfg_root;
+
+    std::ifstream ifs(Video::vcGlobals::config_file_name, std::ios::in);
+    if (!ifs.is_open() || !ifs.good()) {
+        const char *errorStr = strerror(errno);
+        std::cerr << "Failed to open Json file " << Video::vcGlobals::config_file_name.c_str() << " " << errorStr << std::endl;
         return EXIT_FAILURE;
     }
 
+    std::ostringstream strm;
+    if (UtilJsonCpp::checkjsonsyntax(strm, ifs, cfg_root) == EXIT_FAILURE)
+    {
+        std::string errstr = strm.str();
+        std::cerr << "\nERROR in file " << Video::vcGlobals::config_file_name << ":\n\n" << errstr << std::endl;
+        if (ifs.is_open()) ifs.close();
+        return EXIT_FAILURE;
+    }
+    if (ifs.is_open()) ifs.close();
+
     // We will log this as soon as the logger is configured and operational.
-    std::string parseoutput = std::string("\n\nParsed JSON nodes:") + strm.str();
+    std::string parse_output = std::string("\n\nParsed JSON nodes:") + strm.str();
 
     // Everything in the vector will be written to the log file
     // as soon as the logger is initialized.
-    delayedLinesForLogger.push_back(parseoutput);
-
-    // This is the actual root node in the internal json tree.
-    Json::Value cfg_root;
+    delayedLinesForLogger.push_back(parse_output);
 
     std::ifstream cfgfile(Video::vcGlobals::config_file_name);
     if (!cfgfile.is_open())
@@ -201,7 +208,7 @@ int main(int argc, const char *argv[])
         std::cerr << "\nERROR: Could not find json file " << Video::vcGlobals::config_file_name << ".  Exiting...\n" << std::endl;
         return EXIT_FAILURE;
     }
-    cfgfile >> cfg_root;    // json operator>>()
+    ///////////////////////   TODO:  cfgfile >> cfg_root;    // json operator>>()
 
     std::stringstream configstrm;
     configstrm << "\n\nParsed JSON file " << Video::vcGlobals::config_file_name << " successfully.  Contents: \n\n"
@@ -226,8 +233,6 @@ int main(int argc, const char *argv[])
             std::cerr << "\nError while accessing json values read from " << Video::vcGlobals::config_file_name << "." << std::endl;
             return EXIT_FAILURE;
         }
-        // Everything in the vector will be written to the log file
-        // as soon as the logger is initialized.
 
         std::string constring = strm.str();
         std::cerr << constring << std::endl;

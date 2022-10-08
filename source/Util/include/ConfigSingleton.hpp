@@ -24,24 +24,22 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <MainLogger.hpp>
+#include <json/json.h>
+#include <iostream>
 #include <mutex>
 #include <memory>
-#include <json/json.h>
 
 namespace Config
 {
     class ConfigSingleton;        // forward declaration
     using ConfigSingletonShrdPtr = std::shared_ptr<ConfigSingleton>;
+    using IfsreamShrdPtr = std::shared_ptr<std::ifstream>;
 
     class ConfigSingleton : public std::enable_shared_from_this<ConfigSingleton>
     {
     private:
         // No public access to constructor. Have to use ::create()
-        explicit ConfigSingleton(const std::string& filename)
-        {
-            s_jsonfilename = filename;
-        }
+        ConfigSingleton(void) = default;
 
         ConfigSingleton(const ConfigSingleton &) = delete;
         ConfigSingleton &operator=(ConfigSingleton const &) = delete;
@@ -50,15 +48,15 @@ namespace Config
 
     public:
         // this is the only option to construct the new object
-        [[nodiscard]] static ConfigSingletonShrdPtr create(const std::string& filename, Log::Logger& logger);
+        [[nodiscard]] static ConfigSingletonShrdPtr create(const std::string& filename, std::ostream& logstream);
 
         // This cannot be static (std::shared_from_this() needs "this->")
         ConfigSingletonShrdPtr get_shared_ptr();
-        static Json::Value& JsonRoot()                     { return s_configRoot; }
-        static Json::Value& GetJsonRootCopyRef()        { return s_editRoot; }
+        static Json::Value& JsonRoot()                    { return s_configRoot; }
+        static Json::Value& GetJsonRootCopyRef()          { return s_editRoot; }
         static std::string JsonFileName()                 { return s_jsonfilename; }
         static ConfigSingletonShrdPtr instance();
-        static bool initialize(Log::Logger& logger);
+        static bool initialize(std::ostream& logstream);
 
     public:
         // The caller can make changes to the internal copy of the JsonRoot
@@ -68,8 +66,7 @@ namespace Config
         // disk (into the real json file - ::s_jsonfilename). After this operation
         // is finished, the caller can (should) restart their operation so that
         // the new values can take effect.
-        bool UpdateJsonConfigFile(Log::Logger& logger,
-                                  std::string UseTempFileName = std::string("tmp_") + s_jsonfilename);
+        bool UpdateJsonConfigFile(std::ostream& logstream, std::string UseTempFileName = std::string("tmp_") + s_jsonfilename);
 
     private:
         // static members
