@@ -105,6 +105,7 @@ void Usage(std::ostream &strm, std::string command)
 
 int main(int argc, const char *argv[])
 {
+#if 0   // TODO:  Finish this
     using namespace VideoCapture;
 
     /////////////////
@@ -170,8 +171,37 @@ int main(int argc, const char *argv[])
     std::cerr << "JSON parsing log file: " << logChannelName+"_json_log.txt" << std::endl;
     logger.debug() << "JSON parsing log file: " << logChannelName+"_json_log.txt";
 
+    std::ifstream iifs(config_file_name);
+    if (!iifs.is_open())
+    {
+        // This message is for debugging help. JsonCpp does not check if the file stream is
+        // valid, but will fail with a syntax error on the first read, which is not helpful.
+        std::cerr << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
+        ofs << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n" << std::endl;
+        logger.debug() << "\nERROR: Could not find json file " << config_file_name << ".  Exiting...\n";
+
+        ofs.close();
+        return 1;
+    }
+
+    cfgfile >> cfg_root;
+    ofs << "\n" << cfg_root << std::endl;
+    logger.debug() << "\n\n" << cfg_root;
+    cfgfile.close();
+
+
+
+
+
+
+
+
     std::ostringstream strm;
-    if (UtilJsonCpp::checkjsonsyntax(strm, config_file_name) == EXIT_FAILURE)
+    // int UtilJsonCpp::checkjsonsyntax(std::ostream& logstream, std::istream& istrm, Json::Value& root)
+    // parseFromStream(builder, istrm, &root, &errs))
+
+    std::stringstream logstream;
+    if (UtilJsonCpp::checkjsonsyntax(strm, ofs, logstream, config_file_name) == EXIT_FAILURE)
     {
         std::string errstr = strm.str();
         logger.error() << errstr;
@@ -316,6 +346,9 @@ int main(int argc, const char *argv[])
     ofs.close();
 
     return ret;
+}
+#endif // 0
+    return 0;    // TODO: Finish the above
 }
 
 bool parse(std::ostream &strm, int argc, const char *argv[])

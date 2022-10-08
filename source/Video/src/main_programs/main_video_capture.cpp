@@ -29,6 +29,9 @@
 #include <video_capture_globals.hpp>
 #include <JsonCppUtil.hpp>
 #include <Utility.hpp>
+#include <MainLogger.hpp>
+#include <ConfigSingleton.hpp>
+#include <json/json.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,6 +147,8 @@ int main(int argc, const char *argv[])
 {
     using namespace Video;
 
+    // Setting up the config singleton before the logger is set
+    // up - we will accumulate logger lines until it is.
     std::vector<std::string> delayedLinesForLogger;
 
     /////////////////
@@ -151,7 +156,7 @@ int main(int argc, const char *argv[])
     /////////////////
 
     std::string argv0 = argv[0];
-    std::string argv1 = argv[1];
+    std::string argv1 = (argv[1] == nullptr? "-h" : argv[1]);
 
     // If no parameters were supplied, or help was requested:
     if (argc > 1 && (argv1 == "--help" || argv1 == "-h" || argv1 == "help"))
@@ -173,61 +178,52 @@ int main(int argc, const char *argv[])
     // has to be done so that the command line can overwrite its values in the following step.
     /////////////////
 
-    // This is the actual root node in the internal json tree.
-    Json::Value cfg_root;
+    std::stringstream loggerStream;
 
-    std::ifstream ifs(Video::vcGlobals::config_file_name, std::ios::in);
-    if (!ifs.is_open() || !ifs.good()) {
-        const char *errorStr = strerror(errno);
-        std::cerr << "Failed to open Json file " << Video::vcGlobals::config_file_name.c_str() << " " << errorStr << std::endl;
+    // declaring this outside the scope of try/catch so it can be used later
+    Config::ConfigSingletonShrdPtr thesp;
+
+    try {
+        /////////////////
+        // Set up config
+        /////////////////
+
+        thesp = Config::ConfigSingleton::create(Video::vcGlobals::config_file_name, loggerStream);
+
+        // At this point the json root node has been set up - after parsing, checking syntax, etc.
+        // If ANY errors are encountered along the way, they will be catch()ed below and the
+        // program aborted.
+        //
+        // As of this point, the root node can be accessed by reference with
+        //
+        //              Json::Value& ConfigSingleton::instance()->JsonRoot();
+        //
+
+    } catch (const std::exception& e) {
+        std::cerr << "ERROR: Exception while trying to create config singleton: \n    " << e.what() << std::endl;
+        std::cerr << "Previously logged info: " << loggerStream.str() << std::endl;
         return EXIT_FAILURE;
     }
-
-    std::ostringstream strm;
-    if (UtilJsonCpp::checkjsonsyntax(strm, ifs, cfg_root) == EXIT_FAILURE)
-    {
-        std::string errstr = strm.str();
-        std::cerr << "\nERROR in file " << Video::vcGlobals::config_file_name << ":\n\n" << errstr << std::endl;
-        if (ifs.is_open()) ifs.close();
-        return EXIT_FAILURE;
-    }
-    if (ifs.is_open()) ifs.close();
 
     // We will log this as soon as the logger is configured and operational.
-    std::string parse_output = std::string("\n\nParsed JSON nodes:") + strm.str();
+    std::string parse_output = std::string("\n\nParsed JSON nodes:") + loggerStream.str();
 
     // Everything in the vector will be written to the log file
     // as soon as the logger is initialized.
     delayedLinesForLogger.push_back(parse_output);
 
-    std::ifstream cfgfile(Video::vcGlobals::config_file_name);
-    if (!cfgfile.is_open())
-    {
-        // This message is for debugging help. JsonCpp does not check if the file stream is
-        // valid, but will fail with a syntax error on the first read, which is not helpful.
-        std::cerr << "\nERROR: Could not find json file " << Video::vcGlobals::config_file_name << ".  Exiting...\n" << std::endl;
-        return EXIT_FAILURE;
-    }
-    ///////////////////////   TODO:  cfgfile >> cfg_root;    // json operator>>()
-
     std::stringstream configstrm;
     configstrm << "\n\nParsed JSON file " << Video::vcGlobals::config_file_name << " successfully.  Contents: \n\n"
-                      << cfg_root << "\n";
+                      << Config::ConfigSingleton::instance()->JsonRoot() << "\n";
 
     // Everything in the vector will be written to the log file
     // as soon as the logger is initialized.
     delayedLinesForLogger.push_back(configstrm.str());
 
-    cfgfile.close();
-
-    ///////////////////////////////////////////////////////////////////////////////////
-    // As of this point, cfg_root contains the root for the whole json tree.
-    ///////////////////////////////////////////////////////////////////////////////////
-
     try {
 
         std::stringstream strm;
-        if (! Video::updateInternalConfigsWithJsonValues(strm, cfg_root))
+        if (! Video::updateInternalConfigsWithJsonValues(strm, Config::ConfigSingleton::instance()->JsonRoot()))
         {
             std::cerr << strm.str() << std::endl;
             std::cerr << "\nError while accessing json values read from " << Video::vcGlobals::config_file_name << "." << std::endl;

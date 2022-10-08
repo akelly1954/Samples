@@ -1,6 +1,4 @@
-//
-// This is the C++ main fronting for the C main (called here v4l2_raw_capture_main()).
-//
+
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -56,25 +54,6 @@ bool            Video::vcGlobals::capture_finished =   false;
 bool            Video::vcGlobals::capture_pause =      false;
 std::string     Video::vcGlobals::config_file_name =   Video::vcGlobals::logChannelName + ".json";
 
-// This version of the code is built for the following type of json content:
-#if 0
-        "Config": {
-            "Logger": {
-                "channel-name":     "video_capture",
-                "file-name":        "video_capture_log.txt",
-                "log-level":        "DBUG"
-            },
-            "App-options": {
-                "output-file":      "video_capture.data",
-                "write-to-file":    1,
-                "profiling":        0
-            },
-            "Video": {
-                "frame-count":      200
-            }
-        }
-    }
-#endif // 0
 
 // This function overwrites values in Video::vcGlobals with content from
 // the json config file.
@@ -100,12 +79,7 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     Video::vcGlobals::log_level = Utility::trim(cfg_root["Config"]["Logger"]["log-level"].asString());
     strm << "\nFrom JSON:  Set default logger log level to: " << Video::vcGlobals::log_level;
 
-
-
     Log::Log::toString(Video::vcGlobals::loglevel);
-
-
-
 
     return true;
 }
