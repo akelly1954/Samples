@@ -140,10 +140,8 @@ bool ConfigSingleton::initialize(std::ostream& logstream)
         // and exit()
     }
 
-    std::ostringstream strm;
-    if (UtilJsonCpp::checkjsonsyntax(strm, ifs, root) == EXIT_FAILURE)
+    if (UtilJsonCpp::checkjsonsyntax(logstream, ifs, root) == EXIT_FAILURE)
     {
-        logstream << strm.str();
         ifs.close();
         return false;
     }

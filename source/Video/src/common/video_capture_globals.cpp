@@ -30,7 +30,6 @@
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <MainLogger.hpp>
-#include <LoggerCpp/LoggerCpp.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
