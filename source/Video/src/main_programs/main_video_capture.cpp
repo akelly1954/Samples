@@ -1,5 +1,5 @@
 
-// NOTE: TODO: This file has work in progress. Do not use.
+// NOTE: TODO: This file is work in progress. Look, but don't run it.
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -121,25 +121,29 @@ void test_raw_capture_ctl(Log::Logger logger)
 
 // static definitions
 
-static Util::LoggerOptions defaultLogOptions = {
-                // loglevel (in LoggerOptions)
-                Video::vcGlobals::loglevel,
+Util::LoggerOptions setLocalLoggerOptions()
+{
+    Util::LoggerOptions localopt = {
+            // loglevel (in LoggerOptions)
+            Video::vcGlobals::loglevel,
 
-                // log_level (in LoggerOptions)
-                Video::vcGlobals::log_level,
+            // log_level (in LoggerOptions)
+            Video::vcGlobals::log_level,
 
-                // logChannelName (in LoggerOptions)
-                Video::vcGlobals::logChannelName,
+            // logChannelName (in LoggerOptions)
+            Video::vcGlobals::logChannelName,
 
-                // logFileName (in LoggerOptions)
-                Video::vcGlobals::logFilelName,
+            // logFileName (in LoggerOptions)
+            Video::vcGlobals::logFilelName,
 
-                // useConsole  (in LoggerOptions)
-                Util::MainLogger::disableConsole,
+            // useConsole  (in LoggerOptions)
+            Util::MainLogger::disableConsole,
 
-                // useLogFile (in LoggerOptions)
-                Util::MainLogger::enableLogFile
-            };
+            // useLogFile (in LoggerOptions)
+            Util::MainLogger::enableLogFile
+    };
+    return localopt;
+}
 
 int main(int argc, const char *argv[])
 {
@@ -263,41 +267,43 @@ int main(int argc, const char *argv[])
     // Set up the logger
     /////////////////
 
-    // Get initial values into localopt (this does a copy of the LoggerOptions object).
-    Util::LoggerOptions localopt = Util::UtilLogger::getDefaultLoggerOptions();
-
-    // the default values set by class Util::UtilLogger are now overwritten by
-    // the defaultLogOptions struct declared above.
-    localopt = defaultLogOptions;
-
-    // At this point, the individual struct members can be assigned directly (in localopt)
-    // as well, for example:
-    //          localopt.logFilelName = "somestring.txt";
-
-    // TODO: Remove this
-    // This become home of *the* logger.
-    // Util::UtilLogger ulogger;
+    // This picks the values from Video::vcGlobals (which was modified
+    // by the json file and then the command line.
+    Util::LoggerOptions localopt = setLocalLoggerOptions();
 
     // set the values in localopt as the values in ulogger.
     Util::UtilLogger::setLoggerOptions(localopt);
 
-    // No additional calls to ulogger.setLoggerOptions() are
-    // allowed past this point (an exception will be thrown).
-    // This statement is the same as:
-    //      std::shared_ptr<Log::Logger> splogger = Util::UtilLogger::getLoggerPtr();
-    Util::LoggerSPtr splogger = Util::UtilLogger::getLoggerPtr();
+    //////////////////////////////////////////////////////////////
+    // Initialise the UtilLogger object
+    //////////////////////////////////////////////////////////////
+    Util::UtilLogger::create(localopt);
+
+    //////////////////////////////////////////////////////////////
+    // Reference to THE logger object
+    //////////////////////////////////////////////////////////////
+    Log::Logger& ulogger = *(Util::UtilLogger::getLoggerPtr());
+
+    {
+        Util::LoggerOptions logopt;
+
+        std::stringstream ostr;
+        logopt = Util::UtilLogger::getLoggerOptions();
+        Util::UtilLogger::streamLoggerOptions(ostr, logopt, "after getting shared_ptr<> to Log::Logger");
+        ulogger.debug() << ostr.str();
+    }
 
     // The logger is now set up.
-    splogger->info() << "\n\nLogger setup is complete.\n";
-    splogger->info() << "    **********  Deferred output from app initialization (only displayed in DBUG mode.  **********";
-    splogger->info() << "    **********          Need to run with \"-lg DBUG\" on the command line).            **********";
-    splogger->info() << "";
+    ulogger.info() << "\n\nLogger setup is complete.\n";
+    ulogger.info() << "    **********  Deferred output from app initialization (only displayed in DBUG mode.  **********";
+    ulogger.info() << "    **********          Need to run with \"-lg DBUG\" on the command line).            **********";
+    ulogger.info() << "";
 
 
     // Empty out the delayed-lines' vector...
     for(auto line : delayedLinesForLogger)
     {
-        splogger->info() << line;
+        ulogger.debug() << line;
     }
 
     return 0;

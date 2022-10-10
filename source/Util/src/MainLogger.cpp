@@ -142,16 +142,14 @@ LoggerOptions UtilLogger::s_defaultLogOpt = {
 
 LoggerSPtr Util::UtilLogger::sp_Logger;
 UtilLoggerSPtr UtilLogger::sp_UtilLogger;
-LoggerOptions UtilLogger::m_runtimeLogOpt;
-
-// UtilLoggerSPtr sp_UtilLogger;
+LoggerOptions UtilLogger::m_runtimeLogOpt = s_defaultLogOpt;
 
 // methods
 
 Util::UtilLoggerSPtr UtilLogger::create(void)
 {
     // use the default settings for the logger
-     return UtilLogger::create(UtilLogger::s_defaultLogOpt);
+     return UtilLogger::create(UtilLogger::m_runtimeLogOpt);
 }
 
 Util::UtilLoggerSPtr UtilLogger::create(Util::LoggerOptions& logopt)
@@ -167,12 +165,10 @@ Util::UtilLoggerSPtr UtilLogger::create(Util::LoggerOptions& logopt)
                                           );
 
     Util::MainLogger::configureLogManager( configList, logopt.logChannelName);
-
+    Util::UtilLogger::setLoggerOptions(logopt);
+    Util::UtilLogger::sp_Logger = std::make_shared<Log::Logger>(*(new Log::Logger(logopt.logChannelName.c_str())));
     UtilLoggerSPtr spu_logger = std::make_shared<UtilLogger>(Util::UtilLogger());
 
-    Util::UtilLogger::sp_Logger = std::make_shared<Log::Logger>(*(new Log::Logger(logopt.logChannelName.c_str())));
-
-    spu_logger->setLoggerOptions(logopt);
     return spu_logger;
 }
 

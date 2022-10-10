@@ -49,7 +49,6 @@ int main()
     localopt.useConsole = MainLogger::disableConsole;
     localopt.useLogFile = MainLogger::enableLogFile;
 
-
     // Initialise the UtilLogger object
     UtilLogger::create(localopt);
 
