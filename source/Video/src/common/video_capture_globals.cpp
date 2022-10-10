@@ -42,7 +42,7 @@
 std::string     Video::vcGlobals::logChannelName =     "video_capture";
 std::string     Video::vcGlobals::logFilelName =       Video::vcGlobals::logChannelName + "_log.txt";
 std::string     Video::vcGlobals::output_file =        Video::vcGlobals::logChannelName + ".data";  // Name of file intended for the video frames
-Log::Log::Level Video::vcGlobals::loglevel =           Log::Log::Level::eDebug;
+Log::Log::Level Video::vcGlobals::loglevel =           Log::Log::Level::eNotice;
 std::string     Video::vcGlobals::default_log_level =  Log::Log::toString(Video::vcGlobals::loglevel);
 std::string     Video::vcGlobals::log_level =          Video::vcGlobals::default_log_level;
 size_t          Video::vcGlobals::framecount =         200;

@@ -37,69 +37,56 @@ std::string logChannelName = "main_UtilLogger_example";
 
 int main()
 {
+    using namespace Util;
+
     // Get initial values into localopt (this does a copy of the LoggerOptions object).
-    Util::LoggerOptions localopt = Util::UtilLogger::getDefaultLoggerOptions();
+    LoggerOptions localopt = UtilLogger::getDefaultLoggerOptions();
 
     // Now set the options needed for this app
     localopt.loglevel = Log::Log::Level::eDebug;
     localopt.logChannelName = logChannelName;
     localopt.logFilelName = logChannelName + "_log.txt";
-    localopt.useConsole = Util::MainLogger::disableConsole;
+    localopt.useConsole = MainLogger::disableConsole;
+    localopt.useLogFile = MainLogger::enableLogFile;
 
-    // This will get us the default set of options from UtilLogger.
-    Util::UtilLogger ulogger;
-    Util::LoggerOptions logopt;
 
-    {   // braces so we can reuse ostr
-        std::stringstream ostr;
-        logopt = ulogger.getLoggerOptions();
-        ulogger.streamLoggerOptions(ostr, logopt, "-- after construction of UtilLogger from defaults");
-        std::cerr << ostr.str() << std::endl;
-    }
-    {   // braces so we can reuse ostr
-        std::stringstream ostr;
-        ulogger.setLoggerOptions(localopt);
-        logopt = ulogger.getLoggerOptions();
-        ulogger.streamLoggerOptions(ostr, logopt, "after setting new options with local values");
-        std::cerr << ostr.str() << std::endl;
-    }
+    // Initialise the UtilLogger object
+    UtilLogger::create(localopt);
 
-    // Please note: No additional calls to ulogger.setLoggerOptions() are
-    // allowed past this point (an exception will be thrown).
-    Util::LoggerSPtr splogger = ulogger.getLoggerPtr();
+    // Reference to the logger object
+    Log::Logger& ulogger = *(UtilLogger::getLoggerPtr());
 
-    {   // braces so we can reuse ostr
-        std::stringstream ostr;
-        logopt = ulogger.getLoggerOptions();
-        ulogger.streamLoggerOptions(ostr, logopt, "after getting shared_ptr<> to Log::Logger");
-        splogger->debug() << ostr.str();
-    }
+    std::string sret = "SUCCEEDED";
 
-    std::string sret = "FAILED";
     try {
-        splogger->info() << "Logging first info message";
-        splogger->debug() << "Logging first debug message";
+        LoggerOptions logopt;
 
-        // Set a new value to the log level
+        std::stringstream ostr;
+        logopt = UtilLogger::getLoggerOptions();
+        UtilLogger::streamLoggerOptions(ostr, logopt, "after getting shared_ptr<> to Log::Logger");
+        ulogger.debug() << ostr.str();
+
+        ulogger.info() << "Logging first info message";
+        ulogger.debug() << "Logging first debug message";
+
+        // HOW TO CHANGE LOG LEVEL AFTER LOGGER INITIALIZATION
+        // Set a new value to the log level - no more DBUG messages
         Log::Manager::get(logChannelName.c_str())->setLevel(Log::Log::eInfo);
 
         // the second debug message should not appear in the log
-        splogger->info() << "Logging second info message.";
-        splogger->info() << "The following log line should not be a DEBUG level message.";
-        splogger->debug() << "Second debug message SHOULD NOT APPEAR IN THE LOG";
-
-        splogger->info() << "Causing intentional exception...";
-        ulogger.setLoggerOptions(localopt);
+        ulogger.info() << "Logging second info message.";
+        ulogger.info() << "The following log line should not be a DEBUG level message.";
+        ulogger.debug() << "This second debug message SHOULD NOT APPEAR IN THE LOG";
     }
     catch (const std::exception& e)
     {
         std::cerr << "EXCEPTION: " << e.what() << std::endl;
-        splogger->info() << "EXCEPTION: " << e.what();
-        sret = "SUCCEEDED";
+        ulogger.info() << "EXCEPTION: " << e.what();
+        sret = "FAILED";
     }
 
     std::cerr << sret << std::endl;
-    splogger->info() << sret;
+    ulogger.info() << sret;
 
     return 0;
 }

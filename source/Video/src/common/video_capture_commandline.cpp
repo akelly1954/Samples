@@ -28,7 +28,7 @@
 
 void Video::CommandLine::Usage(std::ostream &strm, std::string command)
 {
-    strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
+    strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
             << "\n"
             << "              [ -fn [ file-name ] ]     Turns on the write-frames-to-file functionality.  The file-name \n"
@@ -54,31 +54,34 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
             VideoCapture::video_capture_queue::set_write_frames_to_file(true);
-            // strm << "Turning on write-frames-to-file, using: \"" << output_file << "\"." << std::endl;
+            // strm << "Turning on write-frames-to-file, using: \"" << output_file << "\"." << "\n";
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             VideoCapture::video_capture_queue::set_write_frames_to_file(true);
             // strm << "Turning on write-frames-to-file, using the default: \"" <<
-            //         output_file << "\"." << std::endl;
+            //         output_file << "\"." << "\n";
             break;
         default:
             assert (argc == -668);   // Bug encountered. Will cause abnormal termination
     }
+    strm << "    write-frames-to-file is set to enabled, file name is " << Video::vcGlobals::output_file << "\n";
+
 
     switch(getArg(cmdmap, "-fc", Video::vcGlobals::str_frame_count))
     {
         case Util::ParameterStatus::FlagNotProvided:
-            // for debugging:  strm << "-fc flag not provided. Using default " << str_frame_count << std::endl;
+            // for debugging:  strm << "-fc flag not provided. Using default " << str_frame_count << "\n";
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
-            // for debugging:  strm << "-fc flag provided. Using " << str_frame_count << std::endl;
+            // for debugging:  strm << "-fc flag provided. Using " << str_frame_count << "\n";
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
-            strm << "ERROR: \"-fc\" flag is missing its parameter." << std::endl;
+            strm << "ERROR: \"-fc\" flag is missing its parameter." << "\n";
             return false;
         default:
             assert (argc == -669);   // Bug encountered. Will cause abnormal termination
     }
+
 
     switch(getArg(cmdmap, "-pr", Video::vcGlobals::profiling_enabled))
     {
@@ -86,7 +89,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             Video::vcGlobals::profiling_enabled = false;
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
-            strm << "ERROR: \"-pr\" flag has a parameter where no parameters are allowed." << std::endl;
+            strm << "ERROR: \"-pr\" flag has a parameter where no parameters are allowed." << "\n";
             return false;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             Video::vcGlobals::profiling_enabled = true;
@@ -94,17 +97,21 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
         default:
             assert (argc == -670);   // Bug encountered. Will cause abnormal termination
     }
+    strm << "    Profiling is set to " << (Video::vcGlobals::profiling_enabled? "enabled" : "disabled") << "\n";;
+
 
     switch(getArg(cmdmap, "-lg", Video::vcGlobals::log_level))
     {
         case Util::ParameterStatus::FlagNotProvided:
-            // for debugging:  strm << "-lg flag not provided. Using default " << log_level << std::endl;
+            // for debugging:
+            // strm << "-lg flag not provided. Using default " << Video::vcGlobals::log_level << "\n";
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
-            // for debugging:  strm << "-lg flag provided. Using " << log_level << std::endl;
+            // for debugging:
+            // strm << "-lg flag provided. Using " << Video::vcGlobals::log_level << "\n";
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
-            strm << "ERROR: \"-lg\" flag is missing its parameter." << std::endl;
+            strm << "ERROR: \"-lg\" flag is missing its parameter." << "\n";
             return false;
         default:
             assert (argc == -671);   // Bug encountered. Will cause abnormal termination
@@ -120,13 +127,15 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     }
     else
     {
-        strm << "\nERROR: Invalid log_level (" << Video::vcGlobals::loglevel << ") " <<  " after checking the \"-lg\" flag." << std::endl;
+        strm << "\nERROR: Invalid log_level. Values can be any one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}." << "\n";
         return false;
     }
+    strm << "    Log level is set to " << Video::vcGlobals::loglevel << " = " << Video::vcGlobals::log_level << "\n";;
 
     // Assign the frame count (only after the command line parameters were applied)
     // Frame count set to 0 means stream non-stop.
     Video::vcGlobals::framecount = strtoul(Video::vcGlobals::str_frame_count.c_str(), NULL, 10);
+    strm << "    Frame count is set to " << Video::vcGlobals::framecount << " = " << Video::vcGlobals::str_frame_count << "\n";
 
     return true;
 }

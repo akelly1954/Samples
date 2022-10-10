@@ -40,28 +40,7 @@
 #include <vector>
 
 
-// static definitions
-
-static Util::LoggerOptions defaultLogOptions = {
-                // loglevel (in LoggerOptions)
-                Video::vcGlobals::loglevel,
-
-                // log_level (in LoggerOptions)
-                Video::vcGlobals::log_level,
-
-                // logChannelName (in LoggerOptions)
-                Video::vcGlobals::logChannelName,
-
-                // logFileName (in LoggerOptions)
-                Video::vcGlobals::logFilelName,
-
-                // useConsole  (in LoggerOptions)
-                Util::MainLogger::disableConsole,
-
-                // useLogFile (in LoggerOptions)
-                Util::MainLogger::enableLogFile
-            };
-
+#ifdef TEST_RAW_CAPTURE_CTL
 
 ////////////////////////////////////////////////////////////////////////////////
 // This is a debug-only short-lived thread which exercises pause/resume capture
@@ -69,8 +48,6 @@ static Util::LoggerOptions defaultLogOptions = {
 // Un-comment-out this #define if a low-level test of pause/resume/finish capture is needed.
 //
 // #define TEST_RAW_CAPTURE_CTL
-
-#ifdef TEST_RAW_CAPTURE_CTL
 
 void test_raw_capture_ctl(Log::Logger logger)
 {
@@ -142,6 +119,27 @@ void test_raw_capture_ctl(Log::Logger logger)
 //         the effects of all previous values.
 //
 
+// static definitions
+
+static Util::LoggerOptions defaultLogOptions = {
+                // loglevel (in LoggerOptions)
+                Video::vcGlobals::loglevel,
+
+                // log_level (in LoggerOptions)
+                Video::vcGlobals::log_level,
+
+                // logChannelName (in LoggerOptions)
+                Video::vcGlobals::logChannelName,
+
+                // logFileName (in LoggerOptions)
+                Video::vcGlobals::logFilelName,
+
+                // useConsole  (in LoggerOptions)
+                Util::MainLogger::disableConsole,
+
+                // useLogFile (in LoggerOptions)
+                Util::MainLogger::enableLogFile
+            };
 
 int main(int argc, const char *argv[])
 {
@@ -249,19 +247,21 @@ int main(int argc, const char *argv[])
     // Parse the command line part 2
     /////////////////
 
-    if (! Video::CommandLine::parse(std::cerr, argc, argv))
+    std::stringstream lstrm;
+    if (! Video::CommandLine::parse(lstrm, argc, argv))
     {
         Video::CommandLine::Usage(std::cerr, argv0);
-        std::cerr << std::endl;
+        std::cerr << "Command line parsing:\n" << lstrm.str() << std::endl;
         return EXIT_FAILURE;
     }
+
+    std::string lstr = std::string("Command line parsing:\n") + lstrm.str();
+    std::cerr << lstr << std::endl;
+    delayedLinesForLogger.push_back(lstr);
 
     /////////////////
     // Set up the logger
     /////////////////
-
-    // This become home of *the* logger.
-    Util::UtilLogger ulogger;
 
     // Get initial values into localopt (this does a copy of the LoggerOptions object).
     Util::LoggerOptions localopt = Util::UtilLogger::getDefaultLoggerOptions();
@@ -274,17 +274,25 @@ int main(int argc, const char *argv[])
     // as well, for example:
     //          localopt.logFilelName = "somestring.txt";
 
+    // TODO: Remove this
+    // This become home of *the* logger.
+    // Util::UtilLogger ulogger;
+
     // set the values in localopt as the values in ulogger.
-    ulogger.setLoggerOptions(localopt);
+    Util::UtilLogger::setLoggerOptions(localopt);
 
     // No additional calls to ulogger.setLoggerOptions() are
     // allowed past this point (an exception will be thrown).
     // This statement is the same as:
-    //      std::shared_ptr<Log::Logger> splogger = ulogger.getLoggerPtr();
-    Util::LoggerSPtr splogger = ulogger.getLoggerPtr();
+    //      std::shared_ptr<Log::Logger> splogger = Util::UtilLogger::getLoggerPtr();
+    Util::LoggerSPtr splogger = Util::UtilLogger::getLoggerPtr();
 
     // The logger is now set up.
-    splogger->info() << "Logger setup is complete.";
+    splogger->info() << "\n\nLogger setup is complete.\n";
+    splogger->info() << "    **********  Deferred output from app initialization (only displayed in DBUG mode.  **********";
+    splogger->info() << "    **********          Need to run with \"-lg DBUG\" on the command line).            **********";
+    splogger->info() << "";
+
 
     // Empty out the delayed-lines' vector...
     for(auto line : delayedLinesForLogger)

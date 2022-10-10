@@ -76,28 +76,16 @@ namespace Util
     // class UtilLogger
     //
     // PLEASE NOTE: The class UtilLogger helps with configuring the LoggerCpp options
-    // affecting the Log::Logger object during creation (see LoggerCpp 3rd party project),
-    // up to the point where the object is initially created (during the very first call
-    // made to getLoggerPtr()). Past that point, no more calls to setLoggerOptions() are
-    // allowed, and an exception is thrown (if setLoggerOptions() is called).
-    //
-    // For other LoggerCpp operations on the Log::Logger object, the getLoggerPtr() method
-    // can be used to obtain a shared_ptr<Log::Logger> to the Log::Logger object directly,
-    // For example:
-    //
-    // Util::LoggerSPtr myLoggerCppPtr = myUtilLogger_object.getLoggerOptions();
-    //
-    // which is the equivalent of:
-    //
-    // std::shared_ptr<Log::Logger> myLoggerCppPtr = myUtilLogger_object.getLoggerOptions();
-    //
-    // From that point, simply using this as a reference allows the caller to use all of the
-    // many facilities of class Log::Logger (*myLoggerCppPtr).whatever()... directly.
+    // affecting the Log::Logger object during creation (see LoggerCpp 3rd party project).
     //
     //////////////////////////////////////////////////////////////////////
 
     // Shared_ptr to class Log::Logger
     using LoggerSPtr = std::shared_ptr<Log::Logger>;
+
+    // Forward declaration:
+    class UtilLogger;
+    using UtilLoggerSPtr = std::shared_ptr<UtilLogger>;
 
     struct LoggerOptions
     {
@@ -114,33 +102,41 @@ namespace Util
     class UtilLogger
     {
     public:
-        UtilLogger(void);
-        UtilLogger(const Util::LoggerOptions& logopt);
+        static UtilLoggerSPtr create();
+        static UtilLoggerSPtr create(Util::LoggerOptions& logopt);
+
+    private:
+        UtilLogger() = default;
+    public:
+        UtilLogger &operator=(UtilLogger &&) = default;
+        UtilLogger(UtilLogger &&) = default;
 
     private:
         // None of these methods are allowed
-        UtilLogger(const UtilLogger &) = delete;
-        UtilLogger &operator=(UtilLogger const &) = delete;
-        UtilLogger(UtilLogger &&) = delete;
-        UtilLogger &operator=(UtilLogger &&) = delete;
+        UtilLogger(const UtilLogger &) = default;
+        UtilLogger &operator=(UtilLogger const &) = default;
 
     public:
-        const Util::LoggerOptions getLoggerOptions() const                  { return m_runtimeLogOpt; }
-        static Util::LoggerOptions& getDefaultLoggerOptions()               { return UtilLogger::m_defaultLogOpt; }
-        Util::LoggerOptions& setLoggerOptions(Util::LoggerOptions& logopt);
-        std::string getLoggerLevelEnumString(Log::Log::Level llevel)        { return std::string(Log::Log::toString(llevel)); }
-        LoggerSPtr getLoggerPtr();
+        static Util::LoggerOptions getLoggerOptions()                       { return m_runtimeLogOpt; }
+        static Util::LoggerOptions& getDefaultLoggerOptions()               { return UtilLogger::s_defaultLogOpt; }
+        static Util::LoggerOptions& setLoggerOptions(Util::LoggerOptions& logopt);
+        static std::string getLoggerLevelEnumString(Log::Log::Level llevel) { return std::string(Log::Log::toString(llevel)); }
+        static UtilLoggerSPtr getUtilLoggerPtr()                            { return sp_UtilLogger; }
+        static LoggerSPtr getLoggerPtr()                                    { return sp_Logger; }
         static int stringToEnumLoglevel(const std::string& slog_level);     // returns -1 on error, or (>= 0) value for enum value
 
         // This can be called with std::cout, std::cerr, std::stringstream mystream, etc
-        void streamLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);
+        static void streamLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);
 
     private:
-        std::mutex m_UtilLogger_mutex;
-        bool m_NoMoreConfig = false;
-        LoggerSPtr sp_Logger;
-        static Util::LoggerOptions m_defaultLogOpt;
-        Util::LoggerOptions m_runtimeLogOpt;
+        // TODO: Using MainLogger::mutex
+        // static std::mutex s_UtilLogger_mutex;
+
+        static LoggerSPtr sp_Logger;
+        static UtilLoggerSPtr sp_UtilLogger;
+        static Util::LoggerOptions s_defaultLogOpt;
+        static Util::LoggerOptions m_runtimeLogOpt;
     };
 
 } // end of namespace Util
+
