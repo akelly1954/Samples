@@ -2,11 +2,13 @@
 
 ## Going on now:   
     
+Focusing right now on restructuring what used to be *main_v4l2_raw_capture*, now called **main_video_capture** (within the **video** project). There are two main objectives to the restructuring:  Getting rid of all **C** code in the **V4L2** video section in favor of **C++**.  Also, revamping the supporting objects, and organizing them (within the **Video** directory in several directories: **main_programs**, **common**, **v4l2**, **opencv**. Hopefully what sources go in each directory is self explanatory.    
+     
+(Right now I'm thinking of having another directory called **Qt5** which will house a GUI for managing the json config file and perhaps dial some controls at runtime which will modify the app behavior while it's streaming video -- **Maybe**.)     
+
 Completed the initial integration of **JsonCpp** into the sources. The implementation can be found in objects related to **class ConfigSingleton** in the **Util** project.  The sample/test program **./source/Util/src/main_programs/main_jsoncpp_samplecfg.cpp** is a good starting point to look around (and try things out).   
      
-At runtime, each json value in the file can be accessed like this, for example: **rootNode["object1"]["numbers-list"][23]** where the individual strings and numbers come from the json file.  The same notation can be used to modify the json object itself by assigning a value to the expression above.  More details to come in the README's in each project.   
-     
-The program **main_v4l2_raw_capture.cpp** and its underlying set of objects in the **Video** project is currently undergoing refactoring and replacing of all **C** interfaces to the **V4L2** linux driver with **C++** code.  At the same time, JSON content (and code) is being used to replace existing configuration options in the code as well.   
+The program *main_v4l2_raw_capture.cpp* (now **main_video_capture.cpp**) and its underlying set of objects in the **Video** directory is currently undergoing refactoring and replacing of all **C** interfaces to the **V4L2** linux driver with **C++** code.  At the same time, JSON content (and code) is being used to replace existing configuration options in the code as well.   
      
 All this will not take just a couple of days.  In the meantime, everything works properly, but the code is obviously half-refactored.    
       
@@ -18,10 +20,12 @@ All this will not take just a couple of days.  In the meantime, everything works
       
 2. Add **OpenCV** as the video frame pump so the user can use it as an alternative to **V4L2** (which will still be there as an alternative).  The plan is to use **opencv version 4.6.0** at this time.  It is already cloned and built from the **github** repository, but can only be integrated into this framework once all the C code is out of the Video project and has been replaced by C++ objects.     
         
-The **README** files are currently behind reality by a bit.     
+(*NOTE:  OpenCV and V4L2 are not being developed as plugins.  The intent is to have them both present at runtime so that either one can be used at will. In other words, rather than have a shared library for each that can be used as a plugin, they will both co-exit in the executable at runtime*).    
+     
+The **README** files are lagging behind reality by a bit.     
      
 # Welcome.  
-
+     
 If you are here to look at how to get things done (one way, anyways) or you are here to evaluate my skills for whatever purpose,
 you might want to start with either libraries of objects, or with some main programs that use them, and work your way out from there.
 I'll be updating the README files as I go along, perhaps a step or two behind the software being developed.  
@@ -56,9 +60,12 @@ Even though the IDE and build environment are set here as the defaults (eclipse,
 These programs are used to test objects, as well as to stress-test them.  They don't always have a useful purpose beyond that, except that 
 if the reader is looking for a focused project that can help them solve real problems they face, this is not a bad way to start.    
      
-**main_v4l2_raw_capture.cpp**    
+**main_video_capture.cpp**    
 found *...Samples/source/Video/src/main_programs/*    
+(used to be *main_v4l2_raw_capture*)     
      
+The sources for this project are being restructured at this time.  The old code is still in the source tree, and will stay there until the refactoring is done.
+
 This is an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then gets rid of these frames (by passing them on) to software that deals with each frame - either saving them in a file, analyzing/modifying each frame, and/or displaying them.    
       
 Thanks to the online video community which speaks a different language and uses tools and designs that are a step or three beyond what I know, I'm using a C program at the heart of the video frame "pump" that interfaces betwen the V4L ("Video For Linux" - V4L2 in this case) interface to the hardware, 
