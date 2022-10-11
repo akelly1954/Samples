@@ -51,6 +51,9 @@ namespace Video
         static bool capture_finished;
         static bool capture_pause;
         static std::string config_file_name;
+
+        // Video configuration
+        static std::string video_grabber_name;
     };
 
 // This function overwrites values in Video::vcGlobals with content from

@@ -381,20 +381,20 @@ int main(int argc, const char *argv[])
     //      One for the display
     std::cerr << "\n"
             "To convert the output file to an mp4 file use: \n\n"
-            "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy v4l2_raw_capture.mp4\n\n"
+            "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4\n\n"
             "Then view the mp4 file (as an example) with: \n\n"
-            "    $ vlc ./v4l2_raw_capture.mp4\n"
+            "    $ vlc ./" << argv0 << ".mp4\n"
             << std::endl;
 
     //    and one for the log file
     ulogger.info() << "";
     ulogger.info() << "To convert the output file to an mp4 file use: ";
     ulogger.info() << "";
-    ulogger.info() << "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy v4l2_raw_capture.mp4";
+    ulogger.info() << "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4";
     ulogger.info() << "";
     ulogger.info() << "Then view the mp4 file (as an example) with: ";
     ulogger.info() << "";
-    ulogger.info() << "    $ vlc ./v4l2_raw_capture.mp4";
+    ulogger.info() << "    $ vlc ./" << argv0 << ".mp4";
     ulogger.info() << "";
 
 

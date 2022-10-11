@@ -36,14 +36,10 @@ namespace Video {
     public:
         CommandLine() = default;
 
-        // streams the output to strm
+        // streams the usage information output to strm
         static void Usage(std::ostream &strm, std::string command);
 
         static bool parse(std::ostream &strm, int argc, const char *argv[]);
-
-
-
-
     };
 
 } // end of namespace Video

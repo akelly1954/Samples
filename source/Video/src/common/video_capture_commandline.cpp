@@ -38,7 +38,9 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
             << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << Video::vcGlobals::framecount << ")\n"
             << "              [ -pr ]                   Enable profiler stats\n"
             << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\",\n"
-            << "                                        \"EROR\", \"CRIT\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n";
+            << "                                        \"EROR\", \"CRIT\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n"
+            << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The default\n"
+            << "                                        grabber is \"" << Video::vcGlobals::video_grabber_name << "\").\n";
 }
 
 bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
@@ -54,12 +56,12 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
             VideoCapture::video_capture_queue::set_write_frames_to_file(true);
-            // strm << "Turning on write-frames-to-file, using: \"" << output_file << "\"." << "\n";
+            // strm << "Turning on write-frames-to-file, using: \"" << Video::vcGlobals::output_file << "\"." << "\n";
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             VideoCapture::video_capture_queue::set_write_frames_to_file(true);
             // strm << "Turning on write-frames-to-file, using the default: \"" <<
-            //         output_file << "\"." << "\n";
+            //         Video::vcGlobals::output_file << "\"." << "\n";
             break;
         default:
             assert (argc == -668);   // Bug encountered. Will cause abnormal termination
@@ -100,6 +102,23 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     strm << "    Profiling is set to " << (Video::vcGlobals::profiling_enabled? "enabled" : "disabled") << "\n";;
 
 
+    // this flag (-fg) is not mandatory but needs a frame-grabber name if it is specified
+    switch(getArg(cmdmap, "-fg", Video::vcGlobals::video_grabber_name))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // This means use the default
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // strm << "Setting frame-grabber to  \"" << Video::vcGlobals::video_grabber_name << "\"." << "\n";
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-fg\" flag has no parameter. Needs video grabber name." << "\n";
+            return false;
+        default:
+            assert (argc == -671);   // Bug encountered. Will cause abnormal termination
+    }
+
+
     switch(getArg(cmdmap, "-lg", Video::vcGlobals::log_level))
     {
         case Util::ParameterStatus::FlagNotProvided:
@@ -114,8 +133,20 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-lg\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (argc == -671);   // Bug encountered. Will cause abnormal termination
+            assert (argc == -672);   // Bug encountered. Will cause abnormal termination
     }
+
+
+    /////////////////
+    // Check out the specified video frame grabber name
+    /////////////////
+
+    if (Video::vcGlobals::video_grabber_name != "v4l2" && Video::vcGlobals::video_grabber_name != "opencv")
+    {
+        strm << "\nERROR: Invalid video frame grabber name. Grabber names can be any one of:  {\"v4l2\", \"opencv\"}." << "\n";
+        return false;
+    }
+    strm << "    Video frame grabber name is set to " << Video::vcGlobals::video_grabber_name << "\n";
 
     /////////////////
     // Check out specified log level

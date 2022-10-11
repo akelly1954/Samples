@@ -53,6 +53,9 @@ bool            Video::vcGlobals::capture_finished =   false;
 bool            Video::vcGlobals::capture_pause =      false;
 std::string     Video::vcGlobals::config_file_name =   Video::vcGlobals::logChannelName + ".json";
 
+// Video configuration
+std::string     Video::vcGlobals::video_grabber_name =  "v4l2";
+
 
 // This function overwrites values in Video::vcGlobals with content from
 // the json config file.

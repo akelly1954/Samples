@@ -1,18 +1,32 @@
 {
-	"Config": {
-		"Logger": {
-			"channel-name": 	"video_capture",
-			"file-name": 		"video_capture_log.txt",
-			"log-level": 		"DBUG"
-		},
-		"App-options": {
-			"output-file": 		"video_capture.data",
-			"write-to-file": 	1,
-			"profiling": 		0
-		},
-		"Video": {
-			"frame-count": 		200
-		}
-	}
+    "Config": {
+
+        "Logger": {
+            "channel-name":     "video_capture",
+            "file-name":        "video_capture_log.txt",
+            "log-level":        "DBUG"
+        },
+
+        "App-options": {
+            "output-file":      "video_capture.data",
+            "write-to-file":    1,
+            "profiling":        0
+        },
+        
+        "Video": {
+            "frame-count":      200,
+        
+            "frame-capture":  {
+            
+                "v4l2": {
+                    "name":    "V4L2"
+                },
+            
+                "opencv": {
+                    "name":    "OpenCV"
+                }
+            }
+        }
+    }
 }
 
