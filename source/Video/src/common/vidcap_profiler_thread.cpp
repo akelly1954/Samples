@@ -1,10 +1,5 @@
-
-// TODO: Get rid of skipped builds
-
-#ifdef SKIP_BUILD
-
-#include <video_capture_raw_queue.hpp>
-#include <video_capture_profiler.hpp>
+#include <vidcap_raw_queue_thread.hpp>
+#include <vidcap_profiler_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -54,14 +49,14 @@ using namespace VideoCapture;
 // static members
 
 std::chrono::steady_clock::time_point
-video_capture_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
+vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
 std::mutex profiler_frame::stats_frames_mutex;
 long long profiler_frame::stats_total_num_frames;
 std::chrono::milliseconds profiler_frame::stats_total_frame_duration_milliseconds;
 bool profiler_frame::initialized = false;
 
-bool video_capture_profiler::s_terminated = false;
-Util::condition_data<int> video_capture_profiler::s_condvar(0);
+bool vidcap_profiler::s_terminated = false;
+Util::condition_data<int> vidcap_profiler::s_condvar(0);
 
 void VideoCapture::video_profiler(Log::Logger logger)
 {
@@ -72,9 +67,9 @@ void VideoCapture::video_profiler(Log::Logger logger)
     logger.notice() << "Profiler thread: skipping first frame to establish a duration baseline.";
 
     // Wait for main() to signal us to start
-    video_capture_profiler::s_condvar.wait_for_ready();
+    vidcap_profiler::s_condvar.wait_for_ready();
 
-    while (!video_capture_profiler::s_terminated)
+    while (!vidcap_profiler::s_terminated)
     {
         logger.notice() << "Profiler info...";
         logger.notice() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
@@ -87,12 +82,9 @@ void VideoCapture::video_profiler(Log::Logger logger)
     logger.debug() << "Profiler thread terminating ...";
 }
 
-void video_capture_profiler::set_terminated(bool t)
+void vidcap_profiler::set_terminated(bool t)
 {
-    video_capture_profiler::s_terminated = t;
+    vidcap_profiler::s_terminated = t;
 }
-
-#endif // SKIP_BUILD
-
 
 

@@ -1,12 +1,9 @@
-// TODO: Get rid of skipped builds
-
-#ifdef SKIP_BUILD
-#include <video_capture_raw_queue.hpp>
-#include <video_capture_profiler.hpp>
+#include <vidcap_raw_queue_thread.hpp>
+#include <vidcap_profiler_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
-#include <LoggerCpp/LoggerCpp.h>
+#include <MainLogger.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -179,7 +176,6 @@ size_t VideoCapture::write_frame_to_file(Log::Logger logger, FILE *filestream, s
     return byteswritten;
 }
 
-#endif // SKIP_BUILD
 
 
 

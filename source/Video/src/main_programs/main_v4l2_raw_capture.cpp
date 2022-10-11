@@ -1,6 +1,13 @@
 //
-// This is the C++ main fronting for the C main (called here v4l2_raw_capture_main()).
+// This is severe work in progess during refactoring.  It's all ifdef'ed out.
 //
+//                     DO NOT WASTE YOUR TIME HERE
+//
+
+int main()
+{
+    return 0;
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -25,6 +32,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
+
+#if 0   // TODO:  Finish this
 
 #include <v4l2_interface.hpp>
 #include <video_capture_raw_queue.hpp>
@@ -105,7 +114,6 @@ void Usage(std::ostream &strm, std::string command)
 
 int main(int argc, const char *argv[])
 {
-#if 0   // TODO:  Finish this
     using namespace VideoCapture;
 
     /////////////////
@@ -347,7 +355,6 @@ int main(int argc, const char *argv[])
 
     return ret;
 }
-#endif // 0
     return 0;    // TODO: Finish the above
 }
 
@@ -442,5 +449,6 @@ bool parse(std::ostream &strm, int argc, const char *argv[])
 
     return true;
 }
+#endif // 0
 
 

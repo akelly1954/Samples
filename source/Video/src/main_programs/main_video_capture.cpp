@@ -31,7 +31,10 @@
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <ConfigSingleton.hpp>
+#include <vidcap_profiler_thread.hpp>
+#include <vidcap_raw_queue_thread.hpp>
 #include <json/json.h>
+#include <thread>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +48,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // This is a debug-only short-lived thread which exercises pause/resume capture
 // If used, set frame count from the command line ("-fc 0").
+//
 // Un-comment-out this #define if a low-level test of pause/resume/finish capture is needed.
 //
 // #define TEST_RAW_CAPTURE_CTL
@@ -305,6 +309,112 @@ int main(int argc, const char *argv[])
     {
         ulogger.debug() << line;
     }
+
+
+    /////////////////
+     // Finally, get to work
+     /////////////////
+
+     std::thread queuethread;
+     std::thread profilingthread;
+
+ #ifdef TEST_RAW_CAPTURE_CTL
+     // this can be turned on/off in ...Samples/source/Video/CMakeLists.txt
+     std::thread trcc;
+ #endif // TEST_RAW_CAPTURE_CTL
+
+     int return_for_exit = 0;
+     try
+     {
+         // Start the profiling thread if it's enabled. It wont do anything until it's kicked
+         // by the condition variable (see below vidcap_profiler::s_condvar.send_ready().
+         if (Video::vcGlobals::profiling_enabled)
+         {
+             profilingthread = std::thread(VideoCapture::video_profiler, ulogger);
+             ulogger.debug() << "In main, starting video profiler thread";
+             profilingthread.detach();
+             ulogger.debug() << "In main, kick-start the video_profiler operations.";
+
+             VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+         }
+
+         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
+         queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, ulogger, vcGlobals::output_file, vcGlobals::profiling_enabled);
+         queuethread.detach();
+
+ #ifdef TEST_RAW_CAPTURE_CTL
+         // this will pause/sleep/resume/sleep a bunch of times, then exit.
+         trcc = std::thread (test_raw_capture_ctl, logger);
+ #endif // TEST_RAW_CAPTURE_CTL
+
+        /////////////////////////////////////////////////////////////////////
+        //
+        //  CALL TO NEW VIDEO CAPTURE THREAD INTERFACE GOES HERE
+        //
+        /////////////////////////////////////////////////////////////////////
+
+
+        // CLEANUP QUEUE:
+        // Inform the queue handler thread that the party is over...
+        VideoCapture::video_capture_queue::set_terminated(true);
+
+        // Make sure the ring buffer gets emptied
+        VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+    }
+    catch (std::exception &exp)
+    {
+        ulogger.error()
+              << "Got exception in main() starting the queueing and profiling threads: "
+              << exp.what()
+              << ". Aborting...";
+        return_for_exit = 1;
+    } catch (...)
+    {
+       ulogger.error()
+              << "General exception occurred in MAIN() starting the queueing and profiling threads. Aborting...";
+       return_for_exit = 1;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Give the queue time to empty
+
+    // FINISHED:
+    //      One for the display
+    std::cerr << "\n"
+            "To convert the output file to an mp4 file use: \n\n"
+            "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy v4l2_raw_capture.mp4\n\n"
+            "Then view the mp4 file (as an example) with: \n\n"
+            "    $ vlc ./v4l2_raw_capture.mp4\n"
+            << std::endl;
+
+    //    and one for the log file
+    ulogger.info() << "";
+    ulogger.info() << "To convert the output file to an mp4 file use: ";
+    ulogger.info() << "";
+    ulogger.info() << "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy v4l2_raw_capture.mp4";
+    ulogger.info() << "";
+    ulogger.info() << "Then view the mp4 file (as an example) with: ";
+    ulogger.info() << "";
+    ulogger.info() << "    $ vlc ./v4l2_raw_capture.mp4";
+    ulogger.info() << "";
+
+
+    // CLEANUP
+    // TODO:  Reimplement for v4l2 --- ::set_v4l2capture_finished();  <<<<<<<<<<<<<<<<<
+    VideoCapture::vidcap_profiler::set_terminated(true);
+
+    #ifdef TEST_RAW_CAPTURE_CTL
+    if (trcc.joinable()) trcc.join();
+    #endif // TEST_RAW_CAPTURE_CTL
+
+    // Wait for the queue and profile threads to finish
+    if (queuethread.joinable()) queuethread.join();
+    if (vcGlobals::profiling_enabled && profilingthread.joinable()) profilingthread.join();
+
+    ulogger.info() << "Terminating the logger.";
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Give the queue time to empty
+
+    // Terminate the Log Manager (destroy the Output objects)
+    Log::Manager::terminate();
 
     return 0;
 }
