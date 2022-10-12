@@ -366,7 +366,8 @@ int main(int argc, const char *argv[])
          std::this_thread::sleep_for(std::chrono::seconds(5)); // TODO: get rid of this asap
 
          // CLEANUP VIDEO CAPTURE AND ITS QUEUE:
-         VideoCapture::vidcap_capture_base::set_terminated(true);
+         VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
+         if (ifptr) ifptr->set_terminated(true);
 
          ///////     ulogger.debug() << "In main, terminating queue thread.";
         // Inform the queue handler thread that the party is over...

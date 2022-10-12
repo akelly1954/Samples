@@ -61,7 +61,7 @@ even though 5 minutes later, it will.  It's just the way it is (for now).
 The various other directories that are base directories for the various projects included under **source**, each has its own **linux-build.bash** script which builds that particular project.  
 
 These sources have been built and tested on Debian 11 (bullseye), with 
-Eclipse version 4.21,
+Eclipse version 4.21 (and later with 4.22),
 g++ (Debian 10.2.1-6) 10.2.1 20210110, 
 and cmake 3.18.4.
 

@@ -14,16 +14,19 @@
         },
         
         "Video": {
-            "frame-count":      200,
+        
+            "preferred-interface":  "v4l2",
+        
+            "frame-count":          200,
         
             "frame-capture":  {
             
                 "v4l2": {
-                    "name":    "V4L2"
+                    "name":         "v4l2"
                 },
             
                 "opencv": {
-                    "name":    "OpenCV"
+                    "name":         "opencv"
                 }
             }
         }

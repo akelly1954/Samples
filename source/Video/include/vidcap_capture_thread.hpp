@@ -42,12 +42,22 @@ namespace VideoCapture {
 // video capture base thread
 void video_capture(Log::Logger logger);
 
+// Never instantiated directly.  Base class for v4l2 and opencv.
 class vidcap_capture_base
 {
 public:
-    static void set_terminated(bool t);         // main() sets this to true or false
+    vidcap_capture_base() = default;
+    virtual void initialize() = 0;
+    virtual void run() = 0;
+    virtual void set_terminated(bool t) = 0;
+    static  vidcap_capture_base *get_interface_ptr()    { return vidcap_capture_base::sp_interface_pointer; }
+
+protected:
     static bool s_terminated;
+
+public:
     static Util::condition_data<int> s_condvar;
+    static vidcap_capture_base *sp_interface_pointer;
 };  // end of class vidcap_capture_base
 
 } // end of namespace VideoCapture

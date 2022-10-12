@@ -1,9 +1,11 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_capture_thread.hpp>
+#include <vidcap_v4l2_interface.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
+#include <ConfigSingleton.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,33 +52,44 @@ using namespace VideoCapture;
 
 bool vidcap_capture_base::s_terminated = false;
 Util::condition_data<int> vidcap_capture_base::s_condvar(0);
+vidcap_capture_base *vidcap_capture_base::sp_interface_pointer = nullptr;
 
 void VideoCapture::video_capture(Log::Logger logger)
 {
-    int slp = 800;
+    using namespace VideoCapture;
 
-    logger.debug() << "Video capture thread started...";
+    vidcap_capture_base::sp_interface_pointer = nullptr;
 
-    // Wait for main() to signal us to start
-    vidcap_capture_base::s_condvar.wait_for_ready();
+    // Find out which interface is configured (v4l2 or opencv)
+    Json::Value& ref_root_copy = Config::ConfigSingleton::GetJsonRootCopyRef();
 
-    logger.debug() << "Video capture thread kick-started...";
+    std::string videoInterface = ref_root_copy["Config"]["Video"]["preferred-interface"].asString();
+    std::string interfaceName = ref_root_copy["Config"]["Video"]["frame-capture"][videoInterface]["name"].asString();
 
-    for (size_t i = 1; i < 3; i++)
+    if (interfaceName == "v4l2")
     {
-        if (!vidcap_capture_base::s_terminated) break;
+        logger.info() << "Video Capture thread: Interface used is " << interfaceName;
+        vidcap_capture_base::sp_interface_pointer = new vidcap_v4l2_interface(logger);
 
-        logger.info() << "\n\n       ***** " << i << ": VIDEO CAPTURE NOT IMPLEMENTED YET *****\n\n";
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+        // Start the video interface:
+        vidcap_capture_base::sp_interface_pointer->initialize();
+        vidcap_capture_base::sp_interface_pointer->run();
     }
-
-    logger.debug() << "Video Capture thread terminating ...";
+    else if (interfaceName == "opencv")
+    {
+        std::string str = std::string("Video Capture thread: UNIMPLEMENTED interface requested: ") + interfaceName + " (opencv from the JSON configuration).";
+        logger.warning() << str;
+        throw std::runtime_error(str);
+    }
+    else
+    {
+        logger.error() << "Video Capture thread: Unknown video interface specified in the json configuration: " << videoInterface;
+        throw std::runtime_error(std::string("Video Capture thread: Unknown video interface specified in the json configuration: " + videoInterface));
+    }
 }
 
 void vidcap_capture_base::set_terminated(bool t)
 {
     vidcap_capture_base::s_terminated = t;
 }
-
 
