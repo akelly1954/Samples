@@ -74,10 +74,14 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string outp
         }
     }
 
+    logger.debug() << "In VideoCapture::raw_buffer_queue_handler(): created " << output_file << ".";
+
     while (!video_capture_queue::s_terminated)
     {
+        logger.debug() << "In VideoCapture::raw_buffer_queue_handler(): not terminated, waiting on condvar 1";
         video_capture_queue::s_condvar.wait_for_ready();
 
+        logger.debug() << "In VideoCapture::raw_buffer_queue_handler(): kick started, looping";
         while (!video_capture_queue::s_terminated && !video_capture_queue::s_ringbuf.empty())
         {
             auto sp_frame = video_capture_queue::s_ringbuf.get();
