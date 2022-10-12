@@ -81,7 +81,9 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     Video::vcGlobals::log_level = Utility::trim(cfg_root["Config"]["Logger"]["log-level"].asString());
     strm << "\nFrom JSON:  Set default logger log level to: " << Video::vcGlobals::log_level;
 
-    Log::Log::toString(Video::vcGlobals::loglevel);
+    // video frame grabber
+    Video::vcGlobals::video_grabber_name = Utility::trim(cfg_root["Config"]["Video"]["preferred-interface"].asString());
+    strm << "\nFrom JSON:  Set default video-frame-grabber to: " << Video::vcGlobals::video_grabber_name;
 
     return true;
 }

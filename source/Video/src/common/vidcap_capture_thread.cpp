@@ -63,8 +63,49 @@ void VideoCapture::video_capture(Log::Logger logger)
     // Find out which interface is configured (v4l2 or opencv)
     Json::Value& ref_root_copy = Config::ConfigSingleton::GetJsonRootCopyRef();
 
-    std::string videoInterface = ref_root_copy["Config"]["Video"]["preferred-interface"].asString();
-    std::string interfaceName = ref_root_copy["Config"]["Video"]["frame-capture"][videoInterface]["name"].asString();
+    // This commented out string does not take into consideration command line overrides.
+    // std::string videoInterface = ref_root_copy["Config"]["Video"]["preferred-interface"].asString();
+
+    std::string videoInterface = Video::vcGlobals::video_grabber_name;
+    logger.info() << "Video Capture thread: Requesting the " << videoInterface << " frame-grabber.";
+
+    std::string interfaceName;
+    std::string interfaceList = "Video Capture thread: The list of available frame grabbers in the json config file is: ";
+    Json::Value vidif = ref_root_copy["Config"]["Video"]["frame-capture"];
+    for (auto itr = vidif.begin(); itr != vidif.end(); itr++)
+    {
+        std::string itrkey = itr.key().asString();
+
+        // Iterated over the "frame-capture" set of nodes, the key (as string) in
+        // each represents the node names within the "frame-capture" section.
+        if (itrkey == videoInterface)
+        {
+            interfaceName = Util::Utility::trim(itrkey);
+        }
+        interfaceList += (itrkey + " ");
+    }
+    logger.info() << interfaceList;
+
+    // The above loop is equivalent to this:
+    //
+    // std::string interfaceName = ref_root_copy["Config"]["Video"]["frame-capture"][videoInterface]["name"].asString();
+    //
+    // except that doing the loop above also gets us the list of video
+    // frame-grabbers available in the json file.
+
+    // The empty string here signifies that videoInterface is not in the list of json values that
+    // are included in the "frame-capture" list of interfaces in the json file.
+    if (interfaceName == "")
+    {
+        std::string str = std::string("Video Capture thread: invalid interface (") + videoInterface + ") requested from the JSON configuration.";
+        logger.warning() << str;
+        throw std::runtime_error(str);
+    }
+    else
+    {
+        logger.info() << "Video Capture thread: Picking the " << interfaceName << " frame-grabber.";
+    }
+
 
     if (interfaceName == "v4l2")
     {

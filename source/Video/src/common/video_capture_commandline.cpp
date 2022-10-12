@@ -40,7 +40,7 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
             << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\",\n"
             << "                                        \"EROR\", \"CRIT\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n"
             << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The default\n"
-            << "                                        grabber is \"" << Video::vcGlobals::video_grabber_name << "\").\n";
+            << "                                        grabber is \"v4l2\").\n";
 }
 
 bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
