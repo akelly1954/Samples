@@ -118,14 +118,14 @@ void VideoCapture::video_capture(Log::Logger logger)
     }
     else if (interfaceName == "opencv")
     {
-        std::string str = std::string("Video Capture thread: UNIMPLEMENTED interface requested: ") + interfaceName + " (opencv from the JSON configuration).";
+        std::string str = std::string("Video Capture thread: UNIMPLEMENTED interface requested: ") + interfaceName + ".  Aborting...";
         logger.warning() << str;
         throw std::runtime_error(str);
     }
     else
     {
-        logger.error() << "Video Capture thread: Unknown video interface specified in the json configuration: " << videoInterface;
-        throw std::runtime_error(std::string("Video Capture thread: Unknown video interface specified in the json configuration: " + videoInterface));
+        logger.error() << "Video Capture thread: Unknown video interface specified in the json configuration: " << videoInterface << ".  Aborting...";
+        throw std::runtime_error(std::string("Video Capture thread: Unknown video interface specified in the json configuration: " + videoInterface + ".  Aborting..."));
     }
 }
 
