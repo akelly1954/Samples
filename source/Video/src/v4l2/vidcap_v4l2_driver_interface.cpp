@@ -42,9 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
-#include <getopt.h>             /* getopt_long() */
-
 #include <fcntl.h>              /* low-level i/o */
 #include <unistd.h>
 #include <errno.h>
@@ -64,9 +61,12 @@ using namespace VideoCapture;
 // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
 // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
-#define TEMPORARY
-#ifdef TEMPORARY   // /////////////////////////////////////////////////////////////////////////////
+// Please NOTE:
+// The rather inappropriate #define'd expressions defined below are leftovers from before
+// the V4L2 related objects were converted to C++.  However these macros are not being
+// changed at this time.
 
+// Most inappropriate of all, but easily fixed in the future:
 Log::Logger *global_logger = nullptr;
 
 #define LOGGER(x)             { global_logger->debug() << (x); }
@@ -109,15 +109,13 @@ Log::Logger *global_logger = nullptr;
         LOGGER_STDERR(sbuf);                                               \
     }
 
-// TEMPORARY
-#endif // TEMPORARY /////////////////////////////////////////////////////////////////////////////
-
 
 vidcap_v4l2_driver_interface::vidcap_v4l2_driver_interface(Log::Logger lg)
     :
         logger(lg)
 {
-    // THIS IS TEMPORARY
+    // TODO: THIS (blobal_logger) IS TEMPORARY and should be removed asap -
+    // as soon as the #define's above are changed.
     global_logger = &logger;
     set_terminated(false);
 }
@@ -130,13 +128,13 @@ void vidcap_v4l2_driver_interface::initialize()
 
 void vidcap_v4l2_driver_interface::run()
 {
-    v4l2if_open_device();
-    v4l2if_init_device();
-    v4l2if_start_capturing();
-    v4l2if_mainloop();
-    v4l2if_stop_capturing();
-    v4l2if_uninit_device();
-    v4l2if_close_device();
+    if (!isterminated()) v4l2if_open_device();
+    if (!isterminated()) v4l2if_init_device();
+    if (!isterminated()) v4l2if_start_capturing();
+    if (!isterminated()) v4l2if_mainloop();
+    if (!isterminated()) v4l2if_stop_capturing();
+    if (!isterminated()) v4l2if_uninit_device();
+    if (!isterminated()) v4l2if_close_device();
 }
 
 void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocopy)

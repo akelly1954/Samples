@@ -46,8 +46,16 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_capture_thread.hpp>
 
-namespace VideoCapture {
+// Much of the VideoCapture::vidcap_v4l2_driver_interface object includes code
+// used in the v4l2_capture.c source obtained from the linux.org documentation online.
+// Most of the actual variable names and some C macros are still used in the object
+// declared below, in order to help in future issues that are unknown at this time.
+//
+// Please see the "Reference" section (directory) in this project.  The README.md file
+// shows the connection to the above mentioned C main program, and the C++ object declared
+// below.
 
+namespace VideoCapture {
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
@@ -99,8 +107,6 @@ namespace VideoCapture {
 
     private:
         Log::Logger logger;
-
-    private:
         enum io_method  io = IO_METHOD_MMAP;
         std::vector<const char *> string_io_methods ={ "IO_METHOD_READ", "IO_METHOD_MMAP", "IO_METHOD_USERPTR" };
         int             fd = -1;
@@ -108,7 +114,7 @@ namespace VideoCapture {
         unsigned int    numbufs = 0;
         int             force_format = 0;
         int             int_frame_count = 0;
-        char            *dev_name = NULL;
+        const char      *dev_name = "/dev/video0";
         bool            m_errorterminated = false;
     };
 
