@@ -146,20 +146,12 @@ void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocop
     throw std::runtime_error(msg);
 }
 
-void vidcap_v4l2_driver_interface::v4l2if_exit_code(int code, const char *s)
+void vidcap_v4l2_driver_interface::v4l2if_error_exit(const char *s)
 {
-    if (code)
-    {
-        std::string msg = std::string("vidcap_v4l2_driver_interface: TERMINATION REQUESTED, code = ") + std::to_string(code);
-        logger.error() << msg;
-        set_error_terminated(true);
-        throw std::runtime_error(msg);
-    }
-    else
-    {
-        logger.info() << "vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED, code = " << code;
-        set_terminated(true);
-    }
+    std::string msg = std::string("vidcap_v4l2_driver_interface: ERROR TERMINATION REQUESTED: ") + s;
+    logger.error() << msg;
+    set_error_terminated(true);
+    throw std::runtime_error(msg);
 }
 
 void vidcap_v4l2_driver_interface::v4l2if_exit(const char *s)
@@ -708,23 +700,32 @@ void vidcap_v4l2_driver_interface::v4l2if_close_device(void)
 void vidcap_v4l2_driver_interface::v4l2if_open_device(void)
 {
         struct stat st;
+        int errnocopy;
 
+        if (dev_name == nullptr)
+        {
+            v4l2if_error_exit("v4l2if_open_device: null video device name");
+        }
         if (-1 == stat(dev_name, &st)) {
-            LOGGER_3Arg("Cannot identify '%s': errno=%d, %s", dev_name, errno, strerror(errno));
-            v4l2if_exit("cannot identify device");
+            errnocopy = errno;
+            logger.error() << "v4l2if_open_device: Cannot identify device "
+                           << dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
+            v4l2if_errno_exit("v4l2if_open_device: Cannot identify device", errnocopy);
         }
 
         if (!S_ISCHR(st.st_mode)) {
-            LOGGER_1Arg("%s is no device", dev_name);
-            v4l2if_exit("not a device");
+            logger.error() << "v4l2if_open_device: " << dev_name << " is not a device";
+            v4l2if_error_exit("v4l2if_open_device: Not a device");
         }
 
         fd = open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
+        errnocopy = errno;
 
         if (-1 == fd) {
-            LOGGER_3Arg("Cannot open '%s': errno=%d, %s", dev_name, errno, strerror(errno));
-            v4l2if_exit("cannot open device");
+            logger.error() << "v4l2if_open_device: Cannot open "
+                           << dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
+            v4l2if_errno_exit("v4l2if_open_device: Cannot open device", errnocopy);
         }
-        LOGGER_STDERR_1Arg("device: %s", dev_name);
+        logger.info() << "Device " << dev_name;
 }
 

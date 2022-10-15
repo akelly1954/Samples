@@ -102,7 +102,7 @@ namespace VideoCapture {
         void v4l2if_open_device(void);
 
         void v4l2if_errno_exit(const char *s, int errnocopy);
-        void v4l2if_exit_code(int code, const char *s);
+        void v4l2if_error_exit(const char *s);
         void v4l2if_exit(const char *s);
 
     private:
