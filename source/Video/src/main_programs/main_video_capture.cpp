@@ -58,24 +58,31 @@ void test_raw_capture_ctl(Log::Logger logger)
 {
     logger.debug() << argv0 << ": In test_raw_capture_ctl: thread running";
 
+    VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
+
+    if (!ifptr)
+    {
+        std::string str = std::string("test_raw_capture_ctl thread: Could not obtain video capture iterface pointer (is null).";
+        logger.warning() << str;
+        throw std::runtime_error(str);
+    }
+
     int slp = 3;
     for (int i = 1; i <= 3; i++)
     {
         ::sleep(slp);
         logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
-        // TODO: Implement in new video_capture derived frame-grabbers
-        ::set_v4l2capture_pause(true);
+        if (ifptr) ifptr->set_pause(true);
 
         ::sleep(slp);
         logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
-        // TODO: Implement in new video_capture derived frame-grabbers
-        ::set_v4l2capture_pause(false);
+        if (ifptr) ifptr->set_pause(false);
     }
 
     ::sleep(slp);
     logger.debug() << "test_raw_capture_ctl: FINISH CAPTURE REQUEST...";
     // TODO: Implement in new video_capture derived frame-grabbers
-    ::set_v4l2capture_finished();
+    if (ifptr) ifptr->set_terminated(true);
 }
 
 #endif // TEST_RAW_CAPTURE_CTL
@@ -360,7 +367,7 @@ int main(int argc, const char *argv[])
         /////////////////////////////////////////////////////////////////////
         ulogger.debug() << argv0 << ":  starting the video capture thread.";
         videocapturethread = std::thread(VideoCapture::video_capture, ulogger);
-        videocapturethread.detach();
+        // TODO:  Look at this - doesn't seem to need to be here:     videocapturethread.detach();
 
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
         VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
@@ -371,6 +378,7 @@ int main(int argc, const char *argv[])
         std::this_thread::sleep_for(std::chrono::seconds(5)); // TODO: get rid of this asap
 
         // CLEANUP VIDEO CAPTURE AND ITS QUEUE:
+
         VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
         if (ifptr)
         {

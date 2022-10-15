@@ -47,7 +47,7 @@ set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
 set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
 
 #
-# v4l2_raw_capture main
+# main_video_capture main
 #
 set (main_video_capture "main_video_capture${DBG}")
 add_executable (main_video_capture src/main_programs/main_video_capture.cpp)
@@ -62,23 +62,6 @@ target_link_libraries( main_video_capture
                      )
 install(TARGETS main_video_capture DESTINATION localrun)
 
-#
-# v4l2_raw_capture main
-#
-set (main_v4l2_raw_capture "main_v4l2_raw_capture${DBG}")
-add_executable (main_v4l2_raw_capture src/main_programs/main_v4l2_raw_capture.cpp)
-target_link_libraries( main_v4l2_raw_capture 
-                            ${Video_LIB}
-                            ${EnetUtil_LIB}
-                            ${Util_LIB}
-                            ${LoggerCpp_LIB}
-                            ${JsonCpp_LIB}
-                            ${CMAKE_THREAD_LIBS_INIT} 
-                            ${LINKOPTIONS}
-                     )
-install(TARGETS main_v4l2_raw_capture DESTINATION localrun)
-
 # Dependencies
-add_dependencies (main_v4l2_raw_capture ${Video} ${Util})
 add_dependencies (main_video_capture ${Video} ${Util})
 

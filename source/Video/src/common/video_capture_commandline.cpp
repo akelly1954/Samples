@@ -23,7 +23,7 @@
 
 #include <video_capture_commandline.hpp>
 #include <video_capture_globals.hpp>
-#include <video_capture_raw_queue.hpp>
+#include <vidcap_raw_queue_thread.hpp>
 #include <commandline.hpp>
 
 void Video::CommandLine::Usage(std::ostream &strm, std::string command)

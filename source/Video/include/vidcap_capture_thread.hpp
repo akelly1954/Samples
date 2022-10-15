@@ -47,13 +47,18 @@ class vidcap_capture_base
 {
 public:
     vidcap_capture_base() = default;
+
     virtual void initialize() = 0;
     virtual void run() = 0;
     virtual void set_terminated(bool t) = 0;
-    static  vidcap_capture_base *get_interface_ptr()    { return vidcap_capture_base::sp_interface_pointer; }
+    virtual bool isterminated() = 0;
+    virtual void set_paused(bool t) = 0;
+    virtual bool ispaused(void) = 0;
 
+    static  vidcap_capture_base *get_interface_ptr() { return sp_interface_pointer; }
 protected:
     static bool s_terminated;
+    static bool s_paused;
 
 public:
     static Util::condition_data<int> s_condvar;

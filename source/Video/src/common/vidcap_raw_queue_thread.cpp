@@ -143,6 +143,33 @@ void video_capture_queue::set_write_frames_to_file(bool t)
     video_capture_queue::s_write_frames_to_file = t;
 }
 
+// Note: this method runs on a different thread than the other methods in this object.
+// It's called from the specific video raw capture driver on its thread.
+void video_capture_queue::add_buffer_to_raw_queue(void *p, size_t bsize)
+{
+    if (p != NULL)
+    {
+        size_t bytesleft = bsize;
+        uint8_t *startdata = static_cast<uint8_t*>(p);
+        size_t nextsize = 0;
+
+        while (bytesleft > 0)
+        {
+            nextsize = bytesleft > EnetUtil::NtwkUtilBufferSize? EnetUtil::NtwkUtilBufferSize : bytesleft;
+
+            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp =
+                        EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>::create(startdata, nextsize);
+
+            startdata += nextsize;
+            bytesleft -= nextsize;
+            assert (sp->num_valid_elements() == nextsize);
+
+            // Add the shared_ptr to the queue
+            VideoCapture::video_capture_queue::s_ringbuf.put(sp, VideoCapture::video_capture_queue::s_condvar);
+        }
+    }
+}
+
 // Open/truncate the output file that will hold captured frames
 FILE * VideoCapture::create_output_file(Log::Logger logger, std::string output_file)
 {
@@ -179,9 +206,5 @@ size_t VideoCapture::write_frame_to_file(Log::Logger logger, FILE *filestream, s
 
     return byteswritten;
 }
-
-
-
-
 
 

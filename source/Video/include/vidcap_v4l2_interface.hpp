@@ -48,6 +48,48 @@
 
 namespace VideoCapture {
 
+
+#define LOGGER(x)             { logger.debug() << (x); }
+#define LOGGER_ERROR(x)       { logger.error() << (x); }
+#define LOGGER_STDERR(x)      { std::cerr << (x) << std::endl; LOGGER(x) }
+
+#define LOGGER_1Arg(fmtstr, arg)   {                \
+        char sbuf[512];                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg);  \
+        LOGGER(sbuf);                               \
+    }
+
+#define LOGGER_2Arg(fmtstr, arg1, arg2)   {                 \
+        char sbuf[512];                                     \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2);   \
+        LOGGER(sbuf);                                       \
+    }
+
+#define LOGGER_3Arg(fmtstr, arg1, arg2, arg3)   {                   \
+        char sbuf[512];                                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2, arg3);     \
+        LOGGER(sbuf);                                               \
+    }
+
+#define LOGGER_STDERR_1Arg(fmtstr, arg)   {         \
+        char sbuf[512];                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg);  \
+        LOGGER_STDERR(sbuf);                               \
+    }
+
+#define LOGGER_STDERR_2Arg(fmtstr, arg1, arg2)   {          \
+        char sbuf[512];                                     \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2);   \
+        LOGGER_STDERR(sbuf);                                       \
+    }
+
+#define LOGGER_STDERR_3Arg(fmtstr, arg1, arg2, arg3)   {            \
+        char sbuf[512];                                             \
+        snprintf(sbuf, sizeof(sbuf), fmtstr, arg1, arg2, arg3);     \
+        LOGGER_STDERR(sbuf);                                               \
+    }
+
+
 // This class is instantiated in the same thread as
 class vidcap_v4l2_interface : virtual public vidcap_capture_base
 {

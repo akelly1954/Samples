@@ -1,6 +1,6 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_capture_thread.hpp>
-#include <vidcap_v4l2_interface.hpp>
+#include <vidcap_v4l2_driver_interface.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -42,17 +42,16 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-using namespace VideoCapture;
-
 /////////////////////////////////////////////////////////////////
 // NOTE: This is a different thread to the main thread.
 /////////////////////////////////////////////////////////////////
 
 // static members
 
-bool vidcap_capture_base::s_terminated = false;
-Util::condition_data<int> vidcap_capture_base::s_condvar(0);
-vidcap_capture_base *vidcap_capture_base::sp_interface_pointer = nullptr;
+bool VideoCapture::vidcap_capture_base::s_terminated = false;
+bool VideoCapture::vidcap_capture_base::s_paused = false;
+Util::condition_data<int> VideoCapture::vidcap_capture_base::s_condvar(0);
+VideoCapture::vidcap_capture_base *VideoCapture::vidcap_capture_base::sp_interface_pointer = nullptr;
 
 void VideoCapture::video_capture(Log::Logger logger)
 {
@@ -110,7 +109,7 @@ void VideoCapture::video_capture(Log::Logger logger)
     if (interfaceName == "v4l2")
     {
         logger.info() << "Video Capture thread: Interface used is " << interfaceName;
-        vidcap_capture_base::sp_interface_pointer = new vidcap_v4l2_interface(logger);
+        vidcap_capture_base::sp_interface_pointer = new vidcap_v4l2_driver_interface(logger);
 
         // Start the video interface:
         vidcap_capture_base::sp_interface_pointer->initialize();
@@ -127,10 +126,5 @@ void VideoCapture::video_capture(Log::Logger logger)
         logger.error() << "Video Capture thread: Unknown video interface specified in the json configuration: " << videoInterface << ".  Aborting...";
         throw std::runtime_error(std::string("Video Capture thread: Unknown video interface specified in the json configuration: " + videoInterface + ".  Aborting..."));
     }
-}
-
-void vidcap_capture_base::set_terminated(bool t)
-{
-    vidcap_capture_base::s_terminated = t;
 }
 
