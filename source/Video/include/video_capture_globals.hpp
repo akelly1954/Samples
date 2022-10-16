@@ -36,6 +36,12 @@
 
 namespace Video
 {
+    // Pixel formats: see /usr/include/linux/videodev2.h
+    enum pxl_formats {
+        yuyv = 0,
+        h264
+    };
+
     struct vcGlobals
     {
         static std::string logChannelName;
@@ -44,9 +50,6 @@ namespace Video
         static Log::Log::Level loglevel;
         static std::string default_log_level;
         static std::string log_level;
-        static size_t framecount;
-        static std::string default_str_frame_count;
-        static std::string str_frame_count;
         static bool profiling_enabled;
         static bool capture_finished;
         static bool capture_pause;
@@ -54,6 +57,15 @@ namespace Video
 
         // Video configuration
         static std::string video_grabber_name;
+        static size_t framecount;
+        static std::string str_frame_count;
+        static std::string str_dev_name;
+
+        // Indexed by enum pxl_formats values
+        // has a string description for each enum value
+        // See /usr/include/linux/videodev2.h
+        static enum pxl_formats pixel_format;
+        static std::vector<std::string> pixel_formats_strings;
     };
 
 // This function overwrites values in Video::vcGlobals with content from

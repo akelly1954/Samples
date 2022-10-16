@@ -289,7 +289,7 @@ int main(int argc, const char *argv[])
     Util::UtilLogger::setLoggerOptions(localopt);
 
     //////////////////////////////////////////////////////////////
-    // Initialise the UtilLogger object
+    // Initialize the UtilLogger object
     //////////////////////////////////////////////////////////////
     Util::UtilLogger::create(localopt);
 
@@ -320,8 +320,6 @@ int main(int argc, const char *argv[])
         ulogger.debug() << line;
     }
 
-
-
     /////////////////
     // Finally, get to work
     /////////////////
@@ -334,7 +332,7 @@ int main(int argc, const char *argv[])
     std::thread trcc;
  #endif // TEST_RAW_CAPTURE_CTL
 
-    int return_for_exit = 0;
+    int return_for_exit = EXIT_SUCCESS;
     try
     {
         // Start the profiling thread if it's enabled. It wont do anything until it's kicked
@@ -367,15 +365,51 @@ int main(int argc, const char *argv[])
         /////////////////////////////////////////////////////////////////////
         ulogger.debug() << argv0 << ":  starting the video capture thread.";
         videocapturethread = std::thread(VideoCapture::video_capture, ulogger);
-        // TODO:  Look at this - doesn't seem to need to be here:     videocapturethread.detach();
+        videocapturethread.detach();
 
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
         VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
-        // TODO: This sleep gives the threads 5 seconds in which to do something.
-        //       As soon as the v4l2 capture code is refactored and running,
-        //       THIS SHOULD BE REMOVED!!!
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // TODO: get rid of this asap
+        // This loop waits for video capture termination (normal or otherwise).  The first second or so of
+        // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the
+        // logged messages are commented out since they're not needed unless a runtime issue occurs.
+        for (int waitforfinished = 1; ; waitforfinished++)
+        {
+            auto ptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
+            if (ptr == nullptr)
+            {
+                if (waitforfinished == 1)
+                {
+                    // ulogger.debug() << "---------------------- Started waiting, interface pointer is null";
+                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                    continue;
+                }
+                else if ((waitforfinished % 7) == 0)
+                {
+                    ; // ulogger.debug() << "---------------------- While waiting, interface pointer is null... (counter = " << waitforfinished << ")";
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                if (waitforfinished > 15)
+                {
+                    ulogger.debug() << "---------------------- Interface pointer is still null. Terminating... (counter = " << waitforfinished << ")";
+                    throw std::runtime_error ("MAIN: Video Capture thread has failed (interface pointer is null)");
+                    break;
+                }
+                continue;
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            if ((waitforfinished % 7) == 0)
+            {
+                ; // ulogger.debug() << "------------------ Waiting for capture to finish... (counter = " << waitforfinished << ")";
+            }
+            if (ptr->isterminated())
+            {
+                // ulogger.debug() << "------------------ Video capture is finished... TERMINATING...";
+                break;
+            }
+        }
+        ulogger.debug() << "MAIN: Video Capture thread is done. Cleanup and terminate the prgram.";
 
         // CLEANUP VIDEO CAPTURE AND ITS QUEUE:
 
@@ -398,15 +432,15 @@ int main(int argc, const char *argv[])
     {
         ulogger.error()
               << argv0
-              << ": Got exception starting the queueing and profiling threads: "
+              << ": Got exception starting threads: "
               << exp.what()
               << ". Aborting...";
-        return_for_exit = 1;
+        return_for_exit = EXIT_FAILURE;
     } catch (...)
     {
        ulogger.error()
               << argv0 << ": General exception occurred in MAIN() starting the queueing and profiling threads. Aborting...";
-       return_for_exit = 1;
+       return_for_exit = EXIT_FAILURE;
     }
 
    // FINISHED:
@@ -445,6 +479,6 @@ int main(int argc, const char *argv[])
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
 
-    return 0;
+    return return_for_exit;
 }
 

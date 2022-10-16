@@ -50,7 +50,7 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-
+#include <Utility.hpp>
 #include <vidcap_v4l2_driver_interface.hpp>
 #include <vidcap_raw_queue_thread.hpp>
 #include <LoggerCpp/LoggerCpp.h>
@@ -62,7 +62,7 @@ using namespace VideoCapture;
 // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
 // Please NOTE:
-// The rather inappropriate #define'd expressions defined below are leftovers from before
+// TODO: The rather inappropriate #define'd expressions defined below are leftovers from before
 // the V4L2 related objects were converted to C++.  However these macros are not being
 // changed at this time.
 
@@ -298,9 +298,13 @@ void vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
     // (Having a null finished callback() is an error checked for earlier).
     do
     {
-        if (int_frame_count != 0 && count-- <= 0) break;
+        if (int_frame_count != 0 && count-- <= 0)
+        {
+            set_terminated(true);
+            break;
+        }
 
-        for (;;)
+        while(! isterminated())
         {
             fd_set fds;
             struct timeval tv;
@@ -464,14 +468,14 @@ void vidcap_v4l2_driver_interface::v4l2if_init_mmap(void)
 
         if (-1 == v4l2if_xioctl(fd, VIDIOC_REQBUFS, &req)) {
             if (EINVAL == errno) {
-                LOGGER_STDERR_1Arg("%s does not support memory mapping", dev_name);
+                LOGGER_STDERR_1Arg("%s does not support memory mapping", dev_name.c_str());
             }
             v4l2if_exit("init_mmap - nommap");
         }
 
         if (req.count < 2) {
             {
-                LOGGER_STDERR_1Arg("Insufficient buffer memory on %s", dev_name);
+                LOGGER_STDERR_1Arg("Insufficient buffer memory on %s", dev_name.c_str());
             }
             v4l2if_exit("init_mmap - reqcount");
         }
@@ -519,7 +523,7 @@ void vidcap_v4l2_driver_interface::v4l2if_init_userp(unsigned int buffer_size)
 
         if (-1 == v4l2if_xioctl(fd, VIDIOC_REQBUFS, &req)) {
             if (EINVAL == errno) {
-                LOGGER_STDERR_1Arg("%s does not support user pointer i/o", dev_name);
+                LOGGER_STDERR_1Arg("%s does not support user pointer i/o", dev_name.c_str());
                 v4l2if_exit("init_userp - nouserp");
             } else {
                 v4l2if_errno_exit("VIDIOC_REQBUFS", errno);
@@ -552,7 +556,7 @@ void vidcap_v4l2_driver_interface::v4l2if_init_device(void)
 
         if (-1 == v4l2if_xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
             if (EINVAL == errno) {
-                LOGGER_STDERR_1Arg("%s is no V4L2 device", dev_name);
+                LOGGER_STDERR_1Arg("%s is no V4L2 device", dev_name.c_str());
                 v4l2if_exit("not a v4l2 device");
             } else {
                 v4l2if_errno_exit("VIDIOC_QUERYCAP", errno);
@@ -560,7 +564,7 @@ void vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         }
 
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-            LOGGER_STDERR_1Arg("%s is no capture device", dev_name);
+            LOGGER_STDERR_1Arg("%s is no capture device", dev_name.c_str());
             v4l2if_exit("device is not a capture device");
         }
 
@@ -570,7 +574,7 @@ void vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         switch (io) {
         case IO_METHOD_READ:
                 if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-                    LOGGER_STDERR_1Arg("%s does not support read i/o", dev_name);
+                    LOGGER_STDERR_1Arg("%s does not support read i/o", dev_name.c_str());
                     v4l2if_exit("device does not support read i/o");
                 }
                 break;
@@ -578,7 +582,7 @@ void vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         case IO_METHOD_MMAP:
         case IO_METHOD_USERPTR:
                 if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-                    LOGGER_STDERR_1Arg("%s does not support streaming i/o", dev_name);
+                    LOGGER_STDERR_1Arg("%s does not support streaming i/o", dev_name.c_str());
                     v4l2if_exit("device does not support streaming i/o");
                 }
                 break;
@@ -614,30 +618,39 @@ void vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         CLEAR(fmt);
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (force_format == 2) {
+        if (pixel_format == Video::pxl_formats::h264) {
             fmt.fmt.pix.width       = 1920;
             fmt.fmt.pix.height      = 1080;
             fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_H264;
             fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
             if (-1 == v4l2if_xioctl(fd, VIDIOC_S_FMT, &fmt))
-                    v4l2if_errno_exit("VIDIOC_S_FMT", errno);
+            {
+                // Note VIDIOC_S_FMT may change width and height.
+                v4l2if_errno_exit("Setting pixel format to h264 (VIDIOC_S_FMT ioctl)", errno);
+            }
+            logger.debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
+                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[pixel_format];
 
-            /* Note VIDIOC_S_FMT may change width and height. */
-        } else if (force_format == 1) {
-                fmt.fmt.pix.width       = 640;
-                fmt.fmt.pix.height      = 480;
-                fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
-                fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
+        } else if (pixel_format ==  Video::pxl_formats::yuyv) {
+            fmt.fmt.pix.width       = 640;
+            fmt.fmt.pix.height      = 480;
+            fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
+            fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
 
-                if (-1 == v4l2if_xioctl(fd, VIDIOC_S_FMT, &fmt))
-                        v4l2if_errno_exit("VIDIOC_S_FMT", errno);
-
-                /* Note VIDIOC_S_FMT may change width and height. */
+            // Note VIDIOC_S_FMT may change width and height.
+            if (-1 == v4l2if_xioctl(fd, VIDIOC_S_FMT, &fmt))
+            {
+                v4l2if_errno_exit("Setting pixel format to yuyv (VIDIOC_S_FMT ioctl)", errno);
+            }
+            logger.debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
+                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[pixel_format];
         } else {
-                /* Preserve original settings as set by v4l2-ctl for example */
-                if (-1 == v4l2if_xioctl(fd, VIDIOC_G_FMT, &fmt))
-                        v4l2if_errno_exit("VIDIOC_G_FMT", errno);
+            /* Preserve original settings as set by v4l2-ctl for example */
+            if (-1 == v4l2if_xioctl(fd, VIDIOC_G_FMT, &fmt))
+            {
+                v4l2if_errno_exit("Setting pixel format to previou setting (VIDIOC_G_FMT ioctl)", errno);
+            }
         }
 
         /* Buggy driver paranoia. */
@@ -699,14 +712,15 @@ void vidcap_v4l2_driver_interface::v4l2if_close_device(void)
 
 void vidcap_v4l2_driver_interface::v4l2if_open_device(void)
 {
+        using namespace Util;
         struct stat st;
         int errnocopy;
 
-        if (dev_name == nullptr)
+        if (Utility::trim(dev_name) == "")
         {
-            v4l2if_error_exit("v4l2if_open_device: null video device name");
+            v4l2if_error_exit("v4l2if_open_device: empty video device name");
         }
-        if (-1 == stat(dev_name, &st)) {
+        if (-1 == stat(dev_name.c_str(), &st)) {
             errnocopy = errno;
             logger.error() << "v4l2if_open_device: Cannot identify device "
                            << dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
@@ -718,7 +732,7 @@ void vidcap_v4l2_driver_interface::v4l2if_open_device(void)
             v4l2if_error_exit("v4l2if_open_device: Not a device");
         }
 
-        fd = open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
+        fd = open(dev_name.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
         errnocopy = errno;
 
         if (-1 == fd) {

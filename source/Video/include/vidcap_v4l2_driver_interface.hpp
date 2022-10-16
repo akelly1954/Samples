@@ -84,7 +84,7 @@ namespace VideoCapture {
         void set_paused(bool t)                 { vidcap_capture_base::s_paused = t; };
         bool ispaused(void)                     { return vidcap_capture_base::s_paused; };
 
-        void set_error_terminated (bool t)      { m_errorterminated = t; set_terminated(true); };
+        void set_error_terminated (bool t)      { m_errorterminated = t; set_terminated(t); };
         bool iserror_terminated(void)           { return m_errorterminated; };
 
         int  v4l2if_xioctl(int fh, int request, void *arg);
@@ -112,9 +112,9 @@ namespace VideoCapture {
         int             fd = -1;
         struct buffer   *buffers = NULL;
         unsigned int    numbufs = 0;
-        int             force_format = 0;
-        int             int_frame_count = 0;
-        const char      *dev_name = "/dev/video0";
+        int             pixel_format = Video::vcGlobals::pixel_format;
+        int             int_frame_count = Video::vcGlobals::framecount;
+        std::string     dev_name = Video::vcGlobals::str_dev_name;
         bool            m_errorterminated = false;
     };
 

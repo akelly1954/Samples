@@ -35,12 +35,19 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        parameter is the file which will be created to hold image frames.\n"
             << "                                        If it exists, the file will be truncated. If the file name is omitted,\n"
             << "                                        the default name \"" << Video::vcGlobals::output_file << "\" will be used.\n"
-            << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << Video::vcGlobals::framecount << ")\n"
             << "              [ -pr ]                   Enable profiler stats\n"
             << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\",\n"
             << "                                        \"EROR\", \"CRIT\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n"
             << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The default\n"
-            << "                                        grabber is \"v4l2\").\n";
+            << "                                        grabber is \"v4l2\").\n"
+            << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << Video::vcGlobals::framecount << ")\n"
+            << "              [ -dv video-device ]      The /dev entry for the video camera. (The default value is " << Video::vcGlobals::str_dev_name << ")\n"
+            << "              [ -pf pixel-format ]      The pixel format requested from the video driver, which can be \"h264\" or \"yuyv\".\n"
+            << "                                        These are:\n"
+            << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::h264] << "\n"
+            << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::yuyv] << "\n"
+            << "                                                  Please see /usr/include/linux/videodev2.h for more information\n"
+            << "                                        (The default pixel-format value is \"h264\").\n";
 }
 
 bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
@@ -69,21 +76,24 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     strm << "    write-frames-to-file is set to enabled, file name is " << Video::vcGlobals::output_file << "\n";
 
 
-    switch(getArg(cmdmap, "-fc", Video::vcGlobals::str_frame_count))
+    // assignment to vcGlobals happens after everything else has been assinged below.
+    uint64_t fcount_value = Video::vcGlobals::framecount;
+    switch(getArg(cmdmap, "-fc", fcount_value))
     {
         case Util::ParameterStatus::FlagNotProvided:
-            // for debugging:  strm << "-fc flag not provided. Using default " << str_frame_count << "\n";
+            // for debug:
+            //      strm << "    -fc flag not provided. Using default " << fcount_value << "\n";
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
-            // for debugging:  strm << "-fc flag provided. Using " << str_frame_count << "\n";
+            // for debug:
+            //      strm << "    -fc flag provided. Using " << fcount_value << "\n";
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
-            strm << "ERROR: \"-fc\" flag is missing its parameter." << "\n";
-            return false;
+            strm << "    WARNING: \"-fc\" flag with no parameter: using default " << fcount_value << "\n";
+            break;
         default:
             assert (argc == -669);   // Bug encountered. Will cause abnormal termination
     }
-
 
     switch(getArg(cmdmap, "-pr", Video::vcGlobals::profiling_enabled))
     {
@@ -137,6 +147,42 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     }
 
 
+    std::string pixelfmt = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
+    switch(getArg(cmdmap, "-pf", pixelfmt))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // for debugging:
+            // strm << "    -pf flag not provided. Using default " << pixelfmt << "\n";
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:
+            // strm << "    -pf flag provided. Using " << pixelfmt << "\n";
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-pf\" flag is missing its parameter." << "\n";
+            return false;
+        default:
+            assert (argc == -673);   // Bug encountered. Will cause abnormal termination
+    }
+
+    /////////////////
+    // Check out the specified pixel format name
+    /////////////////
+    if (pixelfmt == "h264")
+    {
+        Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
+    }
+    else if (pixelfmt == "yuyv")
+    {
+        Video::vcGlobals::pixel_format = Video::pxl_formats::yuyv;
+    }
+    else
+    {
+        strm << "ERROR: pixel format is invalid: " << pixelfmt << "\n";
+        return false;
+    }
+    strm << "    Video pixel format is set to: " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format] << "\n";
+
     /////////////////
     // Check out the specified video frame grabber name
     /////////////////
@@ -165,7 +211,8 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
 
     // Assign the frame count (only after the command line parameters were applied)
     // Frame count set to 0 means stream non-stop.
-    Video::vcGlobals::framecount = strtoul(Video::vcGlobals::str_frame_count.c_str(), NULL, 10);
+    Video::vcGlobals::framecount = fcount_value;
+    Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
     strm << "    Frame count is set to " << Video::vcGlobals::framecount << " = " << Video::vcGlobals::str_frame_count << "\n";
 
     return true;
