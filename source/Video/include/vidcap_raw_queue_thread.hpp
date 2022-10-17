@@ -38,7 +38,6 @@
 
 namespace VideoCapture {
 
-
 // Queue handler thread
 void raw_buffer_queue_handler(Log::Logger logger, std::string output_file, bool profiling_enabled);
 

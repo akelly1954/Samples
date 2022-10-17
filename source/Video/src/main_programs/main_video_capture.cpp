@@ -342,8 +342,7 @@ int main(int argc, const char *argv[])
             profilingthread = std::thread(VideoCapture::video_profiler, ulogger);
             ulogger.debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
-            ulogger.debug() << argv0 << ":  kick-starting the video_profiler operations.";
-            VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+            ulogger.debug() << argv0 << ":  the video capture thread will kick-start the video_profiler operations.";
         }
 
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
@@ -473,8 +472,6 @@ int main(int argc, const char *argv[])
     ulogger.info() << "";
     ulogger.info() << "    $ vlc ./" << argv0 << ".mp4";
     ulogger.info() << "";
-
-    VideoCapture::vidcap_profiler::set_terminated(true);
 
     #ifdef TEST_RAW_CAPTURE_CTL
     if (trcc.joinable()) trcc.join();

@@ -158,6 +158,12 @@ void vidcap_v4l2_driver_interface::run()
         }
     }
 
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        logger.debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
+        VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+    }
+
     if (isterminated() || !v4l2if_mainloop())
     {
         if (!isterminated())
@@ -170,6 +176,12 @@ void vidcap_v4l2_driver_interface::run()
     v4l2if_stop_capturing();
     v4l2if_uninit_device();
     v4l2if_close_device();
+
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
+        VideoCapture::vidcap_profiler::set_terminated(true);
+    }
 
     if (iserror_terminated())
     {
@@ -362,6 +374,9 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
             set_terminated(true);
             break;
         }
+
+        if (Video::vcGlobals::profiling_enabled) profiler_frame::increment_one_frame();
+        // logger.debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
 
         while(! isterminated())
         {
