@@ -64,32 +64,36 @@ if the reader is looking for a focused project that can help them solve real pro
 found *...Samples/source/Video/src/main_programs/*    
 (used to be *main_v4l2_raw_capture*)     
      
-The sources for this project are being restructured at this time.  The old code is still in the source tree, and will stay there until the refactoring is done.
-
+The sources for this project are being restructured at this time. But it already works (you can take a video on your camera, stream it to a file, convert it to an mp4 file (or any other format) and then play it on your favorite video viewer (vlc?).     
+     
 This is an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then gets rid of these frames (by passing them on) to software that deals with each frame - either saving them in a file, analyzing/modifying each frame, and/or displaying them.    
       
-Thanks to the online video community which speaks a different language and uses tools and designs that are a step or three beyond what I know, I'm using a C program at the heart of the video frame "pump" that interfaces betwen the V4L ("Video For Linux" - V4L2 in this case) interface to the hardware, 
-and upper levels of the software (C++ objects, Qt, etc).  This is part of software which is provided freely with the V4L2 API.      
+Thanks to the online video community which speaks a different language and uses tools and designs that are a step or three beyond what I know, I'm using a C++ object at the heart of the video frame "pump" that originated from a C program which is published by kernel.org as part of the Linux kernel device driver documentation.  That code, now morphed into a C++ object interfaces betwen the V4L ("Video For Linux" - V4L2 in this case) interface to the hardware, and upper levels of the software (C++ objects, Qt, etc). This is part of software which is provided freely with the V4L2 API.      
      
-     The actual C function used is based on the *v4l/capture.c* sample program copied 
+     The actual C++ object used is based on the *v4l/capture.c* sample program copied 
      from *kernel.org*. See the directory ...Samples/References in this project for the 
      full detail of how to get to the file today, as well as a copy of the source in its 
      current raw (unmodified) form.      
 
-The (now a) function uses a configurable number of memory mapped buffers (4, in this case) that get filled up, one at a time, by the API.  This layer is implemented as a C function which uses 
-callback functions to deliver each frame in YUYV format (Packed YUV 4:2:2, YUY2) or H264 (H264 with start codes) to the next level up, C++ objects that copy each memory mapped buffer (using H264, 
-I'm currently seeing frame sizes of up to 175Kb each using my webcam which 
+The (now a) C++ class uses a set of configurable parameters (now read from the JSON config file, as well as adjusted by command line parameters) to fill up to 4 memory mapped buffers with video data in YUYV format (Packed YUV 4:2:2, YUY2) or H264 (H264 with start codes).  These buffers, one at a time as they are filled, are passed on to the next level up (written to a file, used to display in a viewer, analyzed, etc). Each buffer is copied only once, after which a shared pointer is what gets passed from one queue to another for further processing.  This frees up the memory mapped buffer (one of the 4) which allows the V4L driver in the kernel to fill it up with a new frame.
+ 
+With h264 pixel format, I'm currently seeing frame sizes of up to 175Kb each using my webcam which 
 provides 1920x1080 pixels per frame. Most frames, though, are less than 50Kb each). The numbers will be exponentialy higher for cameras that have a higher resolution.    
         
-Each frame buffer is copied into one or more C++ std::array<> objects (each element in the array represented as a uint8_t character); an std::shared_ptr<> set up for each std::array object, and from that point, the data does not have to be copied again unless and until the frame has to be converted into a different video format.  Each std::shared_ptr<> object is added to a ring buffer (*Util/include/circular_buffer.hpp*) and handled, one by one, in a different std::thread (not the data itself, but the pointer object to it) - using an object which has an embedded condition variable, to avoid having to poll the ring buffer for newly available frame buffers (*Util/include/condition_data.hpp*).     
+Currently all of this is implemented and working all the way up to and including writing out the video data to a file.  This file can be viewed by any of several viewers that handle YUYV or H264 formats. In order to see the results from the file in a viewer, you can do this:    
+     
+For h264 pixel format:     
+     
+    $ ffmpeg -f h264 -i video_capture.data -vcodec copy main_video_capture.mp4    
     
-Currently all of this is implemented and working all the way up to and including the separate thread which peels off one frame at a time from the ring buffer, and appends each frame to a file until the process eventually exits.  This file can be viewed by any of several viewers that handle YUYV or H264 formats. In order to see the results from the file in a viewer, you can do this (for H264 format):
-
-    $ ffmpeg -f h264 -i v4l2_raw_capture.data -vcodec copy v4l2_raw_capture.mp4    
+Or, for yuyv pixel format:     
+     
+    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \
+             -i video_capture.data -c:v libx264 -preset ultrafast -qp 0 main_video_capture.mp4
+     
+Where the *video_capture.data* is the name of the raw data file created by **main_video_capture**, and the .mp4 file is the output from *ffmpeg*. Having done this, you can view the video with any viewer you normally use, for example:   
     
-Where the *v4l2_raw_capture.data* is the name of the raw data file created by **main_v4l2_raw_capture**, and the .mp4 file is the output from *ffmpeg*. Having done this, you can view the video with any viewer you normally use:   
-    
-    $ vlc ./v4l2_raw_capture.mp4        
+    $ vlc ./main_video_capture.mp4        
     
 I use this to test the sanity of the layers below the thread which is handling the frame buffers.       
    
@@ -97,8 +101,7 @@ Obviously this is a Linux-only solution.  The Windows-only solution for grabbing
     
 Run time profiling implemented in this set of objects, gathers stats of various factors in this mechanism that control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), the current frame rate, etc.   
 
-(Current results: the average frame rate is showing as more than 25 fps (with the driver set to deliver at 25fps).  On the average there
-are 0 shared_ptr's in the ring buffer:  When I inserted some sleep()'s here and there to simulate load, those number came up into the few dozens depending on which part of the system I slowed down.)
+(Current results: the average frame rate is showing as more than 25 fps (with the driver set to deliver at 25fps).  On the average there are 0 shared_ptr's in the ring buffer:  When I inserted some sleep()'s here and there to simulate load, those number came up into the few dozens depending on which part of the system I slowed down.)
     
     
 **main_ntwk_basic_sock_server.cpp** and **main_client_for_basic_server.cpp**   
