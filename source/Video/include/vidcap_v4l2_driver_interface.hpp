@@ -89,17 +89,20 @@ namespace VideoCapture {
 
         int  v4l2if_xioctl(int fh, int request, void *arg);
         void v4l2if_process_image(void *p, int size);
-        int  v4l2if_read_frame(void);
-        void v4l2if_mainloop(void);
-        void v4l2if_stop_capturing(void);
-        void v4l2if_start_capturing(void);
-        void v4l2if_uninit_device(void);
-        void v4l2if_init_read(unsigned int buffer_size);
-        void v4l2if_init_mmap(void);
-        void v4l2if_init_userp(unsigned int buffer_size);
-        void v4l2if_init_device(void);
-        void v4l2if_close_device(void);
-        void v4l2if_open_device(void);
+        bool v4l2if_read_frame(void);
+        bool v4l2if_mainloop(void);
+        bool v4l2if_stop_capturing(void);
+        void v4l2if_cleanup_stop_capturing(void);       // ignores return values of system calls
+        bool v4l2if_start_capturing(void);
+        bool v4l2if_uninit_device(void);
+        void v4l2if_cleanup_uninit_device(void);        // ignores return values of system calls
+        bool v4l2if_init_read(unsigned int buffer_size);
+        bool v4l2if_init_mmap(void);
+        bool v4l2if_init_userp(unsigned int buffer_size);
+        bool v4l2if_init_device(void);
+        bool v4l2if_close_device(void);
+        void v4l2if_cleanup_close_device(void);         // ignores return values of system calls
+        bool v4l2if_open_device(void);
 
         void v4l2if_errno_exit(const char *s, int errnocopy);
         void v4l2if_error_exit(const char *s);

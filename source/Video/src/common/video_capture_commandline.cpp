@@ -147,6 +147,25 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     }
 
 
+    switch(getArg(cmdmap, "-dv", Video::vcGlobals::str_dev_name))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // for debugging:
+            // strm << "-dv flag not provided. Using default " << Video::vcGlobals::str_dev_name << "\n";
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            // for debugging:
+            // strm << "-dv flag provided. Using " << Video::vcGlobals::str_dev_name << "\n";
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            strm << "ERROR: \"-dv\" flag is missing its parameter." << "\n";
+            return false;
+        default:
+            assert (argc == -673);   // Bug encountered. Will cause abnormal termination
+    }
+    strm << "    Video frame grabber device name is set to " << Video::vcGlobals::str_dev_name << "\n";
+
+
     std::string pixelfmt = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
     switch(getArg(cmdmap, "-pf", pixelfmt))
     {
@@ -162,7 +181,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-pf\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (argc == -673);   // Bug encountered. Will cause abnormal termination
+            assert (argc == -674);   // Bug encountered. Will cause abnormal termination
     }
 
     /////////////////
