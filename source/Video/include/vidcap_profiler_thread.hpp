@@ -5,6 +5,7 @@
 #include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
 #include <LoggerCpp/LoggerCpp.h>
+#include <vidcap_capture_thread.hpp>
 #include <stdio.h>
 #include <thread>
 #include <mutex>
@@ -66,6 +67,14 @@ public:
     static long long increment_one_frame(void)
     {
         using namespace std::chrono;
+
+        auto ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
+        if (!ifptr || ifptr->ispaused())
+        {
+            // if we're paused, there are not changes to the stats.
+            return stats_total_num_frames;
+        }
+
         std::lock_guard<std::mutex> lock(stats_frames_mutex);
 
         // Use the first frame as the baseline for the total duration counter.

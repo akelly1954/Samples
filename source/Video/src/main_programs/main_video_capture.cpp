@@ -44,6 +44,10 @@
 #include <vector>
 
 
+// #define TEST_RAW_CAPTURE_CTL
+
+#define TEST_RAW_CAPTURE_CTL
+
 #ifdef TEST_RAW_CAPTURE_CTL
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,31 +56,30 @@
 //
 // Un-comment-out this #define if a low-level test of pause/resume/finish capture is needed.
 //
-// #define TEST_RAW_CAPTURE_CTL
-
-void test_raw_capture_ctl(Log::Logger logger)
+void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
 {
+    ::sleep(3);
     logger.debug() << argv0 << ": In test_raw_capture_ctl: thread running";
 
     VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
 
     if (!ifptr)
     {
-        std::string str = std::string("test_raw_capture_ctl thread: Could not obtain video capture iterface pointer (is null).";
+        std::string str("test_raw_capture_ctl thread: Could not obtain video capture iterface pointer (is null).");
         logger.warning() << str;
         throw std::runtime_error(str);
     }
 
     int slp = 3;
-    for (int i = 1; i <= 3; i++)
+    for (int i = 1; i <= 6; i++)
     {
         ::sleep(slp);
         logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
-        if (ifptr) ifptr->set_pause(true);
+        if (ifptr) ifptr->set_paused(true);
 
         ::sleep(slp);
         logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
-        if (ifptr) ifptr->set_pause(false);
+        if (ifptr) ifptr->set_paused(false);
     }
 
     ::sleep(slp);
@@ -352,11 +355,6 @@ int main(int argc, const char *argv[])
         ulogger.debug() << argv0 << ": kick-starting the queue operations.";
         VideoCapture::video_capture_queue::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
- #ifdef TEST_RAW_CAPTURE_CTL
-         // this will pause/sleep/resume/sleep a bunch of times, then exit.
-         trcc = std::thread (test_raw_capture_ctl, logger);
- #endif // TEST_RAW_CAPTURE_CTL
-
         /////////////////////////////////////////////////////////////////////
         //
         //  START THE VIDEO CAPTURE THREAD INTERFACE
@@ -368,6 +366,11 @@ int main(int argc, const char *argv[])
 
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
         VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+
+#ifdef TEST_RAW_CAPTURE_CTL
+        // this will pause/sleep/resume/sleep a bunch of times, then exit.
+        trcc = std::thread (test_raw_capture_ctl, ulogger, argv0);
+#endif // TEST_RAW_CAPTURE_CTL
 
         // This loop waits for video capture termination (normal or otherwise).  The first second or so of
         // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the

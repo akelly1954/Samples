@@ -138,7 +138,17 @@ Shows how to iterate through all of a system's network links and obtain useful i
      
      
 **Includes:**     
-*...Samples/source/EnetUtil/include/* and *...Samples/source/Util/include/* show the definition of objects used in the above programs.  See also *...Samples/source/EnetUtil/src/main_programs/include*.     
+     
+The following **include/** directories include the declaration of the objects used in the above programs:    
+     
+*...Samples/source/Util/include/*     
+*...Samples/source/Video/include/*     
+*...Samples/source/EnetUtil/src/main_programs/include/*     
+*...Samples/source/EnetUtil/include/*     
+     
+See also the 3rd party packages' directories:     
+*...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/include/*     
+*...Samples/source/3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/include/*     
      
      
 **Shell scripts:**    
@@ -146,20 +156,21 @@ Shows how to iterate through all of a system's network links and obtain useful i
 base-linux-build.bash (in *...Samples/source/*)   
 linux-build.bash   (in *...Samples/source/EnetUtil/*)    
 linux-build.bash   (in *...Samples/source/Util/*)     
+linux-build.bash   (in *...Samples/source/Video/*)     
 bash_env.sh (in *...Samples/source/shell_env/*)   
 test_basic_server.bash (in *...Samples/source/EnetUtil/src/main_programs/*)     
-localbuild.sh  (in *...Samples/source/3rdparty/LoggerCpp/*)     
+localbuild.sh  (in *...Samples/source/3rdparty/LoggerCpp/* and in *...Samples/source/3rdparty/JsonCpp/*)     
      
                 
 **CMake Files:**      
      
-cmake/EnetUtil.cmake   
-cmake/tools.cmake   
-cmake/Util.cmake   
-cmake/Video.cmake    
-CMakeLists.txt   
-EnetUtil/CMakeLists.txt   
-Util/CMakeLists.txt    
+*cmake/EnetUtil.cmake*   
+*cmake/tools.cmake*   
+*cmake/Util.cmake*        
+*cmake/Video.cmake*    
+*CMakeLists.txt*   
+*EnetUtil/CMakeLists.txt*   
+*Util/CMakeLists.txt*    
      
       
 **The flow:**    
@@ -173,10 +184,10 @@ The CMake files set up **cmake** to create an **Eclipse IDE** project using **ma
     
     
 # Please Note:
-This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators. Right now I only have some basic libraries and main programs that use/exercise them and there are more objects coming.  As soon as I introduce enough code that is stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.
-
-Thank you.
-
+This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators. Right now, even though I no longer have just some basic libraries and main programs that use/exercise them, there are still more objects coming.  As soon as I introduce enough code that is mostly stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
+     
+Thank you.     
+     
 **SEE ALSO:**    
       
 The README.md file in the **source** folder (./source/README.md).    
