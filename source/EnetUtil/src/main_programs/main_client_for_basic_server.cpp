@@ -324,7 +324,9 @@ int main(int argc, const char *argv[])
 bool parse(std::ostream &strm, int argc, const char *argv[])
 {
     using namespace Util;
-    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv);
+
+    const std::vector<std::string> allowedFlags ={ "-fn", "-ip", "-pn", "-lg" };
+    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
 
     switch(getArg(cmdmap, "-ip", connection_ip))
     {

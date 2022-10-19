@@ -62,9 +62,6 @@ void VideoCapture::video_capture(Log::Logger logger)
     // Find out which interface is configured (v4l2 or opencv)
     Json::Value& ref_root_copy = Config::ConfigSingleton::GetJsonRootCopyRef();
 
-    // This commented out string does not take into consideration command line overrides.
-    // std::string videoInterface = ref_root_copy["Config"]["Video"]["preferred-interface"].asString();
-
     std::string videoInterface = Video::vcGlobals::video_grabber_name;
     logger.info() << "Video Capture thread: Requesting the " << videoInterface << " frame-grabber.";
 

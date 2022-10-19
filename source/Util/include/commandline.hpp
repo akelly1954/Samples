@@ -2,7 +2,10 @@
 
 #include <stdlib.h>
 #include <map>
+#include <vector>
 #include <string>
+// #include <iostream>
+// #include <map>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -97,7 +100,7 @@ namespace Util {
 // straight forward.  MHO.
 // 
 
-std::map<std::string,std::string> getCLMap(int argc, const char *argv[]);
+std::map<std::string,std::string> getCLMap(int argc, const char *argv[], const std::vector<std::string>& allowedFlags);
 
 // Command line parsing
 enum ParameterStatus
@@ -137,7 +140,7 @@ template <>
 bool get_param_value<int>(std::string data, int& var)
 {
     if (data.length() == 0) return false;
-    var = static_cast<unsigned short>(strtol(data.c_str(), NULL, 10));
+    var = static_cast<int>(strtol(data.c_str(), NULL, 10));
     return true;
 }
 
@@ -145,7 +148,7 @@ template <>
 bool get_param_value<long>(std::string data, long& var)
 {
     if (data.length() == 0) return false;
-    var = static_cast<unsigned short>(strtol(data.c_str(), NULL, 10));
+    var = static_cast<long>(strtol(data.c_str(), NULL, 10));
     return true;
 }
 
@@ -161,7 +164,7 @@ template <>
 bool get_param_value<long long>(std::string data, long long& var)
 {
     if (data.length() == 0) return false;
-    var = static_cast<unsigned short>(strtoll(data.c_str(), NULL, 10));
+    var = static_cast<long long>(strtoll(data.c_str(), NULL, 10));
     return true;
 }
 

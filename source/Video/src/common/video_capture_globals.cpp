@@ -45,8 +45,9 @@ std::string     Video::vcGlobals::output_file =        Video::vcGlobals::logChan
 Log::Log::Level Video::vcGlobals::loglevel =           Log::Log::Level::eNotice;
 std::string     Video::vcGlobals::default_log_level =  Log::Log::toString(Video::vcGlobals::loglevel);
 std::string     Video::vcGlobals::log_level =          Video::vcGlobals::default_log_level;
-bool            Video::vcGlobals::profiling_enabled =  false;
 std::string     Video::vcGlobals::config_file_name =   Video::vcGlobals::logChannelName + ".json";
+bool            Video::vcGlobals::profiling_enabled =  false;
+int             Video::vcGlobals::profile_timeslice_ms = 800;
 
 // Video configuration
 std::string     Video::vcGlobals::video_grabber_name =  "v4l2";

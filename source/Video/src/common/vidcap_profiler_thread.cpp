@@ -3,6 +3,7 @@
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
+#include <video_capture_globals.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -60,7 +61,7 @@ Util::condition_data<int> vidcap_profiler::s_condvar(0);
 
 void VideoCapture::video_profiler(Log::Logger logger)
 {
-    int slp = 800;
+    int slp = Video::vcGlobals::profile_timeslice_ms;   //milliseconds
     profiler_frame::initialize();
 
     logger.debug() << "Profiler thread started...";

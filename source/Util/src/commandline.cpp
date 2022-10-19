@@ -1,4 +1,5 @@
 #include "commandline.hpp"
+#include <algorithm>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -26,7 +27,7 @@
 
 // Currently hard-coded to deal with the first command line argument being
 // in the form of -xx.
-std::map<std::string,std::string> Util::getCLMap(int argc, const char *argv[])
+std::map<std::string,std::string> Util::getCLMap(int argc, const char *argv[], const std::vector<std::string>& allowedFlags)
 {
     std::map<std::string,std::string> cmdmap;
 
@@ -37,14 +38,17 @@ std::map<std::string,std::string> Util::getCLMap(int argc, const char *argv[])
 
         std::string currentArg = const_cast<const char *>(argv[i]);
 
-        if (currentArg.length() == 0) continue;  // ignore weird empty strings
-        else if (currentArg[0] == '-' && currentArg.length() == 3)
+        if (currentArg.length() == 0)
+        {
+            continue;  // ignore weird empty strings
+        }
+        else if (std::find(allowedFlags.begin(), allowedFlags.end(), currentArg) != allowedFlags.end())
         {
             // This is a new flag
             if (i < argc-1)
             {
                 std::string nextarg = const_cast<const char *>(argv[i+1]);
-                if (nextarg.length() != 3 || nextarg[0] != '-')   // Is the next arg another flag?
+                if (std::find(allowedFlags.begin(), allowedFlags.end(), nextarg) == allowedFlags.end()) // Is the next arg another flag?
                 {
                     cmdmap[currentArg] = nextarg;
                     i++;

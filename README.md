@@ -171,6 +171,7 @@ localbuild.sh  (in *...Samples/source/3rdparty/LoggerCpp/* and in *...Samples/so
 *CMakeLists.txt*   
 *EnetUtil/CMakeLists.txt*   
 *Util/CMakeLists.txt*    
+*Video/CMakeLists.txt*    
      
       
 **The flow:**    

@@ -63,7 +63,8 @@ void Usage(std::string command)
 bool parse(int argc, const char *argv[])
 {
     using namespace Util;
-    const std::map<std::string,std::string> cmdmap = getCLMap(argc, argv);
+    const std::vector<std::string> allowedFlags ={ "-ii", "-i1", "-i2", "-ff", "-fd", "-fl", "-st" };
+    const std::map<std::string,std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
     std::map<std::string,bool> specified;
 
     specified["-ii"] = getArg(cmdmap, "-ii", intParam1);

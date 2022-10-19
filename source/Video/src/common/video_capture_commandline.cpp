@@ -35,7 +35,8 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        parameter is the file which will be created to hold image frames.\n"
             << "                                        If it exists, the file will be truncated. If the file name is omitted,\n"
             << "                                        the default name \"" << Video::vcGlobals::output_file << "\" will be used.\n"
-            << "              [ -pr ]                   Enable profiler stats\n"
+            << "              [ -pr [ timeslice_ms]     Enable profiler stats. If specified, the optional parameter is the number of\n"
+            << "                                        milliseconds between profiler snapshots. The default is " << Video::vcGlobals::profile_timeslice_ms << " milliseconds.\n"
             << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\",\n"
             << "                                        \"EROR\", \"CRIT\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n"
             << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The default\n"
@@ -53,7 +54,9 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
 bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
 {
     using namespace Util;
-    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv);
+
+    const std::vector<std::string> allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-pf" };
+    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
 
     // this flag (-fn) and an existing readable regular file name are MANDATORY
     switch(getArg(cmdmap, "-fn", Video::vcGlobals::output_file))
@@ -77,7 +80,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
 
 
     // assignment to vcGlobals happens after everything else has been assinged below.
-    uint64_t fcount_value = Video::vcGlobals::framecount;
+    int fcount_value = Video::vcGlobals::framecount;
     switch(getArg(cmdmap, "-fc", fcount_value))
     {
         case Util::ParameterStatus::FlagNotProvided:
@@ -94,22 +97,33 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
         default:
             assert (argc == -669);   // Bug encountered. Will cause abnormal termination
     }
+    // Value for frame count is checked at the very end.
 
-    switch(getArg(cmdmap, "-pr", Video::vcGlobals::profiling_enabled))
+    int default_timeslice = Video::vcGlobals::profile_timeslice_ms;
+    switch(getArg(cmdmap, "-pr", default_timeslice))
     {
         case Util::ParameterStatus::FlagNotProvided:
-            Video::vcGlobals::profiling_enabled = false;
+            Video::vcGlobals::profiling_enabled = Video::vcGlobals::profiling_enabled;
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
-            strm << "ERROR: \"-pr\" flag has a parameter where no parameters are allowed." << "\n";
-            return false;
+            // for debug:
+            //      strm << "    -fc flag provided. Using " << fcount_value << "\n";
+            Video::vcGlobals::profiling_enabled = true;
+            break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             Video::vcGlobals::profiling_enabled = true;
             break;
         default:
             assert (argc == -670);   // Bug encountered. Will cause abnormal termination
     }
-    strm << "    Profiling is set to " << (Video::vcGlobals::profiling_enabled? "enabled" : "disabled") << "\n";;
+    if (default_timeslice <= 0)
+    {
+        strm << "ERROR: Profiling timeslice (" << default_timeslice << ") has to be positive.\n";
+        return false;
+    }
+    Video::vcGlobals::profile_timeslice_ms = default_timeslice;
+    strm << "    Profiling is set to " << (Video::vcGlobals::profiling_enabled? "enabled" : "disabled")
+         << ", timeslice = " << Video::vcGlobals::profile_timeslice_ms << ".\n";
 
 
     // this flag (-fg) is not mandatory but needs a frame-grabber name if it is specified
@@ -226,10 +240,16 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
         strm << "\nERROR: Invalid log_level. Values can be any one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}." << "\n";
         return false;
     }
-    strm << "    Log level is set to " << Video::vcGlobals::loglevel << " = " << Video::vcGlobals::log_level << "\n";;
+    strm << "    Log level is set to " << Video::vcGlobals::loglevel << " = " << Video::vcGlobals::log_level << "\n";
 
     // Assign the frame count (only after the command line parameters were applied)
     // Frame count set to 0 means stream non-stop.
+    if (fcount_value < 0)
+    {
+        strm << "\nERROR: frane count (" << fcount_value << "): The number has to be positive or 0.\n";
+        return false;
+    }
+
     Video::vcGlobals::framecount = fcount_value;
     Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
     strm << "    Frame count is set to " << Video::vcGlobals::framecount << " = " << Video::vcGlobals::str_frame_count << "\n";
