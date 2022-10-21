@@ -87,20 +87,56 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     Video::vcGlobals::log_level = Utility::trim(cfg_root["Config"]["Logger"]["log-level"].asString());
     strm << "\nFrom JSON:  Set default logger log level to: " << Video::vcGlobals::log_level;
 
-    // video frame grabber
-    Video::vcGlobals::video_grabber_name = Utility::trim(cfg_root["Config"]["Video"]["preferred-interface"].asString());
-    strm << "\nFrom JSON:  Set default video-frame-grabber to: " << Video::vcGlobals::video_grabber_name;
+    // Enable writing raw video frames to output file
+    bool enable_write_to_file = (cfg_root["Config"]["App-options"]["write-to-file"].asBool() != 0);
+    Video::vcGlobals::write_frames_to_file = enable_write_to_file;
+    strm << "\nFrom JSON:  Enable writing raw video frames to output file: " << enable_write_to_file? "true" : "false";
 
-   // Video::vcGlobals::output_file
     // Raw video output file
     Video::vcGlobals::output_file = Utility::trim(cfg_root["Config"]["App-options"]["output-file"].asString());
     strm << "\nFrom JSON:  Set raw video output file name to: " << Video::vcGlobals::output_file;
 
+    // Enable profiling operations
+    bool enable_profiling = (cfg_root["Config"]["App-options"]["profiling"].asInt() != 0);
+    Video::vcGlobals::profiling_enabled = enable_profiling;
+    strm << "\nFrom JSON:  Enable profiling: " << enable_profiling? "true" : "false";
 
+    // Milliseconds between profile snapshots
+    Video::vcGlobals::profile_timeslice_ms = cfg_root["Config"]["App-options"]["profile-timeslice-ms"].asInt();
+    strm << "\nFrom JSON:  Set milliseconds between profile snapshots to: " << Video::vcGlobals::profile_timeslice_ms;
 
+    // video frame grabber
+    Video::vcGlobals::video_grabber_name = Utility::trim(cfg_root["Config"]["Video"]["preferred-interface"].asString());
+    strm << "\nFrom JSON:  Set default video-frame-grabber to: " << Video::vcGlobals::video_grabber_name;
 
+    // video grabber frame count
+    Video::vcGlobals::framecount = cfg_root["Config"]["Video"]["frame-count"].asInt();
+    strm << "\nFrom JSON:  Set number of frames to grab (framecount) to: " << Video::vcGlobals::framecount;
 
+    ///////////// Specific video-grabber section (i.e. v4l2, opencv, etc) /////////////////
 
+    strm << "\nFrom JSON:  " << Video::vcGlobals::video_grabber_name << " is labeled as: "
+            << cfg_root["Config"]["Video"]["frame-capture"][Video::vcGlobals::video_grabber_name]["name"].asString();
+
+    Video::vcGlobals::str_dev_name = cfg_root["Config"]["Video"]["frame-capture"][Video::vcGlobals::video_grabber_name]["device-name"].asString();
+    strm << "\nFrom JSON:  Set " << Video::vcGlobals::video_grabber_name << " device name to " << Video::vcGlobals::str_dev_name;
+
+    // Video::vcGlobals::pixel_format is either "h264" or "yuyv"
+    std::string pixelFormat = cfg_root["Config"]["Video"]["frame-capture"][Video::vcGlobals::video_grabber_name]["pixel-format"].asString();
+    if (pixelFormat == "h264")
+    {
+        Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
+    }
+    else if (pixelFormat == "yuyv")
+    {
+        Video::vcGlobals::pixel_format = Video::pxl_formats::yuyv;
+    }
+    else
+    {
+        throw std::runtime_error(std::string("ERROR in Video::updateInternalConfigsWithJsonValues(): Invalid pixel format: ") + pixelFormat + " specified");
+    }
+    strm << "\nFrom JSON:  Set " << Video::vcGlobals::video_grabber_name << " pixel format to "
+            << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
 
     return true;
 }
