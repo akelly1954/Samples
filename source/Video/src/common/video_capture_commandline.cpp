@@ -65,11 +65,11 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             // This means write-to-file may or may not be enabled:  Use the default
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
-            VideoCapture::video_capture_queue::set_write_frames_to_file(true);
+            Video::vcGlobals::write_frames_to_file = true;
             // strm << "Turning on write-frames-to-file, using: \"" << Video::vcGlobals::output_file << "\"." << "\n";
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
-            VideoCapture::video_capture_queue::set_write_frames_to_file(true);
+            Video::vcGlobals::write_frames_to_file = true;
             // strm << "Turning on write-frames-to-file, using the default: \"" <<
             //         Video::vcGlobals::output_file << "\"." << "\n";
             break;
@@ -79,7 +79,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     strm << "    write-frames-to-file is set to enabled, file name is " << Video::vcGlobals::output_file << "\n";
 
 
-    // assignment to vcGlobals happens after everything else has been assinged below.
+    // assignment to vcGlobals happens after everything else has been assigned below.
     int fcount_value = Video::vcGlobals::framecount;
     switch(getArg(cmdmap, "-fc", fcount_value))
     {
@@ -103,7 +103,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
     switch(getArg(cmdmap, "-pr", default_timeslice))
     {
         case Util::ParameterStatus::FlagNotProvided:
-            Video::vcGlobals::profiling_enabled = Video::vcGlobals::profiling_enabled;
+            // Use the default Video::vcGlobals::profiling_enabled
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
             // for debug:
@@ -252,7 +252,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
 
     Video::vcGlobals::framecount = fcount_value;
     Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
-    strm << "    Frame count is set to " << Video::vcGlobals::framecount << " = " << Video::vcGlobals::str_frame_count << "\n";
+    strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
 
     return true;
 }

@@ -81,11 +81,11 @@ namespace VideoCapture {
         void run();
         void set_terminated(bool t)             { vidcap_capture_base::s_terminated = t; };
         bool isterminated(void)                 { return vidcap_capture_base::s_terminated; };
+        void set_error_terminated (bool t)      { vidcap_capture_base::s_errorterminated = t; set_terminated(t); };
+        bool iserror_terminated(void)           { return vidcap_capture_base::s_errorterminated; };
         void set_paused(bool t)                 { vidcap_capture_base::s_paused = t; };
         bool ispaused(void)                     { return vidcap_capture_base::s_paused; };
 
-        void set_error_terminated (bool t)      { m_errorterminated = t; set_terminated(t); };
-        bool iserror_terminated(void)           { return m_errorterminated; };
 
         int  v4l2if_xioctl(int fh, int request, void *arg);
         void v4l2if_process_image(void *p, int size);

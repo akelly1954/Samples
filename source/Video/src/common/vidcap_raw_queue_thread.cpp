@@ -1,5 +1,6 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_profiler_thread.hpp>
+#include <video_capture_globals.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -49,19 +50,21 @@ using namespace VideoCapture;
 // static members
 
 bool video_capture_queue::s_terminated = false;
-bool video_capture_queue::s_write_frames_to_file = true;
-size_t video_capture_queue::s_write_frame_count = 200;
+
+// TODO: Rempve this when you are ready...      bool video_capture_queue::s_write_frames_to_file = true;
+// TODO: Rempve this when you are ready...      size_t video_capture_queue::s_write_frame_count = 200;
 Util::condition_data<int> video_capture_queue::s_condvar(0);
 Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>>
                                                                             video_capture_queue::s_ringbuf(100);
 
 void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string output_file, bool profiling_enabled)
 {
+    using namespace Video;
     FILE *filestream = NULL;
 
     // Captured frames also go to the output file only if the
     // option is set (which it is not, by default)
-    if (video_capture_queue::s_write_frames_to_file)
+    if (vcGlobals::write_frames_to_file)
     {
 
         filestream = create_output_file(logger, output_file);
@@ -86,7 +89,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string outp
         {
             auto sp_frame = video_capture_queue::s_ringbuf.get();
 
-            if (video_capture_queue::s_write_frames_to_file)
+            if (vcGlobals::write_frames_to_file)
             {
                 size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, output_file, sp_frame);
                 assert (nbytes == sp_frame->num_valid_elements());
@@ -107,7 +110,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string outp
     {
         auto sp_frame = video_capture_queue::s_ringbuf.get();
         logger.debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
-        if (video_capture_queue::s_write_frames_to_file)
+        if (vcGlobals::write_frames_to_file)
         {
             size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, output_file, sp_frame);
             assert (nbytes == sp_frame->num_valid_elements());
@@ -119,7 +122,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger, std::string outp
             //////////////////////////////////////////////////////////////////////
         }
     }
-    if (video_capture_queue::s_write_frames_to_file && filestream != NULL)
+    if (vcGlobals::write_frames_to_file && filestream != NULL)
     {
         fflush(filestream);
         fclose(filestream);
@@ -131,15 +134,11 @@ void video_capture_queue::set_terminated(bool t)
     video_capture_queue::s_terminated = t;
 }
 
-void video_capture_queue::set_write_frame_count(size_t count)
-{
-    video_capture_queue::s_write_frame_count = count;
-}
-
-void video_capture_queue::set_write_frames_to_file(bool t)
-{
-    video_capture_queue::s_write_frames_to_file = t;
-}
+// TODO: Remove this when you are ready...          void video_capture_queue::set_write_frame_count(size_t count)
+// {
+//     Video::vcGlobals::framecount = count;
+//     Video::vcGlobals::str_frame_count = std::to_string(count);
+// }
 
 // Note: this method runs on a different thread than the other methods in this object.
 // It's called from the specific video raw capture driver on its thread.

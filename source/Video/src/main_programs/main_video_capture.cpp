@@ -279,6 +279,9 @@ int main(int argc, const char *argv[])
     // Set up the logger
     /////////////////
 
+    // TODO: Either remove an existing log file at this point, or make sure something is logged ALWAYS. Otherwise you wind up with a log file from an exiting run.
+    // (I think the latter.  TODO: indeed.)
+
     // This picks the values from Video::vcGlobals (which was modified
     // by the json file and then the command line.
     Util::LoggerOptions localopt = setLocalLoggerOptions();
@@ -331,6 +334,7 @@ int main(int argc, const char *argv[])
  #endif // TEST_RAW_CAPTURE_CTL
 
     int return_for_exit = EXIT_SUCCESS;
+    bool error_termination = false;
     try
     {
         // Start the profiling thread if it's enabled. It wont do anything until it's kicked
@@ -389,6 +393,7 @@ int main(int argc, const char *argv[])
                 if (waitforfinished > 15)
                 {
                     ulogger.debug() << "---------------------- Interface pointer is still null. Terminating... (counter = " << waitforfinished << ")";
+                    error_termination = true;
                     throw std::runtime_error ("MAIN: Video Capture thread has failed (interface pointer is null)");
                     break;
                 }
@@ -406,16 +411,29 @@ int main(int argc, const char *argv[])
                 break;
             }
         }
-        ulogger.debug() << "MAIN: Video Capture thread is done. Cleanup and terminate the prgram.";
-
         // CLEANUP VIDEO CAPTURE AND ITS QUEUE:
 
         VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
         if (ifptr)
         {
-             // This signals the derived instance of the frame
-             // grabber (v4l2 or opencv at this time) to terminate.
-             if (ifptr) ifptr->set_terminated(true);
+            if (ifptr->iserror_terminated())
+            {
+                error_termination = true;
+                return_for_exit = EXIT_FAILURE;
+            }
+
+            // This signals the derived instance of the frame
+            // grabber (v4l2 or opencv at this time) to terminate.
+            ifptr->set_terminated(true);
+        }
+
+        if (error_termination)
+        {
+            ulogger.debug() << "MAIN: ERROR: Video Capture thread terminating. Cleanup and terminate.";
+        }
+        else
+        {
+            ulogger.debug() << "MAIN: Video Capture thread is done. Cleanup and terminate.";
         }
 
         ulogger.debug() << argv0 << ":  terminating queue thread.";
@@ -427,6 +445,7 @@ int main(int argc, const char *argv[])
     }
     catch (std::exception &exp)
     {
+        error_termination = true;
         ulogger.error()
               << argv0
               << ": Got exception starting threads: "
@@ -435,41 +454,46 @@ int main(int argc, const char *argv[])
         return_for_exit = EXIT_FAILURE;
     } catch (...)
     {
+       error_termination = true;
        ulogger.error()
               << argv0 << ": General exception occurred in MAIN() starting the queueing and profiling threads. Aborting...";
        return_for_exit = EXIT_FAILURE;
     }
 
-   // FINISHED:
-    //      One for the display
-    std::cerr << "\n" <<
-            "To convert the output file to an mp4 file use: \n\n" <<
-            "For pixel format H264 use:\n\n" <<
-            "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4\n\n" <<
-            "Or, for pixel format YUYV use:\n\n" <<
-            "    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \\\n" <<
-            "             -i " << vcGlobals::output_file << " -c:v libx264 -preset ultrafast -qp 0 " << argv0 << ".mp4\n\n" <<
-            "Then view the mp4 file (as an example) with: \n\n" <<
-            "    $ vlc ./" << argv0 << ".mp4\n" <<
-            std::endl;
+    // FINISHED:
 
-    //    and one for the log file
-    ulogger.info() << "";
-    ulogger.info() << "To convert the output file to an mp4 file use: ";
-    ulogger.info() << "";
-    ulogger.info() << "For pixel format H264 use:";
-    ulogger.info() << "";
-    ulogger.info() << "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4";
-    ulogger.info() << "";
-    ulogger.info() << "Or, for pixel format YUYV use:";
-    ulogger.info() << "";
-    ulogger.info() << "    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \\";
-    ulogger.info() << "             -i " << vcGlobals::output_file << " -c:v libx264 -preset ultrafast -qp 0 " << argv0 << ".mp4";
-    ulogger.info() << "";
-    ulogger.info() << "Then view the mp4 file (as an example) with: ";
-    ulogger.info() << "";
-    ulogger.info() << "    $ vlc ./" << argv0 << ".mp4";
-    ulogger.info() << "";
+    if (! error_termination)
+    {
+        //      One for the display
+        std::cerr << "\n" <<
+                "To convert the output file to an mp4 file use: \n\n" <<
+                "For pixel format H264 use:\n\n" <<
+                "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4\n\n" <<
+                "Or, for pixel format YUYV use:\n\n" <<
+                "    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \\\n" <<
+                "             -i " << vcGlobals::output_file << " -c:v libx264 -preset ultrafast -qp 0 " << argv0 << ".mp4\n\n" <<
+                "Then view the mp4 file (as an example) with: \n\n" <<
+                "    $ vlc ./" << argv0 << ".mp4\n" <<
+                std::endl;
+
+        //    and one for the log file
+        ulogger.info() << "";
+        ulogger.info() << "To convert the output file to an mp4 file use: ";
+        ulogger.info() << "";
+        ulogger.info() << "For pixel format H264 use:";
+        ulogger.info() << "";
+        ulogger.info() << "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4";
+        ulogger.info() << "";
+        ulogger.info() << "Or, for pixel format YUYV use:";
+        ulogger.info() << "";
+        ulogger.info() << "    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \\";
+        ulogger.info() << "             -i " << vcGlobals::output_file << " -c:v libx264 -preset ultrafast -qp 0 " << argv0 << ".mp4";
+        ulogger.info() << "";
+        ulogger.info() << "Then view the mp4 file (as an example) with: ";
+        ulogger.info() << "";
+        ulogger.info() << "    $ vlc ./" << argv0 << ".mp4";
+        ulogger.info() << "";
+    }
 
     #ifdef TEST_RAW_CAPTURE_CTL
     if (trcc.joinable()) trcc.join();
@@ -479,6 +503,12 @@ int main(int argc, const char *argv[])
     if (queuethread.joinable()) queuethread.join();
     if (vcGlobals::profiling_enabled && profilingthread.joinable()) profilingthread.join();
     if (videocapturethread.joinable()) videocapturethread.join();
+
+    if (error_termination)
+    {
+        ulogger.error() << "ERROR:  Program terminated.";
+        std::cerr << "ERROR:  Program terminated." << std::endl;
+    }
 
     ulogger.info() << "Terminating the logger.";
 

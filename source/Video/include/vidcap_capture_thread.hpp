@@ -52,12 +52,16 @@ public:
     virtual void run() = 0;
     virtual void set_terminated(bool t) = 0;
     virtual bool isterminated() = 0;
+    virtual void set_error_terminated (bool t) = 0;
+    virtual bool iserror_terminated(void) = 0;
+
     virtual void set_paused(bool t) = 0;
     virtual bool ispaused(void) = 0;
 
     static  vidcap_capture_base *get_interface_ptr() { return sp_interface_pointer; }
 protected:
     static bool s_terminated;
+    static bool s_errorterminated;
     static bool s_paused;
 
 public:

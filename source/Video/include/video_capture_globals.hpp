@@ -59,6 +59,7 @@ namespace Video
         // Video configuration
         static std::string video_grabber_name;
         static size_t framecount;
+        static bool write_frames_to_file;
         static std::string str_frame_count;
         static std::string str_dev_name;
 

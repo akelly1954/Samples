@@ -185,7 +185,10 @@ void vidcap_v4l2_driver_interface::run()
 
     if (iserror_terminated())
     {
-        LOGGER_STDERR("vidcap_v4l2_driver_interface: ERROR TERMINATION REQUESTED.");
+        LOGGER_STDERR("vidcap_v4l2_driver_interface:\n\n"
+                      "        ****************************************\n"
+                      "        ***** ERROR TERMINATION REQUESTED. *****\n"
+                      "        ****************************************\n");
     }
 }
 
@@ -244,7 +247,7 @@ void vidcap_v4l2_driver_interface::v4l2if_process_image(void *p, int size)
 bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
 {
     struct v4l2_buffer buf;
-    int errnocopy = errno;
+    int errnocopy = 0;
     unsigned int i;
 
     switch (io) {
@@ -261,10 +264,12 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
                 return false;
 
             case EIO:
+                // Original source says:
                 /* Could ignore EIO, see spec. */
-
-                /* fall through */
-
+                // I don't think so.
+                LOGGER_2Arg("v4l2if_read_frame: (io = IO_METHOD_READ) read() call failed (EIO): errno=%d: %s", EIO, std::strerror(EIO));
+                set_error_terminated(true);
+                return false;
             default:
                 LOGGER_2Arg("v4l2if_read_frame: read() call failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
                 return true;
@@ -282,14 +287,17 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
 
             if (-1 == v4l2if_xioctl(fd, VIDIOC_DQBUF, &buf)) {
                 errnocopy = errno;
-                switch (errno) {
+                switch (errnocopy) {
                 case EAGAIN:
                     return false;
 
                 case EIO:
+                    // Original source says:
                     /* Could ignore EIO, see spec. */
-
-                    /* fall through */
+                    // I don't think so.
+                    LOGGER_2Arg("v4l2if_read_frame: (io = IO_METHOD_MMAP) ioctl() VIDIOC_DQBUF call failed (EIO): errno=%d: %s", errnocopy, std::strerror(errnocopy));
+                    set_error_terminated(true);
+                    return false;
 
                 default:
                     LOGGER_2Arg("v4l2if_read_frame: ioctl() VIDIOC_DQBUF call failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
@@ -326,9 +334,12 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
                         return false;
 
                 case EIO:
-                        /* Could ignore EIO, see spec. */
-
-                        /* fall through */
+                    // Original source says:
+                    /* Could ignore EIO, see spec. */
+                    // I don't think so.
+                    LOGGER_2Arg("v4l2if_read_frame: (io = IO_METHOD_USERPTR) ioctl() V4L2_BUF_TYPE_VIDEO_CAPTURE/V4L2_MEMORY_USERPTR call failed (EIO): errno=%d: %s", EIO, std::strerror(EIO));
+                    set_error_terminated(true);
+                    return false;
 
                 default:
                     LOGGER_2Arg("v4l2if_read_frame: ioctl() VIDIOC_DQBUF call failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
@@ -399,6 +410,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
                 if (errnocopy == EINTR) continue;
 
                 LOGGER_2Arg("v4l2if_mainloop: select call failed (-1): errno=%d: %s", errnocopy, std::strerror(errnocopy));
+                set_error_terminated(true);
                 return false;
             }
 
@@ -410,13 +422,21 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
 
             if (v4l2if_read_frame())
                     break;
-            /* EAGAIN - continue select loop. */
+            /* EAGAIN or EIO- continue select loop. */
         }
     } while (! isterminated());
 
     if (isterminated())
     {
-        logger.info() << "v4l2if_mainloop: CAPTURE TERMINATION REQUESTED.";
+        if (iserror_terminated())
+        {
+            logger.info() << "v4l2if_mainloop: ERROR:  CAPTURE TERMINATION REQUESTED.";
+        }
+        else
+        {
+            logger.info() << "v4l2if_mainloop: CAPTURE TERMINATION REQUESTED.";
+        }
+        return false;
     }
     return true;
 }

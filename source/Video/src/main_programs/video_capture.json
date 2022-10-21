@@ -8,27 +8,27 @@
         },
 
         "App-options": {
-            "output-file": "video_capture.data",
-            "write-to-file": 1,
+            "output-file":              "video_capture.data",
+            "write-to-file":            1,
             "profiling": 0,
             "profile-timeslice-ms":     800
         },
 
         "Video": {
 
-            "preferred-interface": "v4l2",
-            "frame-count": 200,
+            "preferred-interface" :     "v4l2",
+            "frame-count":              200,
 
             "frame-capture": {
 
                 "v4l2": {
                     "name": "v4l2",
-                    "device-name": "/dev/video0",
-                    "pixel-format":  "h264"
+                    "device-name" :     "/dev/video0",
+                    "pixel-format":     "h264"
                 },
             
                 "opencv": {
-                    "name":         "opencv"
+                    "name":             "opencv"
                 }
             }
         }

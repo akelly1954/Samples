@@ -1,7 +1,5 @@
 #pragma once
 
-// NOTE: TODO: This file has work in progress. Do not use.
-
 // MIT License
 // 
 // Copyright (c) 2022 Andrew Kelly

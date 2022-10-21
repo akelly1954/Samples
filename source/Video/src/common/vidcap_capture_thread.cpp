@@ -49,6 +49,7 @@
 // static members
 
 bool VideoCapture::vidcap_capture_base::s_terminated = false;
+bool VideoCapture::vidcap_capture_base::s_errorterminated = false;
 bool VideoCapture::vidcap_capture_base::s_paused = false;
 Util::condition_data<int> VideoCapture::vidcap_capture_base::s_condvar(0);
 VideoCapture::vidcap_capture_base *VideoCapture::vidcap_capture_base::sp_interface_pointer = nullptr;

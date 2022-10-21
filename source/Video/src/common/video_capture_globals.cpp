@@ -39,25 +39,26 @@
 
 // Video::vcGlobals statics' definition
 
-std::string     Video::vcGlobals::logChannelName =     "video_capture";
-std::string     Video::vcGlobals::logFilelName =       Video::vcGlobals::logChannelName + "_log.txt";
-std::string     Video::vcGlobals::output_file =        Video::vcGlobals::logChannelName + ".data";  // Name of file intended for the video frames
-Log::Log::Level Video::vcGlobals::loglevel =           Log::Log::Level::eNotice;
-std::string     Video::vcGlobals::default_log_level =  Log::Log::toString(Video::vcGlobals::loglevel);
-std::string     Video::vcGlobals::log_level =          Video::vcGlobals::default_log_level;
-std::string     Video::vcGlobals::config_file_name =   Video::vcGlobals::logChannelName + ".json";
-bool            Video::vcGlobals::profiling_enabled =  false;
-int             Video::vcGlobals::profile_timeslice_ms = 800;
+std::string     Video::vcGlobals::logChannelName =          "video_capture";
+std::string     Video::vcGlobals::logFilelName =            Video::vcGlobals::logChannelName + "_log.txt";
+std::string     Video::vcGlobals::output_file =             Video::vcGlobals::logChannelName + ".data";  // Name of file intended for the video frames
+Log::Log::Level Video::vcGlobals::loglevel =                Log::Log::Level::eNotice;
+std::string     Video::vcGlobals::default_log_level =       Log::Log::toString(Video::vcGlobals::loglevel);
+std::string     Video::vcGlobals::log_level =               Video::vcGlobals::default_log_level;
+std::string     Video::vcGlobals::config_file_name =        Video::vcGlobals::logChannelName + ".json";
+bool            Video::vcGlobals::profiling_enabled =       false;
+int             Video::vcGlobals::profile_timeslice_ms =    800;
 
 // Video configuration
-std::string     Video::vcGlobals::video_grabber_name =  "v4l2";
-size_t          Video::vcGlobals::framecount =         200;
+std::string     Video::vcGlobals::video_grabber_name =      "v4l2";
+bool            Video::vcGlobals::write_frames_to_file =    true;
+size_t          Video::vcGlobals::framecount =              200;
 std::string     Video::vcGlobals::str_frame_count(std::to_string(framecount));
-std::string     Video::vcGlobals::str_dev_name = "/dev/video0";
+std::string     Video::vcGlobals::str_dev_name =            "/dev/video0";
 
 // See /usr/include/linux/videodev2.h
 enum Video::pxl_formats Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
-std::vector<std::string> Video::vcGlobals::pixel_formats_strings ={
+std::vector<std::string> Video::vcGlobals::pixel_formats_strings ={         // indexed by pixel_format used as an int
                                         "V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2",
                                         "V4L2_PIX_FMT_H264: H264 with start codes"
                                     };
@@ -89,6 +90,17 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     // video frame grabber
     Video::vcGlobals::video_grabber_name = Utility::trim(cfg_root["Config"]["Video"]["preferred-interface"].asString());
     strm << "\nFrom JSON:  Set default video-frame-grabber to: " << Video::vcGlobals::video_grabber_name;
+
+   // Video::vcGlobals::output_file
+    // Raw video output file
+    Video::vcGlobals::output_file = Utility::trim(cfg_root["Config"]["App-options"]["output-file"].asString());
+    strm << "\nFrom JSON:  Set raw video output file name to: " << Video::vcGlobals::output_file;
+
+
+
+
+
+
 
     return true;
 }
