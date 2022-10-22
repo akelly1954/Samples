@@ -38,7 +38,7 @@
 #include <string>
 
 // Video::vcGlobals statics' definition
-
+bool            Video::vcGlobals::log_initialization_info = false;
 std::string     Video::vcGlobals::logChannelName =          "video_capture";
 std::string     Video::vcGlobals::logFilelName =            Video::vcGlobals::logChannelName + "_log.txt";
 std::string     Video::vcGlobals::output_file =             Video::vcGlobals::logChannelName + ".data";  // Name of file intended for the video frames

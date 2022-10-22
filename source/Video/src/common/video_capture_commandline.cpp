@@ -31,6 +31,7 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
     strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
             << "\n"
+            << "              [ -loginit ]              (no parameters) This flag enables the logging of initialization info.\n"
             << "              [ -fn [ file-name ] ]     Turns on the write-frames-to-file functionality.  The file-name \n"
             << "                                        parameter is the file which will be created to hold image frames.\n"
             << "                                        If it exists, the file will be truncated. If the file name is omitted,\n"
@@ -55,8 +56,28 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
 {
     using namespace Util;
 
-    const std::vector<std::string> allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-pf" };
+    const std::vector<std::string> allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-pf", "-loginit"};
     const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
+
+
+    // this flag (-loginit) enablea logging of initial delayed log output
+    std::string tstr;;
+    switch(getArg(cmdmap, "-loginit", tstr))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            vcGlobals::log_initialization_info = false;
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            strm << "ERROR: \"-loginit\" has a parameter where none is allowed." << "\n";
+            return false;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            vcGlobals::log_initialization_info = true;
+            break;
+        default:
+            assert (argc == -667);   // Bug encountered. Will cause abnormal termination
+    }
+    strm << "    Logging of initialization lines is set to " << (vcGlobals::log_initialization_info? "true" : "false") << ".\n";
 
     // this flag (-fn) and an existing readable regular file name are MANDATORY
     switch(getArg(cmdmap, "-fn", Video::vcGlobals::output_file))

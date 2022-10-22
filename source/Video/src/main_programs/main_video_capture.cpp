@@ -89,48 +89,9 @@ void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
 //
 // Configuration of this program is affected by the initial (compiled) defaults of certain
 // specific objects that can at run time be overwritten with values obtained from json configuration
-// file, as well as command line parameters.
-//
-// The order of precedence is simple:  If nothing else, the compiled static default values of
-// objects will take effect.  Next, values of json config parameters will overwite whatever
-// is in effect when they are read in.  Next, values of command line parameters overwrite whatever
-// is in effect after the json values are read in.
-//
-// Once the json config is read in at run time, any value which comes from the json file,
-// will overwrite the default value that the program was compiled with for the specific object
-// being handled (lets say, the logger debug level - "DEBG", "INFO", etc).
-//
-// After the json config values have been written into the specifc objects they are meant
-// for, command line parameters are parsed and updated into these same objects for those
-// objects that are configurable from the command line.
-//
-// As an example:
-//
-//         The logger's log-level starts out in video_capture_globals.cpp defined as
-//         Video::vcGlobals::loglevel, and initialized to some Log::Log::Level value, such
-//         as Log::Log::Level::eDebug.
-//
-//         Next comes the json config file.  If the following section exists, and contains
-//         a valid value, it will overwrite the object Video::vcGlobals::loglevel:
-//
-//         {
-//             "Config": {
-//                  . . . . . .
-//                     "Logger": {
-//                        . . . . . .
-//                         "log-level":        "INFO"
-//                        . . . . . .
-//                     },
-//                  . . . . . .
-//             }
-//         }
-//
-//         As a result of the above section, the variable Video::vcGlobals::loglevel will be
-//         assigned the value Log::Log::Level::eInfo replacing compiled static value.
-//
-//         At the end, if the command line option "-lg NOTE" is specified, the same variable -
-//         Video::vcGlobals::loglevel will finally be set to Log::Log::Level::eNotice, erasing
-//         the effects of all previous values.
+// file, as well as command line parameters. That is the order of precedence:  command line options
+// override json and precompiled options, json options override precompiled options, and precompiled
+// options override nothing.
 //
 
 // static definitions
@@ -279,8 +240,9 @@ int main(int argc, const char *argv[])
     // Set up the logger
     /////////////////
 
-    // TODO: Either remove an existing log file at this point, or make sure something is logged ALWAYS. Otherwise you wind up with a log file from an exiting run.
-    // (I think the latter.  TODO: indeed.)
+    // Remove an existing log file before instantiating the logger:
+    // This can only be done after command line parsing is finished.
+    ::unlink(Video::vcGlobals::logFilelName.c_str());
 
     // This picks the values from Video::vcGlobals (which was modified
     // by the json file and then the command line.
@@ -299,26 +261,30 @@ int main(int argc, const char *argv[])
     //////////////////////////////////////////////////////////////
     Log::Logger& ulogger = *(Util::UtilLogger::getLoggerPtr());
 
+    ulogger.info() << "START OF NEW VIDEO CAPTURE RUN";
+
     {
         Util::LoggerOptions logopt;
-
         std::stringstream ostr;
         logopt = Util::UtilLogger::getLoggerOptions();
+
         Util::UtilLogger::streamLoggerOptions(ostr, logopt, "after getting shared_ptr<> to Log::Logger");
         ulogger.debug() << ostr.str();
     }
 
     // The logger is now set up.
     ulogger.info() << "\n\nLogger setup is complete.\n";
-    ulogger.info() << "    **********  Deferred output from app initialization (only displayed in DBUG mode.  **********";
-    ulogger.info() << "    **********          Need to run with \"-lg DBUG\" on the command line).            **********";
+    ulogger.info() << "    ******  Deferred output from app initialization (will be logged ******";
+    ulogger.info() << "    ******    when the -loginit flag is used on the command line).  ******";
     ulogger.info() << "";
 
-
-    // Empty out the delayed-lines' vector...
-    for(auto line : delayedLinesForLogger)
+    if (vcGlobals::log_initialization_info)     // -loginit flag
     {
-        ulogger.debug() << line;
+        // Empty out the delayed-lines' vector...
+        for(auto line : delayedLinesForLogger)
+        {
+            ulogger.info() << line;
+        }
     }
 
     /////////////////

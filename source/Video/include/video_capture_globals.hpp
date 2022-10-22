@@ -44,6 +44,7 @@ namespace Video
 
     struct vcGlobals
     {
+        static bool log_initialization_info;
         static std::string logChannelName;
         static std::string logFilelName;
         static std::string output_file;
