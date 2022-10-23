@@ -25,11 +25,113 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-// Currently hard-coded to deal with the first command line argument being
-// in the form of -xx.
-std::map<std::string,std::string> Util::getCLMap(int argc, const char *argv[], const std::vector<std::string>& allowedFlags)
+std::string Util::parseGetHelp(Util::Command_Map cmdmap)
 {
-    std::map<std::string,std::string> cmdmap;
+    std::string retstring;
+    auto itr = cmdmap.find("help");
+    if (itr != cmdmap.end())
+    {
+        retstring = itr->second;
+    }
+    return retstring;
+}
+
+std::string Util::parseGetError(Util::Command_Map cmdmap)
+{
+    std::string retstring;
+    auto itr = cmdmap.find("error");
+    if (itr != cmdmap.end())
+    {
+        retstring = itr->second;
+    }
+    return retstring;
+}
+
+Util::Command_Map Util::parseSetup(int argc, const char *argv[], const std::vector<std::string>& allowedFlags)
+{
+    Util::Command_Map cmdmap;
+    Util::Command_Map errormap;
+
+    std::string argv0 = argv[0];
+    std::string argv1 = (argv[1] == nullptr? "-h" : argv[1]);
+
+    if (argc > 1 && (argv1 == "--help" || argv1 == "-h" || argv1 == "help"))
+    {
+        cmdmap["help"] = "help";
+        return cmdmap;
+    }
+
+    int i = 1;
+    do
+    {
+        if (i >= argc) break;
+
+        std::string currentArg = argv[i];
+
+        if (currentArg.length() == 0)
+        {
+            i++;
+            continue;  // ignore weird empty strings
+        }
+        else if (std::find(allowedFlags.begin(), allowedFlags.end(), currentArg) != allowedFlags.end())
+        {
+            // This is a new flag
+            if (i < argc-1)
+            {
+                std::string nextarg = argv[i+1];
+
+                // Is the next arg another flag?
+                if (std::find(allowedFlags.begin(), allowedFlags.end(), nextarg) == allowedFlags.end())
+                {
+                    if (nextarg[0] == '-')
+                    {
+                        errormap["error"] = std::string("ERROR (1): Unrecognized flag used: ") + nextarg;
+                        return errormap;
+                    }
+                    else
+                    {
+                        // This is the parameter provided for the previous flag.
+                        cmdmap[currentArg] = nextarg;
+                        i++;
+                    }
+                }
+                else
+                {
+                    // This is a flag with no parameter
+                    cmdmap[currentArg] = "";  // i is not incremented because no parameter there.
+                }
+            }
+            else
+            {
+                // This is a flag at the last parameter on the command line.
+                // There is no parameter
+                cmdmap[currentArg] = "";
+                break;
+            }
+        }
+        else
+        {
+            // Current flag is not recognized
+            if (currentArg[0] == '-')
+            {
+                errormap["error"] = std::string("ERROR (2): Unrecognized flag used: ") + currentArg;
+                return errormap;
+            }
+            else
+            {
+                errormap["error"] = std::string("ERROR (3): Unknown command line parameter used: ") + currentArg;
+                return errormap;
+            }
+        }
+        i++;
+    } while (i < argc);
+
+    return cmdmap;
+}
+
+Util::Command_Map Util::getCLMap(int argc, const char *argv[], const std::vector<std::string>& allowedFlags)
+{
+    Util::Command_Map cmdmap;
 
     int i = 1;
     do
@@ -73,52 +175,52 @@ std::map<std::string,std::string> Util::getCLMap(int argc, const char *argv[], c
 }
 
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned short& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, unsigned short& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, bool& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, bool& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, int& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, int& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, long& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, unsigned long& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, unsigned long& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long long& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, long long& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, std::string& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, std::string& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, float& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, float& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, double& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, double& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }
 
-Util::ParameterStatus Util::getArg(const std::map<std::string,std::string>& cmdmap, std::string flag, long double& var)
+Util::ParameterStatus Util::getArg(const Util::Command_Map& cmdmap, std::string flag, long double& var)
 {
     return get_template_arg(cmdmap, flag, var);
 }

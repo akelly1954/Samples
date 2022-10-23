@@ -70,7 +70,6 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
         case Util::ParameterStatus::FlagPresentParameterPresent:
             strm << "ERROR: \"-loginit\" has a parameter where none is allowed." << "\n";
             return false;
-            break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             vcGlobals::log_initialization_info = true;
             break;

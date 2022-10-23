@@ -1,4 +1,5 @@
-#include "commandline.hpp"
+#include <commandline.hpp>
+#include <Utility.hpp>
 #include <iostream>
 #include <iomanip>      // std::setprecision
 #include <algorithm>
@@ -63,17 +64,39 @@ void Usage(std::string command)
 bool parse(int argc, const char *argv[])
 {
     using namespace Util;
+
+    std::string argv0 = argv[0];
+
     const std::vector<std::string> allowedFlags ={ "-ii", "-i1", "-i2", "-ff", "-fd", "-fl", "-st" };
-    const std::map<std::string,std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
+
+    Command_Map cmdMap = parseSetup(argc, argv, allowedFlags);
+    std::string errstr = Utility::trim( parseGetError(cmdMap ));
+    if (errstr != "")
+    {
+        std::cout << "\n" << argv0 << ": " << errstr << std::endl;
+        return false;
+    }
+
+    std::string helpstr = Utility::trim( parseGetHelp(cmdMap) );
+    if (helpstr != "")
+    {
+        // No error, just help
+        if (argc > 2)
+        {
+            std::cout << "\nWARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
+        }
+        return false;
+    }
+
     std::map<std::string,bool> specified;
 
-    specified["-ii"] = getArg(cmdmap, "-ii", intParam1);
-    specified["-i1"] = getArg(cmdmap, "-i1", longParam1);
-    specified["-i2"] = getArg(cmdmap, "-i2", longlongParam1);
-    specified["-st"] = getArg(cmdmap, "-st", stringParam1);
-    specified["-ff"] = getArg(cmdmap, "-ff", floatParam1);
-    specified["-fd"] = getArg(cmdmap, "-fd", doubleParam1);
-    specified["-fl"] = getArg(cmdmap, "-fl", longdoubleParam1);
+    specified["-ii"] = getArg(cmdMap, "-ii", intParam1);
+    specified["-i1"] = getArg(cmdMap, "-i1", longParam1);
+    specified["-i2"] = getArg(cmdMap, "-i2", longlongParam1);
+    specified["-st"] = getArg(cmdMap, "-st", stringParam1);
+    specified["-ff"] = getArg(cmdMap, "-ff", floatParam1);
+    specified["-fd"] = getArg(cmdMap, "-fd", doubleParam1);
+    specified["-fl"] = getArg(cmdMap, "-fl", longdoubleParam1);
 
 #ifdef FOR_DEBUG
     for (auto it = specified.begin(); it != specified.end(); ++it)
@@ -90,28 +113,15 @@ bool parse(int argc, const char *argv[])
 
 int main(int argc, const char *argv[])
 {
-    std::string argv0 = const_cast<const char *>(argv[0]);
+    std::string argv0 = argv[0];
 
-    // If no parameters were supplied, or help was requested:
-    if (argc <= 1 || (argc > 1 &&
-            (std::string(const_cast<const char *>(argv[1])) == "--help" ||
-               std::string(const_cast<const char *>(argv[1])) == "-h" ||
-               std::string(const_cast<const char *>(argv[1])) == "help")
-        )
-    )
+    if (! parse(argc, argv))
     {
-        Usage(argv0);
-        return 0;
-    }
-
-    bool parseres = parse(argc, argv);
-    if (! parseres)
-    {
+        std::cout << "\n";
         Usage(argv0);
         return 1;
     }
 
-    std::cout << "\n";
     std::cout << "int intParam1 = " << intParam1 << std::endl;
     std::cout << "long longParam1 = " << longParam1 << std::endl;
     std::cout << "long long longlongParam1 = " << longlongParam1 << std::endl;
@@ -155,6 +165,7 @@ double doubleParam1 = 94596.04985300
 long double longdoubleParam1 = 2736572527.8273666000
 std::string stringParam1 = "Last night I dreamt I went to Manderley again."
 
+$ # The above seven lines are the output
 $
 
 #endif // ExampleCommandLine

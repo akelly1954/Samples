@@ -25,6 +25,7 @@
 #include <video_capture_commandline.hpp>
 #include <video_capture_globals.hpp>
 #include <JsonCppUtil.hpp>
+#include <commandline.hpp>
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <ConfigSingleton.hpp>
@@ -133,6 +134,36 @@ int main(int argc, const char *argv[])
     /////////////////
 
     std::string argv0 = argv[0];
+    int return_for_exit = EXIT_SUCCESS;
+
+    const std::vector<std::string> allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-pf", "-loginit"};
+    Util::Command_Map cmdMap = Util::parseSetup(argc, argv, allowedFlags);
+    std::string errstr = Util::Utility::trim( Util::parseGetError(cmdMap ));
+
+    if (errstr != "")
+    {
+        std::cerr << argv0 << ": " << errstr << std::endl;
+        Video::CommandLine::Usage(std::cerr, argv0);
+        std::cerr << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::string helpstr = Util::Utility::trim( Util::parseGetHelp(cmdMap ));
+
+    if (helpstr != "")
+    {
+        // No error, just help
+        Video::CommandLine::Usage(std::cerr, argv0);
+        std::cerr << std::endl;
+        if (argc > 2)
+        {
+            std::cerr << "WARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
+        }
+
+        return EXIT_SUCCESS;
+    }
+
+#if 0
     std::string argv1 = (argv[1] == nullptr? "-h" : argv[1]);
 
     // If no parameters were supplied, or help was requested:
@@ -147,6 +178,7 @@ int main(int argc, const char *argv[])
 
         return EXIT_SUCCESS;
     }
+#endif // 0
 
     /////////////////
     // Set up the application configuration:
@@ -299,7 +331,6 @@ int main(int argc, const char *argv[])
     std::thread trcc;
  #endif // TEST_RAW_CAPTURE_CTL
 
-    int return_for_exit = EXIT_SUCCESS;
     bool error_termination = false;
     try
     {

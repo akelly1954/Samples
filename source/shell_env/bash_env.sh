@@ -8,6 +8,8 @@ loggercppdir="${basepath}/source/3rdparty/LoggerCpp"
 loggercppsrcdirname="SRombauts-LoggerCpp-a0868a8-modified"
 LoggerCppSource_DIR="$loggercppdir/$loggercppsrcdirname"
 
+export CMAKE_CXX_FLAGS='-fPIC -std=c++17'
+export CMAKE_CXX_STANDARD=17
 jsoncppdir="${basepath}/source/3rdparty/JsonCpp"
 jsoncppsrcdirname="JsonCpp-8190e06-2022-07-15/jsoncpp"
 JsonCppSource_DIR="$jsoncppdir/$jsoncppsrcdirname"

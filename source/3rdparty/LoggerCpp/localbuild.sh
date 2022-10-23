@@ -49,10 +49,17 @@ cd build
 
 CMAKE_VERBOSE_MAKEFILE=ON
 
-cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=${CMAKE_VERBOSE_MAKEFILE} ${LoggerCppColorString} -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${loggercppsrcdirname}
+cmake \
+    -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} \
+    -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} \
+    -DCMAKE_VERBOSE_MAKEFILE:BOOL=${CMAKE_VERBOSE_MAKEFILE} \
+    ${LoggerCppColorString} \
+    -G"$CmakeGenerator" \
+    -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" \
+    ../${loggercppsrcdirname}
 if [ $? -ne 0 ]
 then
-    echo "ERROR: cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=${CMAKE_VERBOSE_MAKEFILE} ${LoggerCppColorString} -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${loggercppsrcdirname} failed.  Aborting..."
+    echo "ERROR: cmake -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD} -DCMAKE_VERBOSE_MAKEFILE:BOOL=${CMAKE_VERBOSE_MAKEFILE} ${LoggerCppColorString} -G"$CmakeGenerator" -DCMAKE_ECLIPSE_VERSION="${CMAKE_ECLIPSE_VERSION}" ../${loggercppsrcdirname} failed.  Aborting..."
     exit 1
 fi
 

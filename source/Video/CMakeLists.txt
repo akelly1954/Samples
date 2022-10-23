@@ -25,6 +25,10 @@ include_directories( ${Video_HEADERS}
 
 add_library( ${Video} ${LIBTYPE} ${SOURCES} )
 target_link_libraries( ${Video}
+                        ${EnetUtil_LIB}
+                        ${Util_LIB}
+                        ${LoggerCpp_LIB}
+                        ${JsonCpp_LIB}
                        ${CMAKE_THREAD_LIBS_INIT} ${LINKOPTIONS}
                      )
 

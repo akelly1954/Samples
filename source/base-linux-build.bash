@@ -46,12 +46,13 @@ fi
 # 3rdparty gets built regardless of whether --nobuild was invoked.
 echo "Building 3rdparty package LoggerCpp"
 #
-bash localbuild.sh cleanall
+bash localbuild.sh cleanall > lastbuild_log.txt 2>& 1
 if [ $? -ne 0 ]
 then
     echo "ERROR: build of $loggercppdir failed.  Aborting..."
     exit 1
 fi
+echo "SUCCESS: LoggerCpp build is done: log file is in $loggercppdir/lastbuild_log.txt."
 
 cd "$here"
 if [ $? -ne 0 ]
@@ -83,12 +84,13 @@ fi
 # 3rdparty gets built regardless of whether --nobuild was invoked.
 echo "Building 3rdparty package JsonCpp"
 #
-bash localbuild.sh cleanall
+bash localbuild.sh cleanall > lastbuild_log.txt 2>& 1
 if [ $? -ne 0 ]
 then
     echo "ERROR: build of $jsoncppdir failed.  Aborting..."
     exit 1
 fi
+echo "SUCCESS: JsonCpp build is done: log file is in $jsoncppdir/lastbuild_log.txt."
 
 cd "$here"
 if [ $? -ne 0 ]
