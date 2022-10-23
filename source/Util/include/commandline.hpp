@@ -37,166 +37,244 @@
 namespace Util {
 
 // 
-// Command line parsing:
+// Command line parsing: class CommandLine declaration is further down.
 // 
-using Command_Map = std::map<std::string,std::string>;
 
-class CommandLine
-{
+    enum ParameterStatus
+    {
+        FlagNotProvided = 0,                // No flag, and therefore no parameter
+        FlagProvidedWithEmptyParameter,     // Flag is there but empty or no parameter
+        FlagPresentParameterPresent,        // Flag is there, and parameter is there
+    };
 
-};
+    using Command_Map = std::map<std::string,std::string>;
+    using StringVector = std::vector<std::string>;
 
+    // Command line parsing: These functions are overloaded by the type of (referenced)
+    // parameter which gets the correct type of value.  Used by the class CommandLine
+    // as well as code that does not use that object.
+    template <typename T>
+    bool get_param_value(std::string data, T& var)
+    {
+        if (data.length() == 0) return false;
+        var = data;
+        return true;
+    }
 
+    template <>
+    bool get_param_value<unsigned short>(std::string data, unsigned short& var)
+    {
+        if (data.length() == 0) return false;
+        var = static_cast<unsigned short>(strtoul(data.c_str(), NULL, 10) & 0xFFFF);
+        return true;
+    }
 
+    template <>
+    bool get_param_value<bool>(std::string data, bool& var)
+    {
+        if (data.length() == 0) return false;
+        var = static_cast<bool>((strtol(data.c_str(), NULL, 10) == 0)? false : true);
+        return true;
+    }
 
+    template <>
+    bool get_param_value<int>(std::string data, int& var)
+    {
+        if (data.length() == 0) return false;
+        var = static_cast<int>(strtol(data.c_str(), NULL, 10));
+        return true;
+    }
 
+    template <>
+    bool get_param_value<long>(std::string data, long& var)
+    {
+        if (data.length() == 0) return false;
+        var = static_cast<long>(strtol(data.c_str(), NULL, 10));
+        return true;
+    }
 
+    template <>
+    bool get_param_value<unsigned long>(std::string data, unsigned long& var)
+    {
+        if (data.length() == 0) return false;
+        var = strtoul(data.c_str(), NULL, 10);
+        return true;
+    }
 
+    template <>
+    bool get_param_value<long long>(std::string data, long long& var)
+    {
+        if (data.length() == 0) return false;
+        var = static_cast<long long>(strtoll(data.c_str(), NULL, 10));
+        return true;
+    }
 
+    template <>
+    bool get_param_value<std::string>(std::string data, std::string& var)
+    {
+        if (data.length() == 0) return false;
+        var = data;
+        return true;
+    }
 
+    template <>
+    bool get_param_value<float>(std::string data, float& var)
+    {
+        if (data.length() == 0) return false;
+        var = strtof(data.c_str(), NULL);
+        return true;
+    }
 
+    template <>
+    bool get_param_value<double>(std::string data, double& var)
+    {
+        if (data.length() == 0) return false;
+        var = strtod(data.c_str(), NULL);
+        return true;
+    }
 
+    template <>
+    bool get_param_value<long double>(std::string data, long double& var)
+    {
+        if (data.length() == 0) return false;
+        var = strtold(data.c_str(), NULL);
+        return true;
+    }
 
+    ////////////////////////////////////////////////////////////
+    // class CommandLine definition
+    ////////////////////////////////////////////////////////////
 
+    class CommandLine
+    {
+    private:
+        CommandLine() = default;
+    public:
+        explicit CommandLine(int argc, const char *argv[], const StringVector& allowedFlags) :
+                m_argc(argc),
+                m_allowedFlags(allowedFlags)
+        {
+            for (auto i = 0; i < m_argc; i++)
+            {
+                m_strArgv.push_back(argv[i]);
+            }
+            parseCommandLine();
+        }
 
+        bool isError(void)                          { return m_isError; };
+        std::string getErrorString(void)            { return m_errString; };
+        bool isHelp(void)                           { return m_isHelp; };
 
+        // streams the usage information output to strm
+        // static void Usage(std::ostream &strm, std::string command);
 
+        // static bool parse(std::ostream &strm, int argc, const char *argv[]);
 
+        // Generic template function definition.
+        // See the specialized versions above.
+        template <typename T>
+        Util::ParameterStatus get_template_arg(std::string flag, T& var);
 
-Command_Map getCLMap(int argc, const char *argv[], const std::vector<std::string>& allowedFlags);
-Command_Map parseSetup(int argc, const char *argv[], const std::vector<std::string>& allowedFlags);
-std::string parseGetHelp(Command_Map cmdmap);
-std::string parseGetError(Command_Map cmdmap);
+        ParameterStatus getArg( std::string flag, unsigned short& var)
+                                            { return get_template_arg(flag, var); };
 
-// Command line parsing
-enum ParameterStatus
-{
-    FlagNotProvided = 0,                // No flag, and therefore no parameter
-    FlagProvidedWithEmptyParameter,     // Flag is there but empty or no parameter
-    FlagPresentParameterPresent,        // Flag is there, and parameter is there
-};
+        ParameterStatus getArg( std::string flag, bool& var)
+                                                    { return get_template_arg(flag, var); };
 
-// Generic template function definition.
-// See the specialized versions below.
-template <typename T>
-bool get_param_value(std::string data, T& var)
-{
-    if (data.length() == 0) return false;
-    var = data;
-    return true;
-}
+        ParameterStatus getArg( std::string flag, int& var)
+                                                    { return get_template_arg(flag, var); };
 
-template <>
-bool get_param_value<unsigned short>(std::string data, unsigned short& var)
-{
-    if (data.length() == 0) return false;
-    var = static_cast<unsigned short>(strtoul(data.c_str(), NULL, 10) & 0xFFFF);
-    return true;
-}
+        ParameterStatus getArg( std::string flag, long& var)
+                                                    { return get_template_arg(flag, var); };
 
-template <>
-bool get_param_value<bool>(std::string data, bool& var)
-{
-    if (data.length() == 0) return false;
-    var = static_cast<bool>((strtol(data.c_str(), NULL, 10) == 0)? false : true);
-    return true;
-}
+        ParameterStatus getArg( std::string flag, unsigned long& var)
+                                                    { return get_template_arg(flag, var); };
 
-template <>
-bool get_param_value<int>(std::string data, int& var)
-{
-    if (data.length() == 0) return false;
-    var = static_cast<int>(strtol(data.c_str(), NULL, 10));
-    return true;
-}
+        ParameterStatus getArg( std::string flag, long long& var)
+                                                    { return get_template_arg(flag, var); };
 
-template <>
-bool get_param_value<long>(std::string data, long& var)
-{
-    if (data.length() == 0) return false;
-    var = static_cast<long>(strtol(data.c_str(), NULL, 10));
-    return true;
-}
+        ParameterStatus getArg( std::string flag, std::string& var)
+                                                    { return get_template_arg(flag, var); };
 
-template <>
-bool get_param_value<unsigned long>(std::string data, unsigned long& var)
-{
-    if (data.length() == 0) return false;
-    var = strtoul(data.c_str(), NULL, 10);
-    return true;
-}
+        ParameterStatus getArg( std::string flag, float& var)
+                                                    { return get_template_arg(flag, var); };
 
-template <>
-bool get_param_value<long long>(std::string data, long long& var)
-{
-    if (data.length() == 0) return false;
-    var = static_cast<long long>(strtoll(data.c_str(), NULL, 10));
-    return true;
-}
+        ParameterStatus getArg( std::string flag, double& var)
+                                                    { return get_template_arg(flag, var); };
 
-template <>
-bool get_param_value<std::string>(std::string data, std::string& var)
-{
-    if (data.length() == 0) return false;
-    var = data;
-    return true;
-}
+        ParameterStatus getArg( std::string flag, long double& var)
+                                                    { return get_template_arg(flag, var); };
+    private:
+        void parseCommandLine();
+        void setError(std::string errstr)           { m_isError = true; m_errString = errstr; };
 
-template <>
-bool get_param_value<float>(std::string data, float& var)
-{
-    if (data.length() == 0) return false;
-    var = strtof(data.c_str(), NULL);
-    return true;
-}
+    private:
+        int m_argc = 0;
+        StringVector m_strArgv;
+        std::string m_errString;
+        bool    m_isError = false;
+        bool    m_isHelp = false;
+        std::vector<std::string> m_allowedFlags;
+        Command_Map m_cmdMap;
+    };
 
-template <>
-bool get_param_value<double>(std::string data, double& var)
-{
-    if (data.length() == 0) return false;
-    var = strtod(data.c_str(), NULL);
-    return true;
-}
+    // CommandLine method:
+    // Generic template function definition.
+    // There are no specialized versions at this time, because of the use of get_param_value<T>().
+    template <typename T>
+    Util::ParameterStatus CommandLine::get_template_arg(std::string flag, T& var)
+    {
+        auto it = m_cmdMap.find(flag);
+        if (it == m_cmdMap.end()) return Util::ParameterStatus::FlagNotProvided;
 
-template <>
-bool get_param_value<long double>(std::string data, long double& var)
-{
-    if (data.length() == 0) return false;
-    var = strtold(data.c_str(), NULL);
-    return true;
-}
+        // Not checking for string length because get_param_value<T>() does.
+        return Util::get_param_value<T>(it->second, var) ?
+                Util::ParameterStatus::FlagPresentParameterPresent :
+                Util::ParameterStatus::FlagProvidedWithEmptyParameter;
+    }
 
-// Generic template function definition.
-// There are no specialized versions at this time, because of the use of get_param_value<T>().
-template <typename T>
-Util::ParameterStatus get_template_arg(const Command_Map& cmdmap, std::string flag, T& var)
-{
-    auto it = cmdmap.find(flag);
-    if (it == cmdmap.end()) return Util::ParameterStatus::FlagNotProvided;
+    ////////////////////////////////////////////////////////////
+    // End of class CommandLine definition
+    ////////////////////////////////////////////////////////////
 
-    // Not checking for string length because get_param_value<T>() does.
-    return Util::get_param_value<T>(it->second, var) ?
-            Util::ParameterStatus::FlagPresentParameterPresent :
-            Util::ParameterStatus::FlagProvidedWithEmptyParameter;
-}
+    // Free standing functions in the Util:: namespace
 
-// Convenience overloaded functions meant for the delicate user who
-// does not wish to deal with templates.
-//
-// NOTE: The return value of all getArg() functions changed from bool to an enum value.  The c++ compiler
-// will allow the assignment of this return value to a bool.  "Just so happens" that the value of the enum that
-// signifies error is 0 - same as false. That's why you don't have to change anything in the code if it still
-// accepts the value of getArg() as a bool.
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, unsigned short& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, bool& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, int& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, long& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, unsigned long& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, long long& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, std::string& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, float& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, double& var);
-Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, long double& var);
+    Command_Map getCLMap(int argc, const char *argv[], const std::vector<std::string>& allowedFlags);
+    Command_Map parseSetup(int argc, const char *argv[], const std::vector<std::string>& allowedFlags);
+    std::string parseGetHelp(Command_Map cmdmap);
+    std::string parseGetError(Command_Map cmdmap);
+
+    // Generic template function definition.
+    // There are no specialized versions at this time, because of the use of get_param_value<T>().
+    template <typename T>
+    Util::ParameterStatus get_template_arg(const Command_Map& cmdmap, std::string flag, T& var)
+    {
+        auto it = cmdmap.find(flag);
+        if (it == cmdmap.end()) return Util::ParameterStatus::FlagNotProvided;
+
+        // Not checking for string length because get_param_value<T>() does.
+        return Util::get_param_value<T>(it->second, var) ?
+                Util::ParameterStatus::FlagPresentParameterPresent :
+                Util::ParameterStatus::FlagProvidedWithEmptyParameter;
+    }
+
+    // Convenience overloaded functions meant for the delicate user who
+    // does not wish to deal with templates.
+    //
+    // NOTE: The return value of all getArg() functions changed from bool to an enum value.  The c++ compiler
+    // will allow the assignment of this return value to a bool.  "Just so happens" that the value of the enum that
+    // signifies error is 0 - same as false. That's why you don't have to change anything in the code if it still
+    // accepts the value of getArg() as a bool.
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, unsigned short& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, bool& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, int& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, long& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, unsigned long& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, long long& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, std::string& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, float& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, double& var);
+    Util::ParameterStatus getArg(const Command_Map& cmdmap, std::string flag, long double& var);
 
 } // namespace Util
 

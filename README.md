@@ -1,7 +1,5 @@
 # Samples
 
-# Sorry folks, nothing is working in the dev branch right now.  Restructure in progress.
-
 ## Going on now:   
     
 Focusing right now on restructuring what used to be *main_v4l2_raw_capture*, now called **main_video_capture** (within the **video** project). There are two main objectives to the restructuring:  Getting rid of all **C** code in the **V4L2** video section in favor of **C++**.  Also, revamping the supporting objects, and organizing them (within the **Video** directory in several directories: **main_programs**, **common**, **v4l2**, **opencv**. Hopefully what sources go in each directory is self explanatory.    

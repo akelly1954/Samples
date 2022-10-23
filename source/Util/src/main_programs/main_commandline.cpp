@@ -69,16 +69,15 @@ bool parse(int argc, const char *argv[])
 
     const std::vector<std::string> allowedFlags ={ "-ii", "-i1", "-i2", "-ff", "-fd", "-fl", "-st" };
 
-    Command_Map cmdMap = parseSetup(argc, argv, allowedFlags);
-    std::string errstr = Utility::trim( parseGetError(cmdMap ));
-    if (errstr != "")
+    CommandLine cmdline(argc, argv, allowedFlags);
+
+    if(cmdline.isError())
     {
-        std::cout << "\n" << argv0 << ": " << errstr << std::endl;
+        std::cout << "\n" << argv0 << ": " << cmdline.getErrorString() << std::endl;
         return false;
     }
 
-    std::string helpstr = Utility::trim( parseGetHelp(cmdMap) );
-    if (helpstr != "")
+    if(cmdline.isError())
     {
         // No error, just help
         if (argc > 2)
@@ -90,13 +89,13 @@ bool parse(int argc, const char *argv[])
 
     std::map<std::string,bool> specified;
 
-    specified["-ii"] = getArg(cmdMap, "-ii", intParam1);
-    specified["-i1"] = getArg(cmdMap, "-i1", longParam1);
-    specified["-i2"] = getArg(cmdMap, "-i2", longlongParam1);
-    specified["-st"] = getArg(cmdMap, "-st", stringParam1);
-    specified["-ff"] = getArg(cmdMap, "-ff", floatParam1);
-    specified["-fd"] = getArg(cmdMap, "-fd", doubleParam1);
-    specified["-fl"] = getArg(cmdMap, "-fl", longdoubleParam1);
+    specified["-ii"] = cmdline.getArg("-ii", intParam1);
+    specified["-i1"] = cmdline.getArg("-i1", longParam1);
+    specified["-i2"] = cmdline.getArg("-i2", longlongParam1);
+    specified["-st"] = cmdline.getArg("-st", stringParam1);
+    specified["-ff"] = cmdline.getArg("-ff", floatParam1);
+    specified["-fd"] = cmdline.getArg("-fd", doubleParam1);
+    specified["-fl"] = cmdline.getArg("-fl", longdoubleParam1);
 
 #ifdef FOR_DEBUG
     for (auto it = specified.begin(); it != specified.end(); ++it)
