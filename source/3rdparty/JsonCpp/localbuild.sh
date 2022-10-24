@@ -30,7 +30,9 @@ fi
 mkdir -p build
 cd build
 
+#######################################
 CMAKE_VERBOSE_MAKEFILE=ON
+#######################################
 
 cmake \
     -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS} \

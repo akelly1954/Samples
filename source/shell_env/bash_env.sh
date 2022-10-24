@@ -45,11 +45,12 @@ function base_linux_build_Usage
                    sed -e 's,^\* ,  ,' >& 2
 }
 
+
 ##########################################################################
 #
 # Usage message for the multiple linux-build.bash scripts
 #
-################################
+##########################################################################
 function linux_build_Usage
 {
     scriptname=`basename ${0:-"script"}`
@@ -75,5 +76,6 @@ function linux_build_Usage
     cmake --help | sed -e '1,/^The following generators are available/d' | \
                    sed -e 's,^\* ,  ,' >& 2
 }
+
 
 
