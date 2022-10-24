@@ -46,18 +46,21 @@ static long double longdoubleParam1 = -1;
 static std::string stringParam1;
 
 // You write this
-void Usage(std::string command)
+std::string Usage(std::string command)
 {
-    std::cout << "Usage:    " << command << " --help (or -h or help)" << std::endl;
-    std::cout << "Or:       " << command << "\n"
-                 "                  -ii IntParam \n" <<
-                 "                  -i1 LongParam \n" <<
-                 "                  -i2 LongLongParam \n" <<
-                 "                  -ff FloatParam \n" <<
-                 "                  -fd DoubleParam \n" <<
-                 "                  -fl LongDoubleParam \n" <<
-                 "                  -st StringParam \n" <<
-                 std::endl;
+    std::stringstream sstrm;
+    sstrm << "\n";
+    sstrm << "Usage:    " << command << " --help (or -h or help)" << std::endl;
+    sstrm << "Or:       " << command << "\n"
+             "                  -ii IntParam \n" <<
+             "                  -i1 LongParam \n" <<
+             "                  -i2 LongLongParam \n" <<
+             "                  -ff FloatParam \n" <<
+             "                  -fd DoubleParam \n" <<
+             "                  -fl LongDoubleParam \n" <<
+             "                  -st StringParam \n" <<
+             "\n";
+    return sstrm.str();
 }
 
 // You write this
@@ -68,8 +71,7 @@ bool parse(int argc, const char *argv[])
     std::string argv0 = argv[0];
 
     const std::vector<std::string> allowedFlags ={ "-ii", "-i1", "-i2", "-ff", "-fd", "-fl", "-st" };
-
-    CommandLine cmdline(argc, argv, allowedFlags);
+    CommandLine cmdline(argc, argv, allowedFlags /*, Usage(argv0) */ );
 
     if(cmdline.isError())
     {
@@ -77,25 +79,25 @@ bool parse(int argc, const char *argv[])
         return false;
     }
 
-    if(cmdline.isError())
+    if(cmdline.isHelp())
     {
         // No error, just help
         if (argc > 2)
         {
-            std::cout << "\nWARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
+            std::cout << "\nWARNING: using the --help flag cancels all other flags and parameters.  Exiting...\n" << std::endl;
         }
         return false;
     }
 
     std::map<std::string,bool> specified;
 
-    specified["-ii"] = cmdline.getArg("-ii", intParam1);
-    specified["-i1"] = cmdline.getArg("-i1", longParam1);
-    specified["-i2"] = cmdline.getArg("-i2", longlongParam1);
-    specified["-st"] = cmdline.getArg("-st", stringParam1);
-    specified["-ff"] = cmdline.getArg("-ff", floatParam1);
-    specified["-fd"] = cmdline.getArg("-fd", doubleParam1);
-    specified["-fl"] = cmdline.getArg("-fl", longdoubleParam1);
+    specified["-ii"] = cmdline.get_template_arg("-ii", intParam1);
+    specified["-i1"] = cmdline.get_template_arg("-i1", longParam1);
+    specified["-i2"] = cmdline.get_template_arg("-i2", longlongParam1);
+    specified["-st"] = cmdline.get_template_arg("-st", stringParam1);
+    specified["-ff"] = cmdline.get_template_arg("-ff", floatParam1);
+    specified["-fd"] = cmdline.get_template_arg("-fd", doubleParam1);
+    specified["-fl"] = cmdline.get_template_arg("-fl", longdoubleParam1);
 
 #ifdef FOR_DEBUG
     for (auto it = specified.begin(); it != specified.end(); ++it)
@@ -116,9 +118,9 @@ int main(int argc, const char *argv[])
 
     if (! parse(argc, argv))
     {
-        std::cout << "\n";
-        Usage(argv0);
-        return 1;
+        std::stringstream mstr;
+        std::cout << Usage(argv0) << std::endl;
+        return EXIT_FAILURE;
     }
 
     std::cout << "int intParam1 = " << intParam1 << std::endl;
@@ -144,7 +146,7 @@ int main(int argc, const char *argv[])
 
     std::cout << std::endl;
 
-    return 0;
+    return EXIT_FAILURE;
 }
 
 #ifdef ExampleCommandLine

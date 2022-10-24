@@ -23,21 +23,22 @@
 // SOFTWARE.
 
 #include <video_capture_globals.hpp>
+#include <commandline.hpp>
 #include <iostream>
 #include <ostream>
 #include <sstream>
 
 namespace Video {
 
-    class CommandLine
+    class VidCapCommandLine
     {
     public:
-        CommandLine() = default;
+        VidCapCommandLine() = default;
 
         // streams the usage information output to strm
         static void Usage(std::ostream &strm, std::string command);
 
-        static bool parse(std::ostream &strm, int argc, const char *argv[]);
+        static bool parse(std::ostream &strm, Util::CommandLine& cmdline);
     };
 
 } // end of namespace Video

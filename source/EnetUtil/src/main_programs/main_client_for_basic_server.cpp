@@ -90,7 +90,7 @@ void Usage(std::ostream &strm, std::string command)
 }
 
 // See the end of this source file for this function
-bool parse(std::ostream &strm, int argc, const char *argv[]);
+bool parse(std::ostream &strm, Util::CommandLine& cmdline);
 
 bool check_input_file(std::ostream &strm, std::string input_filename, struct stat *sb, size_t & numbytesinfile)
 {
@@ -131,26 +131,34 @@ int main(int argc, const char *argv[])
 
     std::string argv0 = argv[0];
 
-    // If no parameters were supplied, or help was requested:
-    // (since the -fn flag is mandatory).
-    if (argc == 1 || (argc > 1
-            && (std::string(const_cast<const char*>(argv[1])) == "--help"
-                    || std::string(const_cast<const char*>(argv[1])) == "-h"
-                    || std::string(const_cast<const char*>(argv[1])) == "help"))
-            )
+    const std::vector<std::string> allowedFlags ={ "-fn", "-ip", "-pn", "-lg" };
+    CommandLine cmdline(argc, argv, allowedFlags);
+
+    if(cmdline.isError())
     {
-        Usage(std::cerr, argv0);
-        if (argc > 2)
-        {
-            std::cerr << "WARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
-        }
-        return 0;
+
+        std::cout << "\n" << argv0 << ": " << cmdline.getErrorString() << "\n" << std::endl;
+        Usage(std::cout, argv0);
+        std::cout << std::endl;
+        return EXIT_FAILURE;
     }
 
-    if (!parse(std::cerr, argc, argv))
+    if(cmdline.isHelp())
+    {
+        if (argc > 2)
+        {
+            std::cout << "\nWARNING: using the --help flag cancels all other flags and parameters.  Exiting...\n" << std::endl;
+        }
+        Usage(std::cout, argv0);
+        std::cout << std::endl;
+        return EXIT_SUCCESS;
+    }
+
+    if (!parse(std::cerr, cmdline))
     {
         Usage(std::cerr, argv0);
-        return 1;
+        std::cerr << "\n" << argv0 << ":  Command line parsing failed." << std::endl;
+        return EXIT_FAILURE;
     }
 
     /////////////////
@@ -321,14 +329,14 @@ int main(int argc, const char *argv[])
     return ret;
 }
 
-bool parse(std::ostream &strm, int argc, const char *argv[])
+bool parse(std::ostream &strm, Util::CommandLine& cmdline)
 {
     using namespace Util;
 
-    const std::vector<std::string> allowedFlags ={ "-fn", "-ip", "-pn", "-lg" };
-    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
 
-    switch(getArg(cmdmap, "-ip", connection_ip))
+    int fail_int = 101010;      // this is just for the assert()s
+
+    switch(cmdline.get_template_arg("-ip", connection_ip))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // for debugging:  strm << "-ip flag not provided. Using default " << connection_ip << std::endl;
@@ -340,10 +348,10 @@ bool parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-ip\" flag is missing its parameter." << std::endl;
             return false;
         default:
-            assert (argc == -666);   // will cause abnormal termination
+            assert (fail_int == -666);   // will cause abnormal termination
     }
 
-    switch(getArg(cmdmap, "-pn", connection_port_number))
+    switch(cmdline.get_template_arg("-pn", connection_port_number))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // for debugging:  strm << "-pn flag not provided. Using default " << connection_port_number << std::endl;
@@ -355,11 +363,11 @@ bool parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-pn\" flag is missing its parameter." << std::endl;
             return false;
         default:
-            assert (argc == -667);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -667);   // Bug encountered. Will cause abnormal termination
     }
 
     // this flag (-fn) and an existing readable regular file name are MANDATORY
-    switch(getArg(cmdmap, "-fn", input_filename))
+    switch(cmdline.get_template_arg("-fn", input_filename))
     {
         case Util::ParameterStatus::FlagNotProvided:
             strm << "ERROR: the \"-fn\" flag is missing. Specifying input file name with the -fn flag is mandatory." << std::endl;
@@ -371,10 +379,10 @@ bool parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-fn\" flag is missing its parameter." << std::endl;
             return false;
         default:
-            assert (argc == -668);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -668);   // Bug encountered. Will cause abnormal termination
     }
 
-    switch(getArg(cmdmap, "-lg", log_level))
+    switch(cmdline.get_template_arg("-lg", log_level))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // for debugging:  strm << "-lg flag not provided. Using default " << log_level << std::endl;
@@ -386,7 +394,7 @@ bool parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-lg\" flag is missing its parameter." << std::endl;
             return false;
         default:
-            assert (argc == -669);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -669);   // Bug encountered. Will cause abnormal termination
     }
 
     /////////////////
@@ -407,10 +415,4 @@ bool parse(std::ostream &strm, int argc, const char *argv[])
 
     return true;
 }
-
-#ifdef SAMPLE_RUN
-
-Coming soon...  :-)
-
-#endif //  SAMPLE_RUN
 

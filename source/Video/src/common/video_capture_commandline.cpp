@@ -26,7 +26,7 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <commandline.hpp>
 
-void Video::CommandLine::Usage(std::ostream &strm, std::string command)
+void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
 {
     strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
@@ -52,17 +52,17 @@ void Video::CommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        (The default pixel-format value is \"h264\").\n";
 }
 
-bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
+bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdline)
 {
     using namespace Util;
 
-    const std::vector<std::string> allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-pf", "-loginit"};
-    const std::map<std::string, std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
+    if (cmdline.isError() || cmdline.isHelp()) return false;
 
+    int fail_int = 101010;      // this is just for the assert()s
 
-    // this flag (-loginit) enablea logging of initial delayed log output
+    // this flag (-loginit) enables logging of initial delayed log output
     std::string tstr;;
-    switch(getArg(cmdmap, "-loginit", tstr))
+    switch(cmdline.get_template_arg("-loginit", tstr))
     {
         case Util::ParameterStatus::FlagNotProvided:
             vcGlobals::log_initialization_info = false;
@@ -74,12 +74,12 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             vcGlobals::log_initialization_info = true;
             break;
         default:
-            assert (argc == -667);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -667);   // Bug encountered. Will cause abnormal termination
     }
     strm << "    Logging of initialization lines is set to " << (vcGlobals::log_initialization_info? "true" : "false") << ".\n";
 
     // this flag (-fn) and an existing readable regular file name are MANDATORY
-    switch(getArg(cmdmap, "-fn", Video::vcGlobals::output_file))
+    switch(cmdline.get_template_arg("-fn", Video::vcGlobals::output_file))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // This means write-to-file may or may not be enabled:  Use the default
@@ -94,14 +94,14 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             //         Video::vcGlobals::output_file << "\"." << "\n";
             break;
         default:
-            assert (argc == -668);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -668);   // Bug encountered. Will cause abnormal termination
     }
     strm << "    write-frames-to-file is set to enabled, file name is " << Video::vcGlobals::output_file << "\n";
 
 
     // assignment to vcGlobals happens after everything else has been assigned below.
     int fcount_value = Video::vcGlobals::framecount;
-    switch(getArg(cmdmap, "-fc", fcount_value))
+    switch(cmdline.get_template_arg("-fc", fcount_value))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // for debug:
@@ -115,12 +115,12 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             strm << "    WARNING: \"-fc\" flag with no parameter: using default " << fcount_value << "\n";
             break;
         default:
-            assert (argc == -669);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -669);   // Bug encountered. Will cause abnormal termination
     }
     // Value for frame count is checked at the very end.
 
     int default_timeslice = Video::vcGlobals::profile_timeslice_ms;
-    switch(getArg(cmdmap, "-pr", default_timeslice))
+    switch(cmdline.get_template_arg("-pr", default_timeslice))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // Use the default Video::vcGlobals::profiling_enabled
@@ -134,7 +134,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             Video::vcGlobals::profiling_enabled = true;
             break;
         default:
-            assert (argc == -670);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -670);   // Bug encountered. Will cause abnormal termination
     }
     if (default_timeslice <= 0)
     {
@@ -147,7 +147,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
 
 
     // this flag (-fg) is not mandatory but needs a frame-grabber name if it is specified
-    switch(getArg(cmdmap, "-fg", Video::vcGlobals::video_grabber_name))
+    switch(cmdline.get_template_arg("-fg", Video::vcGlobals::video_grabber_name))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // This means use the default
@@ -159,11 +159,11 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-fg\" flag has no parameter. Needs video grabber name." << "\n";
             return false;
         default:
-            assert (argc == -671);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -671);   // Bug encountered. Will cause abnormal termination
     }
 
 
-    switch(getArg(cmdmap, "-lg", Video::vcGlobals::log_level))
+    switch(cmdline.get_template_arg("-lg", Video::vcGlobals::log_level))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // for debugging:
@@ -177,11 +177,11 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-lg\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (argc == -672);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -672);   // Bug encountered. Will cause abnormal termination
     }
 
 
-    switch(getArg(cmdmap, "-dv", Video::vcGlobals::str_dev_name))
+    switch(cmdline.get_template_arg("-dv", Video::vcGlobals::str_dev_name))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // for debugging:
@@ -195,13 +195,13 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-dv\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (argc == -673);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -673);   // Bug encountered. Will cause abnormal termination
     }
     strm << "    Video frame grabber device name is set to " << Video::vcGlobals::str_dev_name << "\n";
 
 
     std::string pixelfmt = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
-    switch(getArg(cmdmap, "-pf", pixelfmt))
+    switch(cmdline.get_template_arg("-pf", pixelfmt))
     {
         case Util::ParameterStatus::FlagNotProvided:
             // for debugging:
@@ -215,7 +215,7 @@ bool Video::CommandLine::parse(std::ostream &strm, int argc, const char *argv[])
             strm << "ERROR: \"-pf\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (argc == -674);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -674);   // Bug encountered. Will cause abnormal termination
     }
 
     /////////////////

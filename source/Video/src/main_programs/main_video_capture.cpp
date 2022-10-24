@@ -130,55 +130,34 @@ int main(int argc, const char *argv[])
     std::vector<std::string> delayedLinesForLogger;
 
     /////////////////
-    // Parse the command line part 1 (print out the --help info asap)
+    // Parse the command line part 1 (print out the --help or parse-error info asap)
     /////////////////
 
     std::string argv0 = argv[0];
     int return_for_exit = EXIT_SUCCESS;
 
-    const std::vector<std::string> allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-pf", "-loginit"};
-    Util::Command_Map cmdMap = Util::parseSetup(argc, argv, allowedFlags);
-    std::string errstr = Util::Utility::trim( Util::parseGetError(cmdMap ));
+    const Util::StringVector allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-pf", "-loginit"};
 
-    if (errstr != "")
+    Util::CommandLine cmdline(argc, argv, allowedFlags);
+
+    if(cmdline.isError())
     {
-        std::cerr << argv0 << ": " << errstr << std::endl;
-        Video::CommandLine::Usage(std::cerr, argv0);
-        std::cerr << std::endl;
+        std::cout << "\n" << argv0 << ": " << cmdline.getErrorString() << "\n" << std::endl;
+        VidCapCommandLine::Usage(std::cout, argv0);
+        std::cout << std::endl;
         return EXIT_FAILURE;
     }
 
-    std::string helpstr = Util::Utility::trim( Util::parseGetHelp(cmdMap ));
-
-    if (helpstr != "")
+    if(cmdline.isHelp())
     {
-        // No error, just help
-        Video::CommandLine::Usage(std::cerr, argv0);
-        std::cerr << std::endl;
         if (argc > 2)
         {
-            std::cerr << "WARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
+            std::cout << "\nWARNING: using the --help flag cancels all other flags and parameters.  Exiting...\n" << std::endl;
         }
-
+        VidCapCommandLine::Usage(std::cout, argv0);
+        std::cout << std::endl;
         return EXIT_SUCCESS;
     }
-
-#if 0
-    std::string argv1 = (argv[1] == nullptr? "-h" : argv[1]);
-
-    // If no parameters were supplied, or help was requested:
-    if (argc > 1 && (argv1 == "--help" || argv1 == "-h" || argv1 == "help"))
-    {
-        Video::CommandLine::Usage(std::cerr, argv0);
-        std::cerr << std::endl;
-        if (argc > 2)
-        {
-            std::cerr << "WARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
-        }
-
-        return EXIT_SUCCESS;
-    }
-#endif // 0
 
     /////////////////
     // Set up the application configuration:
@@ -201,7 +180,7 @@ int main(int argc, const char *argv[])
         // If ANY errors are encountered along the way, they will be catch()ed below and the
         // program aborted.
         //
-        // As of this point, the root node can be accessed by reference with
+        // The root node can be accessed by reference with
         //
         //              Json::Value& ConfigSingleton::instance()->JsonRoot();
         //
@@ -257,10 +236,9 @@ int main(int argc, const char *argv[])
     /////////////////
 
     std::stringstream lstrm;
-    if (! Video::CommandLine::parse(lstrm, argc, argv))
+    if (! VidCapCommandLine::parse(lstrm, cmdline))
     {
-        Video::CommandLine::Usage(std::cerr, argv0);
-        std::cerr << "Command line parsing:\n" << lstrm.str() << std::endl;
+        std::cerr << "\nERROR in command line parsing:\n" << lstrm.str() << std::endl;
         return EXIT_FAILURE;
     }
 

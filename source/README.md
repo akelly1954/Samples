@@ -1,28 +1,28 @@
 # Samples
      
 ## Going on now:   
-     
-Focusing right now on restructuring what used to be *main_v4l2_raw_capture*, now called **main_video_capture** (within the **video** project). There are two main objectives to the restructuring:  Getting rid of all **C** code in the **V4L2** video section in favor of **C++**.  Also, revamping the supporting objects, and organizing them (within the **Video** directory in several directories: **main_programs**, **common**, **v4l2**, **opencv**. Hopefully what sources go in each directory is self explanatory.    
-     
-(Right now I'm thinking of having another directory called **Qt5** which will house a GUI for managing the json config file and perhaps dial some controls at runtime which will modify the app behavior while it's streaming video -- **Maybe**.)     
-
-Completed the initial integration of **JsonCpp** into the sources. The implementation can be found in objects related to **class ConfigSingleton** in the **Util** project.  The sample/test program **./source/Util/src/main_programs/main_jsoncpp_samplecfg.cpp** is a good starting point to look around (and try things out).   
-     
-The program *main_v4l2_raw_capture.cpp* (now **main_video_capture.cpp**) and its underlying set of objects in the **Video** directory is currently undergoing refactoring and replacing of all **C** interfaces to the **V4L2** linux driver with **C++** code.  At the same time, JSON content (and code) is being used to replace existing configuration options in the code as well.   
-     
-All this will not take just a couple of days.  In the meantime, everything works properly, but the code is obviously half-refactored.    
       
-**(Fall 2022)**: New work is being done on the Video projects. Getting rid of the C interface to **V4L2**, and replacing the previous kinda awkward C code with C++ objects.  This is being done in a step-wise fashion, and exists only in the **dev** branch (at the moment). I do merge into the **main** branch occasionally, but only when a feature is done, tested, and working well.   
+**Done with the following projects:**     
+     
+* Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
+     
+* Done with the restructure of the Video project source files (as well as the associated *CMake* files.   
+        
+* There is no more **C** code in this project (previous interface to *V4L2*).  It's all **C++** now.     
+     
+* Fully integrated **JsonCpp** into the code.  Only used in some applications at this time.    
     
+* Revamped the command line parsing utility (see CommandLine.cpp/.hpp), as well as the programs that use it.     
+     
 **Next Steps**:    
     
-1. Initial implementation of the all-C++ version of the Video project will include JSON based config file support.  Which answers the question of how to configure the video pumping of frames from a video source (camera).  There are many many configurable parameters for the video apps that will use either **opencv** or **v4l2** video pumps for each application.   
-      
-2. Add **OpenCV** as the video frame pump so the user can use it as an alternative to **V4L2** (which will still be there as an alternative).  The plan is to use **opencv version 4.6.0** at this time.  It is already cloned and built from the **github** repository, but can only be integrated into this framework once all the C code is out of the Video project and has been replaced by C++ objects.     
-        
-(*NOTE:  OpenCV and V4L2 are not being developed as plugins.  The intent is to have them both present at runtime so that either one can be used at will. In other words, rather than have a shared library for each that can be used as a plugin, they will both co-exit in the executable at runtime*).    
+1. Focus on the video frame grabber using opencv (currently planning on **opencv version 4.6.0**) in addition to **V4L2**.     
      
-The **README** files are lagging behind reality by a bit.     
+2. Add a Qt 5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
+     
+Both **main** and **dev** branches are now in sync. Always take **dev** before **main**.  However, **main** is more stable.    
+     
+The **README** files are still lagging behind reality by a bit.     
      
 ## The Sources and How To Build Them
 

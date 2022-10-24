@@ -69,7 +69,7 @@ const int server_buffer_size = NtwkUtilBufferSize;
 
 void Usage(std::ostream& strm, std::string command)
 {
-    strm << "\nUsage:    " << command << " --help (or -h or help)" << std::endl;
+    strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command << "\n"
             "                  [ -ip server-ip-address ] (listen ip address (default is \"IADDR_ANY\" same as \"\") \n" <<
             "                  [ -pn port-number ]       (listen port number, default is the port number defined \n" <<
@@ -83,22 +83,35 @@ void Usage(std::ostream& strm, std::string command)
             "NOTE: the default port numbers that both client and server use match up at the time the sources were built.\n" <<
             "      If the port number is set on the command line, it should be done for both client and server.\n" <<
             "      The server always reports the port number it is listening on in the first few lines of its log file.\n" <<
-            "\n" <<
-            std::endl;
+            "\n";
 }
 
-bool parse(int argc, const char *argv[])
+bool parse(int argc, const char *argv[], Util::CommandLine& cmdline )
 {
     using namespace Util;
 
-    const std::vector<std::string> allowedFlags ={ "-ip", "-pn", "-bl", "-lg" };
-    const std::map<std::string,std::string> cmdmap = getCLMap(argc, argv, allowedFlags);
+    if(cmdline.isError())
+    {
+        std::cerr << "\n" << argv[0] << ": " << cmdline.getErrorString() << std::endl;
+        return false;
+    }
+
+    if(cmdline.isHelp())
+    {
+        // No error, just help
+        if (argc > 2)
+        {
+            std::cerr << "\nWARNING: using the --help flag negates consideration of all other flags and parameters.  Exiting...\n" << std::endl;
+        }
+        return false;
+    }
+
     std::map<std::string,bool> specified;
 
-    specified["-ip"] = getArg(cmdmap, "-ip", server_listen_ip);
-    specified["-pn"] = getArg(cmdmap, "-pn", server_listen_port_number);
-    specified["-bl"] = getArg(cmdmap, "-bl", server_listen_max_backlog);
-    specified["-lg"] = getArg(cmdmap, "-lg", log_level);
+    specified["-ip"] = cmdline.get_template_arg("-ip", server_listen_ip);
+    specified["-pn"] = cmdline.get_template_arg("-pn", server_listen_port_number);
+    specified["-bl"] = cmdline.get_template_arg("-bl", server_listen_max_backlog);
+    specified["-lg"] = cmdline.get_template_arg("-lg", log_level);
 
     bool ret = true;  // Currently all flags have default values, so it's always good.
     std::for_each(specified.begin(), specified.end(), [&ret](auto member) { if (member.second) { ret = true; }});
@@ -110,25 +123,33 @@ int main(int argc, const char *argv[])
     using namespace Util;
 
     std::string argv0 = argv[0];
+    const StringVector allowedFlags ={ "-ip", "-pn", "-bl", "-lg" };
+    CommandLine cmdline(argc, argv, allowedFlags);
 
-    /////////////////
-    // Parse command line
-    /////////////////
-
-    if (argc > 1 &&
-            (std::string(const_cast<const char *>(argv[1])) == "--help" ||
-               std::string(const_cast<const char *>(argv[1])) == "-h" ||
-               std::string(const_cast<const char *>(argv[1])) == "help")
-        )
+    if(cmdline.isError())
     {
-        Usage(std::cerr, argv0);
-        return 0;
+        std::cout << "\n" << argv0 << ": " << cmdline.getErrorString() << "\n" << std::endl;
+        Usage(std::cout, argv0);
+        std::cout << std::endl;
+        return EXIT_FAILURE;
     }
 
-    bool parseres = parse(argc, argv);
-    if (! parseres)
+    if(cmdline.isHelp())
     {
-        Usage(std::cerr, argv0);
+        if (argc > 2)
+        {
+            std::cout << "\nWARNING: using the --help flag cancels all other flags and parameters.  Exiting...\n" << std::endl;
+        }
+        Usage(std::cout, argv0);
+        std::cout << std::endl;
+        return EXIT_SUCCESS;
+    }
+
+    if (! parse(argc, argv, cmdline))
+    {
+        std::cout << "\n";
+        Usage(std::cout, argv0);
+        std::cout << std::endl;
         return 1;
     }
 
