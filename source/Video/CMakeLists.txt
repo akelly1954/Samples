@@ -50,9 +50,10 @@ install(FILES ${TEST_SCRIPTS}
 set (Util_LIB "${SampleRoot_DIR}/build/Util/libUtil.so")
 set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
 
-#
+##############################
 # main_video_capture main
-#
+##############################
+
 set (main_video_capture "main_video_capture${DBG}")
 add_executable (main_video_capture src/main_programs/main_video_capture.cpp)
 target_link_libraries( main_video_capture 
