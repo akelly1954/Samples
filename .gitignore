@@ -34,8 +34,8 @@
 # local
 lastbuild_log.txt
 build/
+.swp
 .project
 .settings
 .cproject
 .vscode
-.swp
