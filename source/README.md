@@ -13,6 +13,8 @@
 * Fully integrated **JsonCpp** into the code.  Only used in some applications at this time.    
     
 * Revamped the command line parsing utility (see CommandLine.cpp/.hpp), as well as the programs that use it.     
+      
+* Completed the capability of **main_video_capture** to stream out video frames to a process.  This is controlled by the JSON config file (*video_capture.json*) - one has to both enable the pipe to *popen()*, as well as specify the command line of the process to be piped to. Currently the command **"dd of=video_capture.dd.data 2> /dev/null"** is being used.  This allows testing if both the **write-to-file** as well as the **write-to-process** capabilities are enabled in the JSON file.  The *.data* file created by **write-to-file** has to be identical to the *.dd.data* file created by the **dd** utility (see **"output-process"** in *video_capture.json*). Which it is.     
      
 **Next Steps**:    
     
