@@ -1,4 +1,8 @@
 {
+    //                          THIS LINE IS A COMMENT.
+    // It can be used within input data to JsonCpp (as an extension to the json standard).
+    // See configuration setting for JsonCpp where it is instantiated.
+
     "Config": {
 
         "Logger": {
@@ -10,7 +14,11 @@
         "App-options": {
             "output-file":              "video_capture.data",
             "write-to-file":            1,
-            "output-process":           "dd of=video_capture.dd.data 2> /dev/null",
+            "output-process":           "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4 2> /dev/null",
+
+                // As an alternative to the line above, the next line can be used for testing:
+                //      "output-process":           "dd of=video_capture.dd.data 2> /dev/null",
+
             "write-to-process":         1,
             "profiling":                0,
             "profile-timeslice-ms":     300
@@ -28,7 +36,7 @@
                     "device-name" :     "/dev/video0",
                     "pixel-format":     "h264"
                 },
-            
+
                 "opencv": {
                     "name":             "OPENCV",
                     "device-name" :     "TBD",
