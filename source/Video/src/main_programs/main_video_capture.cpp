@@ -323,7 +323,7 @@ int main(int argc, const char *argv[])
         }
 
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
-        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, ulogger, vcGlobals::output_file, vcGlobals::profiling_enabled);
+        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, ulogger);
         queuethread.detach();
 
         ulogger.debug() << argv0 << ": kick-starting the queue operations.";

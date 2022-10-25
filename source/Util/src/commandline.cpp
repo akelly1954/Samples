@@ -32,7 +32,7 @@
 void Util::CommandLine::parseCommandLine(void)
 {
     std::string argv0 = m_strArgv[0];
-    std::string argv1 = (m_strArgv.size() == 1? "-h" : m_strArgv[1].c_str());
+    std::string argv1 = (m_strArgv.size() == 1? "" : m_strArgv[1].c_str());
 
     if (argv1 == "--help" || argv1 == "-h" || argv1 == "-help" || argv1 == "help")
     {

@@ -39,28 +39,28 @@
 namespace VideoCapture {
 
 // Queue handler thread
-void raw_buffer_queue_handler(Log::Logger logger, std::string output_file, bool profiling_enabled);
+void raw_buffer_queue_handler(Log::Logger logger);
 
-FILE *create_output_file(Log::Logger logger, std::string output_file);
+FILE *create_output_file(Log::Logger logger);
 
-size_t write_frame_to_file(Log::Logger logger, FILE *filestream, std::string output_file,
+FILE *create_output_process(Log::Logger logger);
+
+size_t write_frame_to_file(Log::Logger logger, FILE *filestream,
+                  std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame);
+
+size_t write_frame_to_process(Log::Logger logger, FILE *filestream,
                   std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame);
 
 class video_capture_queue
 {
 public:
     static void set_terminated(bool t);         // main() sets this to true or false
-    // TODO: Remove this when you are ready...          static void set_write_frames_to_file(bool t); // main() sets this to true or false
-    // TODO: Remove this when you are ready...          static void set_write_frame_count(size_t count);
 
     // Note: this method runs on a different thread than the other methods in this object.
     // It's called from the specific video raw capture driver on its thread.
     static void add_buffer_to_raw_queue(void *p, size_t bsize);
 
-    static VideoCapture::profiler_frame s_pframe;
     static bool s_terminated;
-    // TODO: Remove this when you are ready...          static bool s_write_frames_to_file;
-    static size_t s_write_frame_count;
     static Util::condition_data<int> s_condvar;
     static Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>> s_ringbuf;
 };  // end of class video_capture_queue

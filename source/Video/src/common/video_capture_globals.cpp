@@ -41,7 +41,8 @@
 bool            Video::vcGlobals::log_initialization_info = false;
 std::string     Video::vcGlobals::logChannelName =          "video_capture";
 std::string     Video::vcGlobals::logFilelName =            Video::vcGlobals::logChannelName + "_log.txt";
-std::string     Video::vcGlobals::output_file =             Video::vcGlobals::logChannelName + ".data";  // Name of file intended for the video frames
+std::string     Video::vcGlobals::output_file =             Video::vcGlobals::logChannelName + ".data"; // Name of file intended for the video frames
+std::string     Video::vcGlobals::output_process =          "date > /dev/null 2>& 1";                   // command to pipe frames to (for popen() - use the json file to set correctly).
 Log::Log::Level Video::vcGlobals::loglevel =                Log::Log::Level::eNotice;
 std::string     Video::vcGlobals::default_log_level =       Log::Log::toString(Video::vcGlobals::loglevel);
 std::string     Video::vcGlobals::log_level =               Video::vcGlobals::default_log_level;
@@ -52,6 +53,7 @@ int             Video::vcGlobals::profile_timeslice_ms =    800;
 // Video configuration
 std::string     Video::vcGlobals::video_grabber_name =      "v4l2";
 bool            Video::vcGlobals::write_frames_to_file =    true;
+bool            Video::vcGlobals::write_frames_to_process = false;
 size_t          Video::vcGlobals::framecount =              200;
 std::string     Video::vcGlobals::str_frame_count(std::to_string(framecount));
 std::string     Video::vcGlobals::str_dev_name =            "/dev/video0";
@@ -88,18 +90,27 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     strm << "\nFrom JSON:  Set default logger log level to: " << Video::vcGlobals::log_level;
 
     // Enable writing raw video frames to output file
-    bool enable_write_to_file = (cfg_root["Config"]["App-options"]["write-to-file"].asBool() != 0);
+    bool enable_write_to_file = !(cfg_root["Config"]["App-options"]["write-to-file"].asInt() == 0);
     Video::vcGlobals::write_frames_to_file = enable_write_to_file;
-    strm << "\nFrom JSON:  Enable writing raw video frames to output file: " << enable_write_to_file? "true" : "false";
+    strm << "\nFrom JSON:  Enable writing raw video frames to output file: " << (enable_write_to_file? "true" : "false");
 
     // Raw video output file
     Video::vcGlobals::output_file = Utility::trim(cfg_root["Config"]["App-options"]["output-file"].asString());
     strm << "\nFrom JSON:  Set raw video output file name to: " << Video::vcGlobals::output_file;
 
+    // Enable writing raw video frames to output file
+    bool enable_write_to_process = !(cfg_root["Config"]["App-options"]["write-to-process"].asInt() == 0);
+    Video::vcGlobals::write_frames_to_process = enable_write_to_process;
+    strm << "\nFrom JSON:  Enable writing raw video frames to process: " << (enable_write_to_process? "true" : "false");
+
+    // Raw video output file
+    Video::vcGlobals::output_process = Utility::trim(cfg_root["Config"]["App-options"]["output-process"].asString());
+    strm << "\nFrom JSON:  Set raw video output process command to: " << Video::vcGlobals::output_process;
+
     // Enable profiling operations
-    bool enable_profiling = (cfg_root["Config"]["App-options"]["profiling"].asInt() != 0);
+    bool enable_profiling = !(cfg_root["Config"]["App-options"]["profiling"].asInt() == 0);
     Video::vcGlobals::profiling_enabled = enable_profiling;
-    strm << "\nFrom JSON:  Enable profiling: " << enable_profiling? "true" : "false";
+    strm << "\nFrom JSON:  Enable profiling: " << (enable_profiling? "true" : "false");
 
     // Milliseconds between profile snapshots
     Video::vcGlobals::profile_timeslice_ms = cfg_root["Config"]["App-options"]["profile-timeslice-ms"].asInt();

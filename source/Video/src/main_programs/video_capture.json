@@ -10,6 +10,8 @@
         "App-options": {
             "output-file":              "video_capture.data",
             "write-to-file":            1,
+            "output-process":           "dd of=video_capture.dd.data 2> /dev/null",
+            "write-to-process":         1,
             "profiling":                0,
             "profile-timeslice-ms":     300
         },

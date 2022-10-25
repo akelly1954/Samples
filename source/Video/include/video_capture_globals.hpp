@@ -48,6 +48,7 @@ namespace Video
         static std::string logChannelName;
         static std::string logFilelName;
         static std::string output_file;
+        static std::string output_process;
         static Log::Log::Level loglevel;
         static std::string default_log_level;
         static std::string log_level;
@@ -61,6 +62,7 @@ namespace Video
         static std::string video_grabber_name;
         static size_t framecount;
         static bool write_frames_to_file;
+        static bool write_frames_to_process;
         static std::string str_frame_count;
         static std::string str_dev_name;
 
