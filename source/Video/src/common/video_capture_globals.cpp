@@ -129,11 +129,20 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     strm << "\nFrom JSON:  " << Video::vcGlobals::video_grabber_name << " is labeled as: "
             << cfg_root["Config"]["Video"]["frame-capture"][Video::vcGlobals::video_grabber_name]["name"].asString();
 
-    Video::vcGlobals::str_dev_name = cfg_root["Config"]["Video"]["frame-capture"][Video::vcGlobals::video_grabber_name]["device-name"].asString();
+    Video::vcGlobals::str_dev_name = cfg_root["Config"]
+                                              ["Video"]
+                                               ["frame-capture"]
+                                                [Video::vcGlobals::video_grabber_name]
+                                                 ["device-name"].asString();
     strm << "\nFrom JSON:  Set " << Video::vcGlobals::video_grabber_name << " device name to " << Video::vcGlobals::str_dev_name;
 
+    // TODO: pixel-format becomes preferred-pixel-format, and output-process comes from that
     // Video::vcGlobals::pixel_format is either "h264" or "yuyv"
-    std::string pixelFormat = cfg_root["Config"]["Video"]["frame-capture"][Video::vcGlobals::video_grabber_name]["pixel-format"].asString();
+    std::string pixelFormat = cfg_root["Config"]
+                                       ["Video"]
+                                        ["frame-capture"]
+                                         [Video::vcGlobals::video_grabber_name]
+                                          ["preferred-pixel-format"].asString();
     if (pixelFormat == "h264")
     {
         Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
@@ -148,6 +157,17 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     }
     strm << "\nFrom JSON:  Set " << Video::vcGlobals::video_grabber_name << " pixel format to "
             << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
+
+    // Raw video output file
+    Video::vcGlobals::output_process = cfg_root["Config"]
+                                                ["Video"]
+                                                 ["frame-capture"]
+                                                  [Video::vcGlobals::video_grabber_name]
+                                                   ["pixel-format"]
+                                                    [pixelFormat]
+                                                     ["output-process"].asString();
+            // Utility::trim(cfg_root["Config"]["App-options"]["output-process"].asString());
+    strm << "\nFrom JSON:  Set raw video output process command to: " << Video::vcGlobals::output_process;
 
     return true;
 }
