@@ -1,6 +1,6 @@
 {
     //                          THIS LINE IS A COMMENT.
-    // Comments can be used within input data to JsonCpp (as avery informal extension to the json standard).
+    // Comments can be used within input data to JsonCpp (as a very informal extension to the json standard).
     // See configuration settings for JsonCpp in the JsonCpp source code (Samples/source/3rdparty/JsonCpp)
 
     "Config": {
@@ -29,7 +29,7 @@
                 "v4l2": {
                     "name":                         "V4L2",
                     "device-name" :                 "/dev/video0",
-                    "preferred-pixel-format":       "yuyv",
+                    "preferred-pixel-format":       "h264",
 
                     "pixel-format": {
                         "h264": {

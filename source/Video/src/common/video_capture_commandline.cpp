@@ -96,7 +96,9 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         default:
             assert (fail_int == -668);   // Bug encountered. Will cause abnormal termination
     }
-    strm << "    write-frames-to-file is set to enabled, file name is " << Video::vcGlobals::output_file << "\n";
+    strm << "    write-frames-to-file is set to "
+         << (Video::vcGlobals::write_frames_to_file == false? "false": "true")
+         << ", file name is " << Video::vcGlobals::output_file << "\n";
 
 
     // assignment to vcGlobals happens after everything else has been assigned below.
@@ -266,7 +268,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
     // Frame count set to 0 means stream non-stop.
     if (fcount_value < 0)
     {
-        strm << "\nERROR: frane count (" << fcount_value << "): The number has to be positive or 0.\n";
+        strm << "\nERROR: frame count (" << fcount_value << "): The number has to be positive or 0.\n";
         return false;
     }
 

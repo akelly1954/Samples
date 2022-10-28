@@ -77,7 +77,7 @@ void VideoCapture::video_capture(Log::Logger logger)
         // each represents the node names within the "frame-capture" section.
         if (itrkey == videoInterface)
         {
-            interfaceName = Util::Utility::trim(itrkey);
+            interfaceName = itrkey;
         }
         interfaceList += (itrkey + " ");
     }

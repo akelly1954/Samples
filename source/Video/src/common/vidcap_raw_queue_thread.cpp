@@ -1,6 +1,7 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <video_capture_globals.hpp>
+#include <ConfigSingleton.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -80,8 +81,6 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
     // option is set (which it is not, by default)
     if (Video::vcGlobals::write_frames_to_process)
     {
-        // logger.debug() << "raw_buffer_queue_handler: initialize popen call.";
-
         processstream = create_output_process(logger);
         if (processstream == NULL)
         {
@@ -238,6 +237,22 @@ FILE * VideoCapture::create_output_process(Log::Logger logger)
 {
     int errnocopy = 0;
     FILE *output_stream = NULL;
+
+    // Need to refresh output process since command line options
+    // may have changed the requested pixel-format.
+    Json::Value& cfg_root = Config::ConfigSingleton::GetJsonRootCopyRef();
+
+    std::string pixelFormat = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
+
+    Video::vcGlobals::output_process = cfg_root["Config"]
+                                                ["Video"]
+                                                 ["frame-capture"]
+                                                  [Video::vcGlobals::video_grabber_name]
+                                                   ["pixel-format"]
+                                                    [pixelFormat]
+                                                     ["output-process"].asString();
+
+    logger.debug() << "\nraw_buffer_queue_handler: Updated output process to:  " << Video::vcGlobals::output_process;
 
     if ((output_stream = ::popen (Video::vcGlobals::output_process.c_str(), "w")) == NULL)
     {

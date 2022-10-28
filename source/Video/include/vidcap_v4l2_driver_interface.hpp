@@ -115,9 +115,6 @@ namespace VideoCapture {
         int             fd = -1;
         struct buffer   *buffers = NULL;
         unsigned int    numbufs = 0;
-        int             pixel_format = Video::vcGlobals::pixel_format;
-        int             int_frame_count = Video::vcGlobals::framecount;
-        std::string     dev_name = Video::vcGlobals::str_dev_name;
         bool            m_errorterminated = false;
     };
 

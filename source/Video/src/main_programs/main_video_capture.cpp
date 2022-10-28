@@ -217,7 +217,8 @@ int main(int argc, const char *argv[])
         }
 
         std::string constring = strm.str();
-        std::cerr << constring << std::endl;
+        // TODO:  This just clutters up the screen.  Leave it in the log file:
+        // std::cerr << constring << std::endl;
 
         // Everything in the vector will be written to the log file
         // as soon as the logger is initialized.
@@ -437,6 +438,7 @@ int main(int argc, const char *argv[])
 
     // FINISHED:
 
+#if 0 // This is no longer relevant
     if (! error_termination)
     {
         //      One for the display
@@ -469,6 +471,7 @@ int main(int argc, const char *argv[])
         ulogger.info() << "    $ vlc ./" << argv0 << ".mp4";
         ulogger.info() << "";
     }
+#endif // 0
 
     #ifdef TEST_RAW_CAPTURE_CTL
     if (trcc.joinable()) trcc.join();

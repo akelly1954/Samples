@@ -75,8 +75,29 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
 {
     using namespace Util;
 
+    std::string preferredInterface = cfg_root["Config"]["Video"]["preferred-interface"].asString();
     // logChannelName
-    strm << "\nGetting config values from config file " << Video::vcGlobals::config_file_name << "\n";
+    strm << "\nFrom JSON:  Getting available pixel formats for interface "
+         << "\"" << preferredInterface << "\":\n";
+
+    // Create the list
+    std::string pixlist = "        {  ";
+    Json::Value pixfmt = cfg_root["Config"]
+                                  ["Video"]
+                                   ["frame-capture"]
+                                    [preferredInterface]
+                                     ["pixel-format"];
+
+    for (auto itr = pixfmt.begin(); itr != pixfmt.end(); itr++)
+    {
+        std::string itrkey = itr.key().asString();
+        pixlist += (itrkey + "  ");
+    }
+    pixlist += "  }";
+
+    strm << pixlist;
+
+    // End of list creation
 
     Video::vcGlobals::logChannelName = Utility::trim(cfg_root["Config"]["Logger"]["channel-name"].asString());
     strm << "\nFrom JSON:  Set logger channel-name to: " << Video::vcGlobals::logChannelName;
@@ -102,10 +123,6 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     bool enable_write_to_process = !(cfg_root["Config"]["App-options"]["write-to-process"].asInt() == 0);
     Video::vcGlobals::write_frames_to_process = enable_write_to_process;
     strm << "\nFrom JSON:  Enable writing raw video frames to process: " << (enable_write_to_process? "true" : "false");
-
-    // Raw video output file
-    Video::vcGlobals::output_process = Utility::trim(cfg_root["Config"]["App-options"]["output-process"].asString());
-    strm << "\nFrom JSON:  Set raw video output process command to: " << Video::vcGlobals::output_process;
 
     // Enable profiling operations
     bool enable_profiling = !(cfg_root["Config"]["App-options"]["profiling"].asInt() == 0);
@@ -136,7 +153,6 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
                                                  ["device-name"].asString();
     strm << "\nFrom JSON:  Set " << Video::vcGlobals::video_grabber_name << " device name to " << Video::vcGlobals::str_dev_name;
 
-    // TODO: pixel-format becomes preferred-pixel-format, and output-process comes from that
     // Video::vcGlobals::pixel_format is either "h264" or "yuyv"
     std::string pixelFormat = cfg_root["Config"]
                                        ["Video"]
@@ -166,7 +182,6 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
                                                    ["pixel-format"]
                                                     [pixelFormat]
                                                      ["output-process"].asString();
-            // Utility::trim(cfg_root["Config"]["App-options"]["output-process"].asString());
     strm << "\nFrom JSON:  Set raw video output process command to: " << Video::vcGlobals::output_process;
 
     return true;

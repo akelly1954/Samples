@@ -122,11 +122,6 @@ vidcap_v4l2_driver_interface::vidcap_v4l2_driver_interface(Log::Logger lg)
 
 void vidcap_v4l2_driver_interface::initialize()
 {
-    // Command line and json file configuration is done.
-    // Obtain the changes from the vcGlobals object.
-    pixel_format = Video::vcGlobals::pixel_format;
-    int_frame_count = Video::vcGlobals::framecount;
-    dev_name = Video::vcGlobals::str_dev_name;
 }
 
 void vidcap_v4l2_driver_interface::run()
@@ -373,14 +368,14 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
 
 bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
 {
-    int count = int_frame_count;
+    int count = Video::vcGlobals::framecount;
     int errnocopy = 0;
 
     // Loop while not finished, and original int_frame_count was 0, or counter is not done counting
     // (Having a null finished callback() is an error checked for earlier).
     do
     {
-        if (int_frame_count != 0 && count-- <= 0)
+        if (Video::vcGlobals::framecount != 0 && count-- <= 0)
         {
             set_terminated(true);
             break;
@@ -506,7 +501,9 @@ bool vidcap_v4l2_driver_interface::v4l2if_start_capturing(void)
             if (-1 == v4l2if_xioctl(fd, VIDIOC_QBUF, &buf))
             {
                 errnocopy = errno;
-                LOGGER_2Arg("v4l2if_start_capturing: ioctl VIDIOC_QBUF failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
+                logger.error() << "v4l2if_start_capturing: ioctl VIDIOC_QBUF failed: errno="
+                               << errnocopy << ": " << std::strerror(errnocopy);
+                set_terminated(true);
                 return false;
             }
         }
@@ -514,7 +511,9 @@ bool vidcap_v4l2_driver_interface::v4l2if_start_capturing(void)
         if (-1 == v4l2if_xioctl(fd, VIDIOC_STREAMON, &type))
         {
             errnocopy = errno;
-            LOGGER_2Arg("v4l2if_start_capturing: ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
+            logger.error() << "v4l2if_start_capturing (MMAP): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE failed: errno="
+                           << errnocopy << ": " << std::strerror(errnocopy);
+            set_terminated(true);
             return false;
         }
         break;
@@ -538,6 +537,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_start_capturing(void)
             {
                 errnocopy = errno;
                 LOGGER_2Arg("v4l2if_start_capturing: ioctl VIDIOC_QBUF failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
+                set_terminated(true);
                 return false;
             }
         }
@@ -545,7 +545,8 @@ bool vidcap_v4l2_driver_interface::v4l2if_start_capturing(void)
         if (v4l2if_xioctl(fd, VIDIOC_STREAMON, &type) == -1)
         {
             errnocopy = errno;
-            LOGGER_2Arg("v4l2if_start_capturing: ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
+            LOGGER_2Arg("v4l2if_start_capturing(USRPTR): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
+            set_terminated(true);
             return false;
         }
         break;
@@ -645,14 +646,14 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_mmap(void)
 
     if (v4l2if_xioctl(fd, VIDIOC_REQBUFS, &req) == -1) {
         if (EINVAL == errno) {
-            LOGGER_1Arg("v4l2if_init_mmap(): %s does not support memory mapping", dev_name.c_str());
+            LOGGER_1Arg("v4l2if_init_mmap(): %s does not support memory mapping", Video::vcGlobals::str_dev_name.c_str());
         }
         return false;
     }
 
     if (req.count < 2)
     {
-        LOGGER_1Arg("v4l2if_init_mmap(): Insufficient buffer memory on %s", dev_name.c_str());
+        LOGGER_1Arg("v4l2if_init_mmap(): Insufficient buffer memory on %s", Video::vcGlobals::str_dev_name.c_str());
         return false;
     }
 
@@ -712,9 +713,9 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_userp(unsigned int buffer_size)
     {
         errnocopy = errno;
         if (EINVAL == errno) {
-            LOGGER_1Arg("v4l2if_init_userp: %s does not support user pointer i/o", dev_name.c_str());
+            LOGGER_1Arg("v4l2if_init_userp: %s does not support user pointer i/o", Video::vcGlobals::str_dev_name.c_str());
         } else {
-            LOGGER_3Arg("v4l2if_init_userp: ioctl VIDIOC_REQBUFS for %s failed: errno=%d: %s", dev_name.c_str(), errnocopy, std::strerror(errnocopy));
+            LOGGER_3Arg("v4l2if_init_userp: ioctl VIDIOC_REQBUFS for %s failed: errno=%d: %s", Video::vcGlobals::str_dev_name.c_str(), errnocopy, std::strerror(errnocopy));
         }
         return false;
     }
@@ -753,7 +754,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         if (-1 == v4l2if_xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
             errnocopy = errno;
             if (EINVAL == errnocopy) {
-                LOGGER_1Arg("v4l2if_init_device: %s is not a V4L2 device", dev_name.c_str());
+                LOGGER_1Arg("v4l2if_init_device: %s is not a V4L2 device", Video::vcGlobals::str_dev_name.c_str());
                 return false;
             } else {
                 LOGGER_2Arg("v4l2if_init_device: VIDIOC_QUERYCAP ioctl failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
@@ -762,7 +763,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         }
 
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-            LOGGER_1Arg("v4l2if_init_device: %s is not a capture device", dev_name.c_str());
+            LOGGER_1Arg("v4l2if_init_device: %s is not a capture device", Video::vcGlobals::str_dev_name.c_str());
             return false;
         }
 
@@ -772,7 +773,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         switch (io) {
         case IO_METHOD_READ:
                 if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
-                    LOGGER_1Arg("v4l2if_init_device: %s does not support read i/o", dev_name.c_str());
+                    LOGGER_1Arg("v4l2if_init_device: %s does not support read i/o", Video::vcGlobals::str_dev_name.c_str());
                     return false;
                 }
                 break;
@@ -780,7 +781,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         case IO_METHOD_MMAP:
         case IO_METHOD_USERPTR:
                 if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-                    LOGGER_1Arg("%s does not support streaming i/o", dev_name.c_str());
+                    LOGGER_1Arg("%s does not support streaming i/o", Video::vcGlobals::str_dev_name.c_str());
                     return false;
                 }
                 break;
@@ -813,7 +814,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         CLEAR(fmt);
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (pixel_format == Video::pxl_formats::h264) {
+        if (Video::vcGlobals::pixel_format == Video::pxl_formats::h264) {
             fmt.fmt.pix.width       = 1920;
             fmt.fmt.pix.height      = 1080;
             fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_H264;
@@ -822,14 +823,21 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
             if (v4l2if_xioctl(fd, VIDIOC_S_FMT, &fmt) == -1)
             {
                 errnocopy = errno;
-                // Note VIDIOC_S_FMT may change width and height.
-                LOGGER_2Arg("v4l2if_init_device: Setting pixel format to h264 (VIDIOC_S_FMT ioctl) failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
-                return false;
+                if (errnocopy == EIO)
+                {
+                    logger.debug() << "v4l2if_init_device: Got EIO setting pixel format to h264 (VIDIOC_S_FMT ioctl)";
+                }
+                else
+                {
+                    // Note VIDIOC_S_FMT may change width and height.
+                    LOGGER_2Arg("v4l2if_init_device: Setting pixel format to h264 (VIDIOC_S_FMT ioctl) failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
+                    return false;
+                }
             }
             logger.debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
-                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[pixel_format];
+                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
 
-        } else if (pixel_format ==  Video::pxl_formats::yuyv) {
+        } else if (Video::vcGlobals::pixel_format ==  Video::pxl_formats::yuyv) {
             fmt.fmt.pix.width       = 640;
             fmt.fmt.pix.height      = 480;
             fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
@@ -838,11 +846,18 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
             // Note VIDIOC_S_FMT may change width and height.
             if (v4l2if_xioctl(fd, VIDIOC_S_FMT, &fmt) == -1)
             {
-                LOGGER_2Arg("v4l2if_init_device: Setting pixel format to yuyv (VIDIOC_S_FMT ioctl) failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
-                return false;
+                if (errnocopy == EIO)
+                {
+                    logger.debug() << "v4l2if_init_device: Got EIO setting pixel format to yuyv (VIDIOC_S_FMT ioctl)";
+                }
+                else
+                {
+                    LOGGER_2Arg("v4l2if_init_device: Setting pixel format to yuyv (VIDIOC_S_FMT ioctl) failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
+                    return false;
+                }
             }
             logger.debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
-                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[pixel_format];
+                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
         } else {
             /* Preserve original settings as set by v4l2-ctl for example */
             if (v4l2if_xioctl(fd, VIDIOC_G_FMT, &fmt) == -1)
@@ -943,32 +958,32 @@ bool vidcap_v4l2_driver_interface::v4l2if_open_device(void)
     struct stat st;
     int errnocopy;
 
-    if (Utility::trim(dev_name) == "")
+    if (Utility::trim(Video::vcGlobals::str_dev_name) == "")
     {
         logger.error() << "v4l2if_open_device: empty video device name";
         return false;
     }
-    if (stat(dev_name.c_str(), &st) == -1) {
+    if (stat(Video::vcGlobals::str_dev_name.c_str(), &st) == -1) {
         errnocopy = errno;
         logger.error() << "v4l2if_open_device: Cannot identify device "
-                       << dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
+                       << Video::vcGlobals::str_dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
         return false;
     }
 
     if (!S_ISCHR(st.st_mode)) {
-        logger.error() << "v4l2if_open_device: " << dev_name << " is not a device";
+        logger.error() << "v4l2if_open_device: " << Video::vcGlobals::str_dev_name << " is not a device";
         return false;
     }
 
-    fd = open(dev_name.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
+    fd = open(Video::vcGlobals::str_dev_name.c_str(), O_RDWR /* required */ | O_NONBLOCK, 0);
     errnocopy = errno;
 
     if (-1 == fd) {
         logger.error() << "v4l2if_open_device: Cannot open "
-                       << dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
+                       << Video::vcGlobals::str_dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
         return false;
     }
-    logger.info() << "Device " << dev_name;
+    logger.info() << "Device " << Video::vcGlobals::str_dev_name;
     return true;
 }
 
