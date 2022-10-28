@@ -57,8 +57,10 @@ bool            Video::vcGlobals::write_frames_to_process = false;
 size_t          Video::vcGlobals::framecount =              200;
 std::string     Video::vcGlobals::str_frame_count(std::to_string(framecount));
 std::string     Video::vcGlobals::str_dev_name =            "/dev/video0";
+bool            Video::vcGlobals::proc_redir =              true;
+std::string     Video::vcGlobals::redir_filename =          "/dev/null";
 
-// See /usr/include/linux/videodev2.h
+// See /usr/include/linux/videodev2.h for the descriptive strings in the vector<>
 enum Video::pxl_formats Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
 std::vector<std::string> Video::vcGlobals::pixel_formats_strings ={         // indexed by pixel_format used as an int
                                         "V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2",

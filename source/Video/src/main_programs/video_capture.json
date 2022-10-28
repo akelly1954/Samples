@@ -33,13 +33,13 @@
 
                     "pixel-format": {
                         "h264": {
-                            "output-process":       "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4 2> /dev/null"
+                            "output-process":       "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4"
                         },
                         "yuyv": {
-                            "output-process":       "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2>/dev/null"
+                            "output-process":       "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
                         },
                         "other": {
-                            "output-process":       "dd of=video_capture.dd.data 2> /dev/null" 
+                            "output-process":       "dd of=video_capture.dd.data" 
                         }
                     }
                 },
@@ -50,13 +50,13 @@
                     "preferred-pixel-format":       "other",
                     "pixel-format": {
                         "h264": {
-                            "output-process":   "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4 2> /dev/null"
+                            "output-process":   "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4"
                         },
                         "yuyv": {
-                            "output-process":   "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2>/dev/null"
+                            "output-process":   "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
                         },
                         "other": {
-                            "output-process":   "dd of=video_capture.dd.data 2> /dev/null" 
+                            "output-process":   "dd of=video_capture.dd.data" 
                         }
                     }
                 }

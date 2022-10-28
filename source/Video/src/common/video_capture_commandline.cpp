@@ -31,24 +31,32 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
     strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
             << "\n"
+            << "              [ -fn [ file-name ] ]     Turns on the \"write-to-file\" functionality (see JSON file).  The file-name \n"
+            << "                                        parameter is the file which will be created to hold image frames. If it exists, \n"
+            << "                                        the file will be truncated. If the file name is omitted, the default name \n"
+            << "                                        \"" << Video::vcGlobals::output_file << "\" will be used. (By default, the \"write-to-file\" capability \n"
+            << "                                        is turned off in favor of the \"write-to-process\" member in the JSON config file.\n"
+            << "              [ -pr [ timeslice_ms]     Enable profiler stats. If specified, the optional parameter is the number \n"
+            << "                                        of milliseconds between profiler snapshots. The default is " << Video::vcGlobals::profile_timeslice_ms << " milliseconds.\n"
+            << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}. \n"
+            << "                                        (The default is " << Video::vcGlobals::default_log_level << ")\n"
             << "              [ -loginit ]              (no parameters) This flag enables the logging of initialization info.\n"
-            << "              [ -fn [ file-name ] ]     Turns on the write-frames-to-file functionality.  The file-name \n"
-            << "                                        parameter is the file which will be created to hold image frames.\n"
-            << "                                        If it exists, the file will be truncated. If the file name is omitted,\n"
-            << "                                        the default name \"" << Video::vcGlobals::output_file << "\" will be used.\n"
-            << "              [ -pr [ timeslice_ms]     Enable profiler stats. If specified, the optional parameter is the number of\n"
-            << "                                        milliseconds between profiler snapshots. The default is " << Video::vcGlobals::profile_timeslice_ms << " milliseconds.\n"
-            << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\",\n"
-            << "                                        \"EROR\", \"CRIT\"}. (The default is " << Video::vcGlobals::default_log_level << ")\n"
-            << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The default\n"
-            << "                                        grabber is \"v4l2\").\n"
+            << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. \n"
+            << "                                        (The default grabber is \"v4l2\").\n"
             << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << Video::vcGlobals::framecount << ")\n"
             << "              [ -dv video-device ]      The /dev entry for the video camera. (The default value is " << Video::vcGlobals::str_dev_name << ")\n"
+            << "              [ -proc-redir [ file ]]   If the \"write-to-process\" member of the JSON config file is set to 1 (enabled), \n"
+            << "                                        the process which is started and streamed to (typically ffmpeg) has its \"standard \n"
+            << "                                        error\" still open to the controlling display (terminal).  To get rid of the extra \n"
+            << "                                        output on the screen, std::cerr, (stderr, fd 2, etc) can be redirected to a regular \n"
+            << "                                        file or to \"/dev/null\" as needed by using this flag and a filename. If the \"file\" \n"
+            << "                                        parameter is not specified, the standard error output will go to the screen. \n"
+            << "                                        (By default, the flag is enabled, and the filename used is \"/dev/null\").\n"
             << "              [ -pf pixel-format ]      The pixel format requested from the video driver, which can be \"h264\" or \"yuyv\".\n"
             << "                                        These are:\n"
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::h264] << "\n"
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::yuyv] << "\n"
-            << "                                                  Please see /usr/include/linux/videodev2.h for more information\n"
+            << "                                        Please see /usr/include/linux/videodev2.h for more information\n"
             << "                                        (The default pixel-format value is \"h264\").\n";
 }
 
@@ -78,7 +86,34 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
     }
     strm << "    Logging of initialization lines is set to " << (vcGlobals::log_initialization_info? "true" : "false") << ".\n";
 
-    // this flag (-fn) and an existing readable regular file name are MANDATORY
+    std::string redirect_file = Video::vcGlobals::redir_filename;
+    switch(cmdline.get_template_arg("-proc-redir", Video::vcGlobals::redir_filename))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // Do not change anything
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            Video::vcGlobals::proc_redir = true;
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            // This means do not redirect process output
+            Video::vcGlobals::proc_redir = false;
+            break;
+        default:
+            assert (fail_int == -668);   // Bug encountered. Will cause abnormal termination
+    }
+    strm << "    redirect stderr to file is set to "
+         << (Video::vcGlobals::proc_redir == false? "false": "true") << "\n";
+
+    if (Video::vcGlobals::proc_redir)
+    {
+        strm << "    Stderr output from the process streamed to, will be redirected to " << Video::vcGlobals::redir_filename << "\n";
+    }
+    else
+    {
+        strm << "    Stderr output from the process streamed to, will be not be redirected. It may quite possibly go to the screen. \n";
+    }
+
     switch(cmdline.get_template_arg("-fn", Video::vcGlobals::output_file))
     {
         case Util::ParameterStatus::FlagNotProvided:
@@ -94,7 +129,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             //         Video::vcGlobals::output_file << "\"." << "\n";
             break;
         default:
-            assert (fail_int == -668);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -669);   // Bug encountered. Will cause abnormal termination
     }
     strm << "    write-frames-to-file is set to "
          << (Video::vcGlobals::write_frames_to_file == false? "false": "true")
@@ -117,7 +152,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             strm << "    WARNING: \"-fc\" flag with no parameter: using default " << fcount_value << "\n";
             break;
         default:
-            assert (fail_int == -669);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -670);   // Bug encountered. Will cause abnormal termination
     }
     // Value for frame count is checked at the very end.
 
@@ -136,7 +171,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             Video::vcGlobals::profiling_enabled = true;
             break;
         default:
-            assert (fail_int == -670);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -671);   // Bug encountered. Will cause abnormal termination
     }
     if (default_timeslice <= 0)
     {
@@ -161,7 +196,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             strm << "ERROR: \"-fg\" flag has no parameter. Needs video grabber name." << "\n";
             return false;
         default:
-            assert (fail_int == -671);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -672);   // Bug encountered. Will cause abnormal termination
     }
 
 
@@ -179,7 +214,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             strm << "ERROR: \"-lg\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (fail_int == -672);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -673);   // Bug encountered. Will cause abnormal termination
     }
 
 
@@ -197,7 +232,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             strm << "ERROR: \"-dv\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (fail_int == -673);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -674);   // Bug encountered. Will cause abnormal termination
     }
     strm << "    Video frame grabber device name is set to " << Video::vcGlobals::str_dev_name << "\n";
 
@@ -217,7 +252,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             strm << "ERROR: \"-pf\" flag is missing its parameter." << "\n";
             return false;
         default:
-            assert (fail_int == -674);   // Bug encountered. Will cause abnormal termination
+            assert (fail_int == -675);   // Bug encountered. Will cause abnormal termination
     }
 
     /////////////////

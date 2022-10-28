@@ -251,18 +251,26 @@ FILE * VideoCapture::create_output_process(Log::Logger logger)
                                                    ["pixel-format"]
                                                     [pixelFormat]
                                                      ["output-process"].asString();
-
-    logger.debug() << "\nraw_buffer_queue_handler: Updated output process to:  " << Video::vcGlobals::output_process;
-
-    if ((output_stream = ::popen (Video::vcGlobals::output_process.c_str(), "w")) == NULL)
+    std::string actual_process;
+    if (Video::vcGlobals::proc_redir)
     {
-        errnocopy = errno;
-        logger.error() << "Could not start the process \"" <<
-        Video::vcGlobals::output_process << "\": " << Util::Utility::get_errno_message(errnocopy);
+        actual_process = Video::vcGlobals::output_process + " 2> " + Video::vcGlobals::redir_filename;
     }
     else
     {
-        logger.debug() << "Started the process \"" << Video::vcGlobals::output_process << "\".";
+        actual_process = Video::vcGlobals::output_process;
+    }
+    logger.debug() << "\nraw_buffer_queue_handler: Updated output process to:  " << actual_process;
+
+    if ((output_stream = ::popen (actual_process.c_str(), "w")) == NULL)
+    {
+        errnocopy = errno;
+        logger.error() << "Could not start the process \"" << actual_process
+                       << "\": " << Util::Utility::get_errno_message(errnocopy);
+    }
+    else
+    {
+        logger.debug() << "Started the process \"" << actual_process << "\".";
     }
     return output_stream;
 }
