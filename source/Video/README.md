@@ -50,8 +50,8 @@ use this code for their own purpose.
 **Command Line Options**:    
       
  In the descriptions listed below, I refer to the equivalent Json **Node** which contains the value used/modified 
- by the item in question like this, for example:  **Root["Config"]["Logger"]["file-name"]** - which is
- *JasonCpp* syntaxt for C++ access to this node (after the JsonCpp object has been parsed).  It is the C++ *operator[]()* 
+ by the item in question like this:  **Root["Config"]["Logger"]["file-name"]** - which is
+ *JasonCpp* syntax for C++ access to this node (after the JsonCpp object has been parsed).  It is the C++ *operator[]()* 
  method which uniquely defines the **Json Node** in the Json file. 
  (Please have the file *video_capture.json* open 
  for reference as we go through this. You will see plenty of this syntax in the code - see *video_capture_globals.cpp* or *video_capture_thread.cpp* for examples).     
@@ -63,12 +63,18 @@ use this code for their own purpose.
                                  "video_capture.data" will be used. (By default, the "write-to-file" capability
                                  is turned off in favor of the "write-to-process" member in the JSON config file).   
      
-     Equivalent Json member(s):  Root["Config"]["App-options"]["write-to-file"] (treated here like an int)     
+     Equivalent Json member(s):  Root["Config"]["App-options"]["write-to-file"] (bool, treated here like an int)     
                                  Root["Config"]["App-options"]["output-file"] (string)      
-      
+     
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static bool write_frames_to_file;
+                                 static std::string output_file;
+
 If the -fn flag is specified (on the command line), then the write-to-file capability is turned on (enabled). It is off by default.  If the file-name is not mentioned, the default value (from the Json file) is used.  This capability writes out to
 a file the actual raw frames that come from  the camera in the format specified by the json file and/or the command line options
-(see more on that below).        
+(see more on that below).    
+     
+The write-to-file capability operates completely independently from the write-to-process capability outlined below.  They can both be enabled and produce an **h264** data file (or a **yuyv** data file), as well as an **mp4** file in the same run.  Usually one of the two suffices.      
      
 (**A note about bool**:  Although
 it is well defined enough in C++, values other than 0 or 1 can be used.  The way the JsonCpp *bool* is used in this project
