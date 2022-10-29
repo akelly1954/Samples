@@ -12,7 +12,7 @@ To get started, let's take a look on how to run the utility with a bit of setup 
      
 **So first**:     
      
-The output shown below is from the utility run like this: **main_video_capture --help**.  Please take a look at the options to familiarize yourself with them, and we can then show a couple of examples:     
+The output shown below is from the utility run like this: **main_video_capture --help**.  Please take a look at the options to familiarize yourself with them, and we can then show a couple of examples.  Interspersed with the options are small sections of text that provide additional information about each:     
      
      $ main_video_capture --help   
             
@@ -22,15 +22,40 @@ The output shown below is from the utility run like this: **main_video_capture -
      
      Or:
      
-       main_video_capture  
-         
+       main_video_capture  [ options ]
+
+**Usage**:  This is really an either/or situation. You either want "help" or you want to run the app with full functionality.
+The following section lists all the options available from the command line - around nine or ten at this time. This list
+tends to grow over time, and the README (this file) does not necessarily keep up in a timely manner. This also means that
+the definitive description of the behavior of the various options lies in the source file (*video_capture_commandline.cpp*), 
+and the JSON configuration file that is needed by the app in order to run (*video_capture.json*).    
+     
+**A note about video_capture_commandline.cpp** and the associated other source file that use it:  What goes on in there does seem a bit unwieldy. And it kind of is.  However... (and in my defense), I've been developing (improving) and moving the command line parsing and configuration from "inline" code towards usage of C++ templates and specialized template functions. You can see evidence of that in the objects that the parser uses to do its job. By the time this is done, most if not all the parsing and organization of the data at runtime, will mostly be done by a base class (see *commandline.cpp/.hpp* in the **Util** project) which will do all of the parsing work, and leave it to the caller to check values, legal limits, etc.
+    
+**So what is covered by the JSON file, and what is covered by command line options?**       
+     
+Glad you asked.  Most, if not all of the command line options are covered by the JSON configuration.  But not vice-versa. The JSON file has some complexity that is almost impossible to cover by the command line options in some sane fashion. Here's how this is managed:     
+     
+In the source files *video_capture_globals.cpp/.hpp* you will find the **struct vcGlobals** object in the **Video** namespace (aka *Video::vcGlobals* in the code).     
+     
+This *struct* encapsulates **ALL** the runtime options that the app uses. The order of precedence of how options take effect
+is as follows: All options have their compiled initial values which are totally ignored and most of the time, over-written by the JSON file values at runtime.  The JSON syntax checking and parsing directly updates this **struct**.  Finally, run-time command line options overwrite the appropriate **struct** members' values when the command line parsing takes place.    
+     
+This means that the command line options are the most important - they have the final say in what *Video::vcGlobals* contains. The JSON values are secondary to that, followed by the compiled-in values that exist for static variables, etc, which matter the least.   
+     
+**Motivation**:  I really really don't like any of the command line parsing (and configuration) software that comes with *C++/linux*, or is available out there in the wild.  It's a personal choice, and as you can tell, my alternatives for these
+projects are being developed as I go along.  My apologies if this offends the sensibilities of anyone who wishes to 
+use this code for their own purpose.     
+    
+**Command Line Options**:    
+    
        [ -fn [ file-name ] ]     Turns on the "write-to-file" functionality (see JSON file).  The file-name
                                  parameter is the file which will be created to hold image frames. If it exists,
                                  the file will be truncated. If the file name is omitted, the default name
                                  "video_capture.data" will be used. (By default, the "write-to-file" capability
-                                 is turned off in favor of the "write-to-process" member in the JSON config file.   
+                                 is turned off in favor of the "write-to-process" member in the JSON config file).   
                                   
-       [ -pr [ timeslice_ms]     Enable profiler stats. If specified, the optional parameter is the number
+       [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number
                                  of milliseconds between profiler snapshots. The default is 800 milliseconds.  
                                    
        [ -lg log-level ]         Can be one of: {"DBUG", "INFO", "NOTE", "WARN", "EROR", "CRIT"}.
@@ -84,8 +109,6 @@ The software that does not belong to me, is covered by its own license which is 
 
 Currently the Windows' WIN32 configuration has not been built and tested yet. 
 This may be added in the future.
-
-**NEXT**: Read the **source/README.md** information for more info. 
 
 
 
