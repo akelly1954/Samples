@@ -2,6 +2,10 @@
 
 ## Going on now:   
       
+The README.md file in the **Video** project is beginning to take shape.  This will become a multi page (screenful) document
+full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is still a work in progress, but already recommended reading if you want to wade into these waters. 
+(See **...Samples/source/Video/README.md**).        
+     
 **Done with the following projects:**     
      
 * Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
