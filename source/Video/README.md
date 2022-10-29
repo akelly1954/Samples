@@ -55,7 +55,7 @@ use this code for their own purpose.
  method which uniquely defines the **Json Node** in the Json file. 
  (Please have the file *video_capture.json* open 
  for reference as we go through this. You will see plenty of this syntax in the code - see *video_capture_globals.cpp* or *video_capture_thread.cpp* for examples).     
-     
+
     
        [ -fn [ file-name ] ]     Turns on the "write-to-file" functionality (see JSON file).  The file-name
                                  parameter is the file which will be created to hold image frames. If it exists,
@@ -70,19 +70,35 @@ use this code for their own purpose.
                                  static bool write_frames_to_file;
                                  static std::string output_file;
 
-If the -fn flag is specified (on the command line), then the write-to-file capability is turned on (enabled). It is off by default.  If the file-name is not mentioned, the default value (from the Json file) is used.  This capability writes out to
-a file the actual raw frames that come from  the camera in the format specified by the json file and/or the command line options
+If the **-fn** flag is specified (on the command line), then the write-to-file capability is turned on (enabled). It is off by default.  If the **file-name** is not mentioned, the value (from the Json file) is used.  This capability writes out to
+the file the actual raw frames that come from  the camera in the format specified by the json file and/or the command line options
 (see more on that below).    
      
 The write-to-file capability operates completely independently from the write-to-process capability outlined below.  They can both be enabled and produce an **h264** data file (or a **yuyv** data file), as well as an **mp4** file in the same run.  Usually one of the two suffices.      
      
 (**A note about bool**:  Although
 it is well defined enough in C++, values other than 0 or 1 can be used.  The way the JsonCpp *bool* is used in this project
-is like an int (in the Json file), but when it is to be assigned to a *C++ bool type*, the univesally accepted conversion takes place:  If the value is 0, then the bool is set to *false*.  Anything else means *true*).   
+is like an int (in the Json file), but when it is to be assigned to a *C++ bool type*, the univesally accepted conversion takes place:  If the value is 0, then the bool is set to *false*.  Anything else means *true*).
+   
       
        [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number
                                  of milliseconds between profiler snapshots. The default is 800 milliseconds.  
-                                   
+     
+     Equivalent Json member(s):  Root["Config"]["App-options"]["profiling"] (bool, treated here like an int)     
+                                 Root["Config"]["App-options"]["profile-timeslice-ms"] (int)      
+     
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static bool profiling_enabled;
+                                 static int  profile_timeslice_ms;
+
+Profiling numbers (stats) are run in their own thread every *timeslice_ms* milliseconds once the video frames are being 
+captured by the video driver interface (which also runs in its own thread).  The counting of frames is why profiling intrudes
+into the video interface to take a snapshot of some of the needed profiling data, because it's only there that it is easily known when one frame is finished, and the next is about to start.     
+      
+Although the linux driver dictates the fixed size of every memory mapped buffer used to hold raw video frames, the relationship is usually many-to-one: it takes more than one buffer to complete a single frame.  By the time it takes for a buffer to be copied and fed to the ring buffer of std::shared_ptr<>'s for further processing, it is no longer immediately apparent where one frame is done, and where the next one starts.  
+     
+Profiling is **disabled** by default.  If the **-pr** flag is used on the command line, profiling is **enabled**. How many milliseconds pass between profiling runs depends on the **timeslice_ms** command line parameter if it is specified, or the value specified in the Json file if it is not specified on the command line.    
+
        [ -lg log-level ]         Can be one of: {"DBUG", "INFO", "NOTE", "WARN", "EROR", "CRIT"}.
                                  (The default is NOTE)  
                                  
