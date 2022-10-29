@@ -49,12 +49,13 @@ use this code for their own purpose.
     
 **Command Line Options**:    
       
- In the descriptions listed below, I refer to the equivalen Json **Node** which contains the value used/modified 
- by the item in question like this, for example:  **Root["Config"]["Logger"]["file-name"].asString()** - which is
+ In the descriptions listed below, I refer to the equivalent Json **Node** which contains the value used/modified 
+ by the item in question like this, for example:  **Root["Config"]["Logger"]["file-name"]** - which is
  *JasonCpp* syntaxt for C++ access to this node (after the JsonCpp object has been parsed).  It is the C++ *operator[]()* 
- method which uniquely defines the string (in this case) in the Json file.  (Please have the file *video_capture.json* open 
+ method which uniquely defines the **Json Node** in the Json file. 
+ (Please have the file *video_capture.json* open 
  for reference as we go through this. You will see plenty of this syntax in the code - see *video_capture_globals.cpp* or *video_capture_thread.cpp* for examples).     
-
+     
     
        [ -fn [ file-name ] ]     Turns on the "write-to-file" functionality (see JSON file).  The file-name
                                  parameter is the file which will be created to hold image frames. If it exists,
@@ -65,9 +66,11 @@ use this code for their own purpose.
      Equivalent Json member(s):  Root["Config"]["App-options"]["write-to-file"] (treated here like an int)     
                                  Root["Config"]["App-options"]["output-file"] (string)      
       
-If the -fn flag is specified (on the command line), then the write-to-file capability is turned on (enabled). It is off by default.  If the file-name is not mentioned, the default value (from the Json file) is used.     
+If the -fn flag is specified (on the command line), then the write-to-file capability is turned on (enabled). It is off by default.  If the file-name is not mentioned, the default value (from the Json file) is used.  This capability writes out to
+a file the actual raw frames that come from  the camera in the format specified by the json file and/or the command line options
+(see more on that below).        
      
-(A note about *bool*:  Although
+(**A note about bool**:  Although
 it is well defined enough in C++, values other than 0 or 1 can be used.  The way the JsonCpp *bool* is used in this project
 is like an int (in the Json file), but when it is to be assigned to a *C++ bool type*, the univesally accepted conversion takes place:  If the value is 0, then the bool is set to *false*.  Anything else means *true*).   
       
