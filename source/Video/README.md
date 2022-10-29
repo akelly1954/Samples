@@ -48,13 +48,29 @@ projects are being developed as I go along.  My apologies if this offends the se
 use this code for their own purpose.     
     
 **Command Line Options**:    
+      
+ In the descriptions listed below, I refer to the equivalen Json **Node** which contains the value used/modified 
+ by the item in question like this, for example:  **Root["Config"]["Logger"]["file-name"].asString()** - which is
+ *JasonCpp* syntaxt for C++ access to this node (after the JsonCpp object has been parsed).  It is the C++ *operator[]()* 
+ method which uniquely defines the string (in this case) in the Json file.  (Please have the file *video_capture.json* open 
+ for reference as we go through this. You will see plenty of this syntax in the code - see *video_capture_globals.cpp* or *video_capture_thread.cpp* for examples).     
+
     
        [ -fn [ file-name ] ]     Turns on the "write-to-file" functionality (see JSON file).  The file-name
                                  parameter is the file which will be created to hold image frames. If it exists,
                                  the file will be truncated. If the file name is omitted, the default name
                                  "video_capture.data" will be used. (By default, the "write-to-file" capability
                                  is turned off in favor of the "write-to-process" member in the JSON config file).   
-                                  
+     
+     Equivalent Json member(s):  Root["Config"]["App-options"]["write-to-file"] (treated here like an int)     
+                                 Root["Config"]["App-options"]["output-file"] (string)      
+      
+If the -fn flag is specified (on the command line), then the write-to-file capability is turned on (enabled). It is off by default.  If the file-name is not mentioned, the default value (from the Json file) is used.     
+     
+(A note about *bool*:  Although
+it is well defined enough in C++, values other than 0 or 1 can be used.  The way the JsonCpp *bool* is used in this project
+is like an int (in the Json file), but when it is to be assigned to a *C++ bool type*, the univesally accepted conversion takes place:  If the value is 0, then the bool is set to *false*.  Anything else means *true*).   
+      
        [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number
                                  of milliseconds between profiler snapshots. The default is 800 milliseconds.  
                                    

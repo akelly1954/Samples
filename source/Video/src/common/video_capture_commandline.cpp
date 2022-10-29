@@ -31,7 +31,7 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
     strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
             << "\n"
-            << "              [ -fn [ file-name ] ]     Turns on the \"write-to-file\" functionality (see JSON file).  The file-name \n"
+            << "              [ -fn [ file-name ]]      Turns on the \"write-to-file\" functionality (see JSON file).  The file-name \n"
             << "                                        parameter is the file which will be created to hold image frames. If it exists, \n"
             << "                                        the file will be truncated. If the file name is omitted, the default name \n"
             << "                                        \"" << Video::vcGlobals::output_file << "\" will be used. (By default, the \"write-to-file\" capability \n"
