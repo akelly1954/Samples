@@ -50,7 +50,6 @@ namespace Video
         static std::string output_file;
         static std::string output_process;
         static Log::Log::Level loglevel;
-        static std::string default_log_level;
         static std::string log_level;
         static bool profiling_enabled;
         static int  profile_timeslice_ms;

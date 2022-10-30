@@ -100,10 +100,30 @@ Although the linux driver dictates the fixed size of every memory mapped buffer 
 Profiling is **disabled** by default.  If the **-pr** flag is used on the command line, profiling is **enabled**. How many milliseconds pass between profiling runs depends on the **timeslice_ms** command line parameter if it is specified, or the value specified in the Json file if it is not specified on the command line.    
 
        [ -lg log-level ]         Can be one of: {"DBUG", "INFO", "NOTE", "WARN", "EROR", "CRIT"}.
-                                 (The default is NOTE)  
-                                 
-       [ -loginit ]              (no parameters) This flag enables the logging of initialization info.   
+                                 (The default is the runtime value of "log-level" in the Json config file)    
+     
+     Equivalent Json member(s):  Root["Config"]["Logger"]["log-level"] (string)     
           
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static Log::Log::Level loglevel;
+                                 static std::string log_level;
+
+The log level determines the level of verbosity of information written to the log file (*Root["Config"]["Logger"]["file-name"]* in the Json config file).   Internally, the log level strings are translated to any of the enum values defined in the LoggerCpp source file *...Samples/source/3rdparty/include/LoggerCpp/Log.h* as *enum Level { eDebug = 0, eInfo, eNotice, eWarning, eError, eCritic }*.
+           
+       [ -loginit ]              (no parameters) This flag enables the logging of initialization info.   
+        
+     Equivalent Json member(s):  None
+          
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static bool log_initialization_info;
+
+The parsing of the Json config file, as well as the parsing of the command line produce a 
+volumenous amount of information into the log file.  Typically, once command line issues and
+json syntax issues are resolved, one does not need to see this information in the log file every time
+one examines it.  This option causes all the log file information which is accumulated before
+the logger is ready to write data into the log file, to be written into the log file.  Otherwise,
+by default, this initial (and volumenous) output is supressed, and does not show up in the log file.           
+
        [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {"v4l2", "opencv"}.
                                  (The default grabber is "v4l2").  
                                    
