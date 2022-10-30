@@ -10,7 +10,7 @@ There are many many options and configurations that control how to get video fro
 
 To get started, let's take a look on how to run the utility with a bit of setup and a couple of exmples.  Let's assume we have a camera connected to a USB port on our system, and which we know to be working.  For example, run the **vlc** utility, and under the **Media --> Open Capture Device** menu, set the capture device to "/dev/video0" (on linux).  If the device drop-down menu does not show any entries, then the setup for the camera is not yet complete, or a few other possibilities that we're not going to cover here (disconnect/reconnect the usb line to the system, etc).  The actual device name can be something else, depending on the camera configuration.   
      
-**So first**:     
+### So first:     
      
 The output shown below is from the utility run like this: **main_video_capture --help**.  Please take a look at the options to familiarize yourself with them, and we can then show a couple of examples.  Interspersed with the options are small sections of text that provide additional information about each:     
      
@@ -24,7 +24,8 @@ The output shown below is from the utility run like this: **main_video_capture -
      
        main_video_capture  [ options ]
 
-**Usage**:  This is really an either/or situation. You either want "help" or you want to run the app with full functionality.
+#### Usage:      
+This is really an either/or situation. You either want "help" or you want to run the app with full functionality.
 The following section lists all the options available from the command line - around nine or ten at this time. This list
 tends to grow over time, and the README (this file) does not necessarily keep up in a timely manner. This also means that
 the definitive description of the behavior of the various options lies in the source file (*video_capture_commandline.cpp*), 
@@ -47,7 +48,7 @@ This means that the command line options are the most important - they have the 
 projects are being developed as I go along.  My apologies if this offends the sensibilities of anyone who wishes to 
 use this code for their own purpose.     
     
-**Command Line Options**:    
+##### Command Line Options:    
       
  In the descriptions listed below, I refer to the equivalent Json **Node** which contains the value used/modified 
  by the item in question like this:  **Root["Config"]["Logger"]["file-name"]** - which is
@@ -267,13 +268,11 @@ As mentioned before, both flags (-use-other-proc and -fn) can be used at the sam
      Equivalent Json member(s):  Root["Config"]["Video"]["frame-capture"]
                                                             [Video::vcGlobals::video_grabber_name]
                                                                             ["preferred-pixel-format"] (string)     
-          
      Equivalent C++ Video::vcGlobals member(s):  
                                  static enum pxl_formats pixel_format;  
 
-
 For each section of "frame-capture" specified for a particular interface ("v4l2", "opencv"), a specific pixel format has
-to exist order to associate the frame grabbing with a specific device ("device-name") and a pixel format 
+to exist in order to associate the frame grabbing with a specific device ("device-name"), a pixel format 
 ("preferred-pixel-format", and its associated "output-process").  As mentioned above, the depends on the OS driver used
 as well as the source hardware (camera).  This option is set automatically based on the interface picked.  
 
