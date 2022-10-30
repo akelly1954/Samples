@@ -57,12 +57,13 @@ use this code for their own purpose.
  for reference as we go through this. You will see plenty of this syntax in the code - see *video_capture_globals.cpp* or *video_capture_thread.cpp* for examples).     
 
     
-       [ -fn [ file-name ] ]     Turns on the "write-to-file" functionality (see JSON file).  The file-name
-                                 parameter is the file which will be created to hold image frames. If it exists,
-                                 the file will be truncated. If the file name is omitted, the default name
-                                 "video_capture.data" will be used. (By default, the "write-to-file" capability
-                                 is turned off in favor of the "write-to-process" member in the JSON config file).   
-     
+       [ -fn [ file-name ] ]     Turns on the "write-to-file" functionality (see JSON file).  The file-name 
+                                 parameter is the file which will be created to hold image frames. If it exists, 
+                                 the file will be truncated. If the file name is omitted, the default name used 
+                                 is the runtime value of "output-file" in the Json config file. (By default, the 
+                                 "write-to-file" capability is turned off in favour of the "write-to-process" 
+                                 member in the JSON config file).   
+       
      Equivalent Json member(s):  Root["Config"]["App-options"]["write-to-file"] (bool, treated here like an int)     
                                  Root["Config"]["App-options"]["output-file"] (string)      
      
@@ -81,8 +82,9 @@ it is well defined enough in C++, values other than 0 or 1 can be used.  The way
 is like an int (in the Json file), but when it is to be assigned to a *C++ bool type*, the univesally accepted conversion takes place:  If the value is 0, then the bool is set to *false*.  Anything else means *true*).
    
       
-       [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number
-                                 of milliseconds between profiler snapshots. The default is 800 milliseconds.  
+       [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number of 
+                                 milliseconds between profiler snapshots. (The default is the runtime value of 
+                                "profile-timeslice-ms" in the Json config file).    
      
      Equivalent Json member(s):  Root["Config"]["App-options"]["profiling"] (bool, treated here like an int)     
                                  Root["Config"]["App-options"]["profile-timeslice-ms"] (int)      
@@ -124,11 +126,43 @@ one examines it.  This option causes all the log file information which is accum
 the logger is ready to write data into the log file, to be written into the log file.  Otherwise,
 by default, this initial (and volumenous) output is supressed, and does not show up in the log file.           
 
-       [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {"v4l2", "opencv"}.
-                                 (The default grabber is "v4l2").  
-                                   
+       [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {"v4l2", "opencv"}. 
+                                 (The default grabber is the runtime value of "preferred-interface" 
+                                 in the Json config file).  
+     
+     Equivalent Json member(s):  Root["Config"]["Video"]["preferred-interface"] (string)     
+          
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static std::string video_grabber_name;
+
+The video frame grabber to be used in a run, depends on what is available both from the video source (camera), 
+as well as in the operating system driver, as well as in the interface to the (OS) driver.  There has to be one
+configuration that matches all three, or the interface will not work.  In this case, since the software
+is being developed for a USB webcam which provides an interface compatible with V4L (*Video for Linux* - V4L2 in this case), 
+the interface in this program was originally written for V4L2 frame grabbing.  Another interface in the process
+of being implemented, is **opencv**, which is not merely a frame grabber, but a complex and feature-heavy interface
+to the camera source, which also provides raw video frames as an exposed interface which we will use. Although you might
+see evidence of **opencv** in the code, it is not quite ready for use.  But the option exists in this interface to the operating system, even though it does not work yet, at the moment.    
+     
+The **-fg** flag currently has two acceptable values: "v4l2" or "opencv".  The default is the only one that works at the moment - "v4l2".  If you exmine the *video_capture.json* file, you will see some nested sections under *"Video"* for which the frame grabber name (as well as the *pixel-format* - see below) act as keys, so that specifying the correct frame grabber on the command line (or by default) also resolves additional grabber-dependent (as well as pixel format- dependent) capabilities that have reasonable values which will be automatically configured once the grabber and the pixel formats are chosen.     
+
        [ -fc frame-count ]       Number of frames to grab from the hardware (default is 200)   
-         
+     
+     Equivalent Json member(s):  Root["Config"]["App-options"]["frame-count"] (int)     
+          
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static size_t framecount;
+                                 static std::string str_frame_count;
+
+This number (the frame count) will determine for how long the frame grabber will stream video from the source 
+(camera).  The program will terminate normally after *frame-count* frames have been captured and processed. 
+The default number (if *-fc* is not used) is set by the *"frame-count"* parameter specified in the Json configuration
+file.  A special case of this option is when *"-fc 0"* is used on the command line (same as **frame-count** in the JSON file).  This tells the program to stream frames indefinitely.  It could be stopped by using the keyboard to interrupt the
+program, or by disconnecting the camera from the USB port, which will cause an error.    
+      
+**CAUTION**:  Running the program with a large frame-count value or without limitation **WILL** take a huge amount of
+space in the file system. A multitude of gigabytes can be consumed in a short time.    
+
        [ -dv video-device ]      The /dev entry for the video camera. (The default value is /dev/video0)   
        
        [ -proc-redir [ file ]]   If the "write-to-process" member of the JSON config file is set to 1 (enabled),
