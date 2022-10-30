@@ -1,3 +1,7 @@
+
+<__TOC__>
+
+
 # Video Capture 
 
 Stream video frames from the source (a camera), through the linux driver, to (in this case) the process **main_video_capture**, which uses objects from this project (**Video**), as well as objects from the other projects in this repository.
@@ -10,7 +14,7 @@ There are many many options and configurations that control how to get video fro
 
 To get started, let's take a look on how to run the utility with a bit of setup and a couple of exmples.  Let's assume we have a camera connected to a USB port on our system, and which we know to be working.  For example, run the **vlc** utility, and under the **Media --> Open Capture Device** menu, set the capture device to "/dev/video0" (on linux).  If the device drop-down menu does not show any entries, then the setup for the camera is not yet complete, or a few other possibilities that we're not going to cover here (disconnect/reconnect the usb line to the system, etc).  The actual device name can be something else, depending on the camera configuration.   
      
-### So first:     
+### The "--help" flag     
      
 The output shown below is from the utility run like this: **main_video_capture --help**.  Please take a look at the options to familiarize yourself with them, and we can then show a couple of examples.  Interspersed with the options are small sections of text that provide additional information about each:     
      
