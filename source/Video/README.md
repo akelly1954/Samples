@@ -84,7 +84,7 @@ is like an int (in the Json file), but when it is to be assigned to a *C++ bool 
       
        [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number of 
                                  milliseconds between profiler snapshots. (The default is the runtime value of 
-                                "profile-timeslice-ms" in the Json config file).    
+                                 "profile-timeslice-ms" in the Json config file).    
      
      Equivalent Json member(s):  Root["Config"]["App-options"]["profiling"] (bool, treated here like an int)     
                                  Root["Config"]["App-options"]["profile-timeslice-ms"] (int)      
@@ -97,20 +97,23 @@ Profiling numbers (stats) are run in their own thread every *timeslice_ms* milli
 captured by the video driver interface (which also runs in its own thread).  The counting of frames is why profiling intrudes
 into the video interface to take a snapshot of some of the needed profiling data, because it's only there that it is easily known when one frame is finished, and the next is about to start.     
       
-Although the linux driver dictates the fixed size of every memory mapped buffer used to hold raw video frames, the relationship is usually many-to-one: it takes more than one buffer to complete a single frame.  By the time it takes for a buffer to be copied and fed to the ring buffer of std::shared_ptr<>'s for further processing, it is no longer immediately apparent where one frame is done, and where the next one starts.  
+Although the linux driver dictates the fixed size of every memory mapped buffer used to hold raw video frames, the relationship is usually many-to-one: it takes more than one buffer to complete a single frame.  By the time it takes for a buffer to be copied and fed to the ring buffer of std::shared_ptr<>'s for further processing, it is no longer immediately apparent where one frame ends, and where the next one begins.  
      
 Profiling is **disabled** by default.  If the **-pr** flag is used on the command line, profiling is **enabled**. How many milliseconds pass between profiling runs depends on the **timeslice_ms** command line parameter if it is specified, or the value specified in the Json file if it is not specified on the command line.    
 
        [ -lg log-level ]         Can be one of: {"DBUG", "INFO", "NOTE", "WARN", "EROR", "CRIT"}.
                                  (The default is the runtime value of "log-level" in the Json config file)    
      
-     Equivalent Json member(s):  Root["Config"]["Logger"]["log-level"] (string)     
+     Equivalent Json member(s):  Root["Config"]["Logger"]["log-level"] (string) 
+                                 Root["Config"]["Logger"]["file-name"]    
           
      Equivalent C++ Video::vcGlobals member(s): 
                                  static Log::Log::Level loglevel;
                                  static std::string log_level;
+                                 static std::string logFilelName;
 
-The log level determines the level of verbosity of information written to the log file (*Root["Config"]["Logger"]["file-name"]* in the Json config file).   Internally, the log level strings are translated to any of the enum values defined in the LoggerCpp source file *...Samples/source/3rdparty/include/LoggerCpp/Log.h* as *enum Level { eDebug = 0, eInfo, eNotice, eWarning, eError, eCritic }*.
+The log level determines the level of verbosity of information written to the log file (*Root["Config"]["Logger"]["file-name"]* in the Json config file).   Internally, the log level strings are translated to any of the enum values defined in the LoggerCpp source file *...Samples/source/3rdparty/include/LoggerCpp/Log.h* as *enum Level { eDebug = 0, eInfo, eNotice, eWarning, eError, eCritic }*.  Please note that the log file name itself does
+not change after the program starts running. It is fixed as the content of the Json file member mentioned above.    
            
        [ -loginit ]              (no parameters) This flag enables the logging of initialization info.   
         
@@ -136,7 +139,7 @@ by default, this initial (and volumenous) output is supressed, and does not show
                                  static std::string video_grabber_name;
 
 The video frame grabber to be used in a run, depends on what is available both from the video source (camera), 
-as well as in the operating system driver, as well as in the interface to the (OS) driver.  There has to be one
+as well as in the operating system driver, as well as in the interface to the (OS) driver.  There has to be at least one 
 configuration that matches all three, or the interface will not work.  In this case, since the software
 is being developed for a USB webcam which provides an interface compatible with V4L (*Video for Linux* - V4L2 in this case), 
 the interface in this program was originally written for V4L2 frame grabbing.  Another interface in the process
@@ -146,7 +149,8 @@ see evidence of **opencv** in the code, it is not quite ready for use.  But the 
      
 The **-fg** flag currently has two acceptable values: "v4l2" or "opencv".  The default is the only one that works at the moment - "v4l2".  If you exmine the *video_capture.json* file, you will see some nested sections under *"Video"* for which the frame grabber name (as well as the *pixel-format* - see below) act as keys, so that specifying the correct frame grabber on the command line (or by default) also resolves additional grabber-dependent (as well as pixel format- dependent) capabilities that have reasonable values which will be automatically configured once the grabber and the pixel formats are chosen.     
 
-       [ -fc frame-count ]       Number of frames to grab from the hardware (default is 200)   
+       [ -fc frame-count ]       Number of frames to grab from the hardware. (The default is the runtime value of 
+                                 "frame-count" in the Json config file).  
      
      Equivalent Json member(s):  Root["Config"]["App-options"]["frame-count"] (int)     
           
@@ -156,29 +160,92 @@ The **-fg** flag currently has two acceptable values: "v4l2" or "opencv".  The d
 
 This number (the frame count) will determine for how long the frame grabber will stream video from the source 
 (camera).  The program will terminate normally after *frame-count* frames have been captured and processed. 
-The default number (if *-fc* is not used) is set by the *"frame-count"* parameter specified in the Json configuration
-file.  A special case of this option is when *"-fc 0"* is used on the command line (same as **frame-count** in the JSON file).  This tells the program to stream frames indefinitely.  It could be stopped by using the keyboard to interrupt the
+The default number (if *-fc* is not used) is set by the *"frame-count"* parameter specified in the Json configuration file.     
+     
+A special case of this option is when *"-fc 0"* is used on the command line (same as **frame-count** in the JSON file).  This tells the program to stream frames indefinitely.  It could be stopped by using the keyboard to interrupt the
 program, or by disconnecting the camera from the USB port, which will cause an error.    
       
 **CAUTION**:  Running the program with a large frame-count value or without limitation **WILL** take a huge amount of
 space in the file system. A multitude of gigabytes can be consumed in a short time.    
 
-       [ -dv video-device ]      The /dev entry for the video camera. (The default value is /dev/video0)   
-       
+       [ -dv video-device ]      The /dev entry for the video camera. (The default value is the runtime value of
+                                 "device-name" in the Json config file in the section named for the video-grabber used.
+     
+     Equivalent Json member(s):  Root["Config"]["Video"]["frame-capture"]
+                                                            [Video::vcGlobals::video_grabber_name]
+                                                                            ["device-name"] (string)     
+          
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static std::string str_dev_name;
+
+The equivalent Json member refered to here uses the *Video::vcGlobals::video_grabber_name* static variable to define
+the correct "device-name" Json member.  In actual fact, the static variable *Video::vcGlobals::str_dev_name* already has the correct string in it which is determined automatically during the Json parsing of the configuration
+file).  This can be examined easily in the log file after the run.  
+     
        [ -proc-redir [ file ]]   If the "write-to-process" member of the JSON config file is set to 1 (enabled),
                                  the process which is started and streamed to (typically ffmpeg) has its "standard
                                  error" still open to the controlling display (terminal).  To get rid of the extra
                                  output on the screen, std::cerr, (stderr, fd 2, etc) can be redirected to a regular
                                  file or to "/dev/null" as needed by using this flag and a filename. If the "file"
                                  parameter is not specified, the standard error output will go to the screen.
-                                 (By default, the flag is enabled, and the filename used is "/dev/null").  
-                                   
+                                 (By default, the flag is enabled, and the filename used is "/dev/null"). 
+     
+     Equivalent Json member(s):  None. But this capability affects what happens to:
+      
+                                 Root["Config"]["Video"]["frame-capture"]
+                                       [Video::vcGlobals::video_grabber_name]
+                                          ["pixel-format"]
+                                            [string derived from enum pxl_formats Video::vcGlobals::pixel_format]
+                                              ["output-process"] (string);
+          
+     Equivalent C++ Video::vcGlobals member(s): 
+                                 static bool proc_redir;
+                                 static std::string redir_filename;
+
+The description for this flag almost says it all, but in a rather terse fashion.  The simplest way to explain this would be an example:    
+                                         
+If at runtime, the preferred interface is "v4l2", and the preferred pixel format for that interface is "yuyv" (see next flag below), the definitively precise string representing the process to be started with the popen() system call from within the **main_video_capture** program would be found at:     
+
+     Root["Config"]["Video"]["frame-capture"]["v4l2"]["pixel-format"]["yuyv"]["output-process"]     
+
+The linux command residing in that section currently is:     
+
+     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
+             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
+
+* If the *-proc-redir* flag is not used at all, the actual process started would be:    
+
+     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
+             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2> /dev/null"
+
+Which means that the ffmpeg stderr output would be redirected to the bit bucket (/dev/null). (This is the default).       
+     
+* If, however the flag is specified like this: "*-proc-dir ffmpeg_sderr.txt*", the actual process started would be: 
+
+     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
+             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2> ffmpeg_sderr.txt"
+
+Which means that the ffmpeg stderr output would be found in ffmpeg_sderr.txt after the run.   
+     
+* If, lastly, the flag is specified like this: "*-proc-dir*" with no parameter, the actual process started would be: 
+
+     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
+             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"  
+
+Which means that the ffmpeg stderr output would appear on the screen at runtime, obscuring the regular output 
+to the screen of **main_video_capture**.   This can appear messy at the beginning, since you're not seeing the 
+regular output you are used to seeing from the app, but instead you're seing **a lot** of detail of what's going
+on with ffmpeg while it is converting the yuyv raw frames to an mp4 file.    
+     
+Please Note:  In this last case, you will not see the shell prompt showing that the app finished running, because ffmpeg most likely wrote over it.  You might think that the app got a "hang" - but it did not.  Just press the ENTER key and you will get the prompt.     
+     
        [ -pf pixel-format ]      The pixel format requested from the video driver, which can be "h264" or "yuyv".
                                  These are:
                                            V4L2_PIX_FMT_H264: H264 with start codes
                                            V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2
                                  Please see /usr/include/linux/videodev2.h for more information
-                                 (The default pixel-format value is "h264").
+                                 (The default pixel-format value is the runtime value of "preferred-pixel-format"
+                                 in the Json config file in the section named for the video-grabber used).
 
 
 

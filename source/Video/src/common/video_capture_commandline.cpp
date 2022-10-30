@@ -41,12 +41,14 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        milliseconds between profiler snapshots. (The default is the runtime value of \n"
             << "                                        \"profile-timeslice-ms\" in the Json config file).\n"
             << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}. \n"
-            << "                                        (The default is the runtime value of \"log-level\" in the Json config file)\n"
+            << "                                        (The default is the runtime value of \"log-level\" in the Json config file).\n"
             << "              [ -loginit ]              (no parameters) This flag enables the logging of initialization info.\n"
             << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The \n"
-            << "                                        default grabber is the runtime value of \"preferred-interface\" in the Json config file)\n"
-            << "              [ -fc frame-count ]       Number of frames to grab from the hardware (default is " << Video::vcGlobals::framecount << ")\n"
-            << "              [ -dv video-device ]      The /dev entry for the video camera. (The default value is " << Video::vcGlobals::str_dev_name << ")\n"
+            << "                                        default grabber is the runtime value of \"preferred-interface\" in the Json config file).\n"
+            << "              [ -fc frame-count ]       Number of frames to grab from the hardware. (The default is the runtime value of \n"
+            << "                                        \"frame-count\" in the Json config file).\n"
+            << "              [ -dv video-device ]      The /dev entry for the video camera. (The default value is the runtime value of\n"
+            << "                                        \"device-name\" in the Json config file in the section named for the video-grabber used.\n"
             << "              [ -proc-redir [ file ]]   If the \"write-to-process\" member of the JSON config file is set to 1 (enabled), \n"
             << "                                        the process which is started and streamed to (typically ffmpeg) has its \"standard \n"
             << "                                        error\" still open to the controlling display (terminal).  To get rid of the extra \n"
@@ -59,7 +61,8 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::h264] << "\n"
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::yuyv] << "\n"
             << "                                        Please see /usr/include/linux/videodev2.h for more information\n"
-            << "                                        (The default pixel-format value is \"h264\").\n";
+            << "                                        (The default pixel-format value is the runtime value of \"preferred-pixel-format\"\n"
+            << "                                        in the Json config file in the section named for the video-grabber used).\n";
 }
 
 bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdline)
