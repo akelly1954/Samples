@@ -242,14 +242,25 @@ FILE * VideoCapture::create_output_process(Log::Logger logger)
     // may have changed the requested pixel-format.
     Json::Value& cfg_root = Config::ConfigSingleton::GetJsonRootCopyRef();
 
-    std::string pixelFormat = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
+    std::string procIndicator;
+
+    if (Video::vcGlobals::use_other_proc)
+    {
+        // Use the "other" entry in the "pixel-format" section
+        procIndicator = "other";
+    }
+    else
+    {
+        // use the process string indicated by the "preferred-pixel-format" indicator
+        procIndicator = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
+    }
 
     Video::vcGlobals::output_process = cfg_root["Config"]
                                                 ["Video"]
                                                  ["frame-capture"]
                                                   [Video::vcGlobals::video_grabber_name]
                                                    ["pixel-format"]
-                                                    [pixelFormat]
+                                                    [procIndicator]
                                                      ["output-process"].asString();
     std::string actual_process;
     if (Video::vcGlobals::proc_redir)

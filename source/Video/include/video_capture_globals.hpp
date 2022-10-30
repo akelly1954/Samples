@@ -49,6 +49,7 @@ namespace Video
         static std::string logFilelName;
         static std::string output_file;
         static std::string output_process;
+        static bool use_other_proc;
         static Log::Log::Level loglevel;
         static std::string log_level;
         static bool profiling_enabled;

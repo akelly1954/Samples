@@ -136,7 +136,9 @@ int main(int argc, const char *argv[])
     std::string argv0 = argv[0];
     int return_for_exit = EXIT_SUCCESS;
 
-    const Util::StringVector allowedFlags ={ "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit"};
+    const Util::StringVector allowedFlags ={
+            "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc"
+    };
 
     Util::CommandLine cmdline(argc, argv, allowedFlags);
 

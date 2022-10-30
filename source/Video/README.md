@@ -238,16 +238,44 @@ regular output you are used to seeing from the app, but instead you're seing **a
 on with ffmpeg while it is converting the yuyv raw frames to an mp4 file.    
      
 Please Note:  In this last case, you will not see the shell prompt showing that the app finished running, because ffmpeg most likely wrote over it.  You might think that the app got a "hang" - but it did not.  Just press the ENTER key and you will get the prompt.     
+
+       [ -use-other-proc ]       (no parameters) This flag directs the program to use the "other" entry (within the 
+                                 "pixel-format" section of "preferred-interface" of the "frame-capture" section of 
+                                 the JSON configuration file) as the command string to use for popen() instead of the 
+                                 default command string indicated by the name of the pixel format chosen.    
+        
+     Equivalent Json member(s):  None.     
+          
+     Equivalent C++ Video::vcGlobals member(s):  
+                                 static bool use_other_proc;  
+
+This flag directs **main_video_capture** to use the *"other"* entry specified in the *"pixel-format*" section instead of the 
+default.  This is helpful for testing and/or debugging, particularly if the **-fn** flag is used as well. Assuming 
+that the *"dd"* command is left in the *"other"* node, the output produced by it (in the file specified by the *"of="* 
+parameter of *"dd"*, **should** always be identical to output produced in the file specified by the **-fn** flag.     
      
+As mentioned before, both flags (-use-other-proc and -fn) can be used at the same time. Of course other things can be done by setting *"other"* to some other command line.  YMMV.    
+
        [ -pf pixel-format ]      The pixel format requested from the video driver, which can be "h264" or "yuyv".
                                  These are:
                                            V4L2_PIX_FMT_H264: H264 with start codes
                                            V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2
                                  Please see /usr/include/linux/videodev2.h for more information
                                  (The default pixel-format value is the runtime value of "preferred-pixel-format"
-                                 in the Json config file in the section named for the video-grabber used).
+                                 in the Json config file in the section named for the video-grabber used).   
+     
+     Equivalent Json member(s):  Root["Config"]["Video"]["frame-capture"]
+                                                            [Video::vcGlobals::video_grabber_name]
+                                                                            ["preferred-pixel-format"] (string)     
+          
+     Equivalent C++ Video::vcGlobals member(s):  
+                                 static enum pxl_formats pixel_format;  
 
 
+For each section of "frame-capture" specified for a particular interface ("v4l2", "opencv"), a specific pixel format has
+to exist order to associate the frame grabbing with a specific device ("device-name") and a pixel format 
+("preferred-pixel-format", and its associated "output-process").  As mentioned above, the depends on the OS driver used
+as well as the source hardware (camera).  This option is set automatically based on the interface picked.  
 
 
    __________________   
@@ -255,7 +283,9 @@ Please Note:  In this last case, you will not see the shell prompt showing that 
     
     
 # Please Note:
-This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators. Right now, even though I no longer have just some basic libraries and main programs that use/exercise them, there are still more objects coming.  As soon as I introduce enough code that is mostly stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
+This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators.     
+     
+Right now, even though I no longer have just some basic libraries and main programs that use/exercise them, there are still more objects coming.  As soon as I introduce enough code that is mostly stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
      
 Thank you.     
      

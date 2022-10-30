@@ -43,6 +43,7 @@ std::string     Video::vcGlobals::logChannelName =          "video_capture";
 std::string     Video::vcGlobals::logFilelName =            Video::vcGlobals::logChannelName + "_log.txt";
 std::string     Video::vcGlobals::output_file =             Video::vcGlobals::logChannelName + ".data"; // Name of file intended for the video frames
 std::string     Video::vcGlobals::output_process =          "date > /dev/null 2>& 1";                   // command to pipe frames to (for popen() - use the json file to set correctly).
+bool            Video::vcGlobals::use_other_proc =          false;
 Log::Log::Level Video::vcGlobals::loglevel =                Log::Log::Level::eNotice;
 std::string     Video::vcGlobals::log_level =               Log::Log::toString(Video::vcGlobals::loglevel);
 std::string     Video::vcGlobals::config_file_name =        Video::vcGlobals::logChannelName + ".json";

@@ -56,6 +56,10 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        file or to \"/dev/null\" as needed by using this flag and a filename. If the \"file\" \n"
             << "                                        parameter is not specified, the standard error output will go to the screen. \n"
             << "                                        (By default, the flag is enabled, and the filename used is \"/dev/null\").\n"
+            << "              [ -use-other-proc ]       (no parameters) This flag directs the program to use the \"other\" entry (within the \n"
+            << "                                        \"pixel-format\" section of \"preferred-interface\" of the \"frame-capture\" section of \n"
+            << "                                        the JSON configuration file) as the command string to use for popen() instead of the \n"
+            << "                                        default command string indicated by the name of the pixel format chosen.\n"
             << "              [ -pf pixel-format ]      The pixel format requested from the video driver, which can be \"h264\" or \"yuyv\".\n"
             << "                                        These are:\n"
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::h264] << "\n"
@@ -277,6 +281,26 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         return false;
     }
     strm << "    Video pixel format is set to: " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format] << "\n";
+
+
+    int useotherproc = static_cast<int>(Video::vcGlobals::use_other_proc);
+    switch(cmdline.get_template_arg("-use-other-proc", useotherproc))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // Do not change anything
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            strm << "ERROR: \"-use-other-proc\" has a parameter where none is allowed." << "\n";
+            return false;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            Video::vcGlobals::use_other_proc = true;
+            break;
+        default:
+            assert (fail_int == -676);   // Bug encountered. Will cause abnormal termination
+    }
+    strm << "    use_other_proc is set to "
+         << (Video::vcGlobals::use_other_proc == false? "false": "true") << "\n";
+
 
     /////////////////
     // Check out the specified video frame grabber name
