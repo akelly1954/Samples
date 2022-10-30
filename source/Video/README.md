@@ -206,31 +206,31 @@ The description for this flag almost says it all, but in a rather terse fashion.
                                          
 If at runtime, the preferred interface is "v4l2", and the preferred pixel format for that interface is "yuyv" (see next flag below), the definitively precise string representing the process to be started with the popen() system call from within the **main_video_capture** program would be found at:     
 
-     Root["Config"]["Video"]["frame-capture"]["v4l2"]["pixel-format"]["yuyv"]["output-process"]     
+        Root["Config"]["Video"]["frame-capture"]["v4l2"]["pixel-format"]["yuyv"]["output-process"]     
 
 The linux command residing in that section currently is:     
-
-     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
-             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
-
+     
+        ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \  
+               -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
+        
 * If the *-proc-redir* flag is not used at all, the actual process started would be:    
 
-     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
-             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2> /dev/null"
+        ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \    
+               -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2> /dev/null    
 
 Which means that the ffmpeg stderr output would be redirected to the bit bucket (/dev/null). (This is the default).       
      
 * If, however the flag is specified like this: "*-proc-dir ffmpeg_sderr.txt*", the actual process started would be: 
 
-     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
-             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2> ffmpeg_sderr.txt"
+        ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \     
+               -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4 2> ffmpeg_sderr.txt      
 
 Which means that the ffmpeg stderr output would be found in ffmpeg_sderr.txt after the run.   
      
 * If, lastly, the flag is specified like this: "*-proc-dir*" with no parameter, the actual process started would be: 
 
-     "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \
-             -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"  
+        ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 \     
+               -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4    
 
 Which means that the ffmpeg stderr output would appear on the screen at runtime, obscuring the regular output 
 to the screen of **main_video_capture**.   This can appear messy at the beginning, since you're not seeing the 
