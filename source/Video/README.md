@@ -8,7 +8,7 @@ Stream video frames from the source (a camera), through the linux driver, to (in
 [INTRODUCTION](#introduction) 
   * [Starting Slowly](#starting-slowly) 
   * [Usage and the --help flag](#usage-and-the---help-flag) 
-  * [Option Coverage: JSON file vs. command line](#so-what-is-covered-by-the-json-file-and-what-is-covered-by-command-line-options)
+  * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line)
 
 
 
@@ -43,9 +43,9 @@ and the JSON configuration file that is needed by the app in order to run (*vide
      
 **A note about video_capture_commandline.cpp** and the associated other source file that use it:  What goes on in there does seem a bit unwieldy. And it kind of is.  However... (and in my defense), I've been developing (improving) and moving the command line parsing and configuration from "inline" code towards usage of C++ templates and specialized template functions. You can see evidence of that in the objects that the parser uses to do its job. By the time this is done, most if not all the parsing and organization of the data at runtime, will mostly be done by a base class (see *commandline.cpp/.hpp* in the **Util** project) which will do all of the parsing work, and leave it to the caller to check values, legal limits, etc.   
     
-#### So what is covered by the JSON file, and what is covered by command line options?
+#### Option Coverage: JSON file vs. command line
   
-Glad you asked.  Most, if not all of the command line options are covered by the JSON configuration.  But not vice-versa. The JSON file has some complexity that is almost impossible to cover by the command line options in some sane fashion. Here's how this is managed:     
+Most, if not all of the command line options are covered by the JSON configuration.  But not vice-versa. The JSON file has some complexity that is almost impossible to cover by the command line options in some sane fashion. Here's how this is managed:     
      
 In the source files *video_capture_globals.cpp/.hpp* you will find the **struct vcGlobals** object in the **Video** namespace (aka *Video::vcGlobals* in the code).     
      
