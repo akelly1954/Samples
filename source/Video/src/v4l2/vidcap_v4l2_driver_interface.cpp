@@ -50,6 +50,7 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <thread>
 #include <Utility.hpp>
 #include <vidcap_v4l2_driver_interface.hpp>
 #include <vidcap_raw_queue_thread.hpp>
@@ -126,65 +127,84 @@ void vidcap_v4l2_driver_interface::initialize()
 
 void vidcap_v4l2_driver_interface::run()
 {
-    if (isterminated() || !v4l2if_open_device())
-    {
-        if (!isterminated())
+    try {
+        if (isterminated() || !v4l2if_open_device())
         {
-            logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_open_device() FAILED. Terminating...";
-            set_error_terminated(true);
+            if (!isterminated())
+            {
+                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_open_device() FAILED. Terminating...";
+                set_error_terminated(true);
+            }
+        }
+
+        if (isterminated() || !v4l2if_init_device())
+        {
+            if (!isterminated())
+            {
+                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_init_device() FAILED. Terminating...";
+                set_error_terminated(true);
+            }
+        }
+
+        if (isterminated() || !v4l2if_start_capturing())
+        {
+            if (!isterminated())
+            {
+                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_start_capturing() FAILED. Terminating...";
+                set_error_terminated(true);
+            }
+        }
+
+        if (Video::vcGlobals::profiling_enabled)
+        {
+            logger.debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
+            VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+        }
+
+        if (isterminated() || !v4l2if_mainloop())
+        {
+            if (!isterminated())
+            {
+                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_mainloop() FAILED. Terminating...";
+                set_error_terminated(true);
+            }
+        }
+
+        v4l2if_stop_capturing();
+        v4l2if_uninit_device();
+        v4l2if_close_device();
+
+        if (Video::vcGlobals::profiling_enabled)
+        {
+            logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
+            VideoCapture::vidcap_profiler::set_terminated(true);
+        }
+
+        if (iserror_terminated())
+        {
+            LOGGER_STDERR("vidcap_v4l2_driver_interface:\n\n"
+                          "        ****************************************\n"
+                          "        ***** ERROR TERMINATION REQUESTED. *****\n"
+                          "        ****************************************\n");
+        }
+        else
+        {
+            logger.info() << "vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED";
+            std::cerr << "NORMAL TERMINATION..." << std::endl;
         }
     }
-
-    if (isterminated() || !v4l2if_init_device())
+    catch (std::exception &exp)
     {
-        if (!isterminated())
-        {
-            logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_init_device() FAILED. Terminating...";
-            set_error_terminated(true);
-        }
-    }
-
-    if (isterminated() || !v4l2if_start_capturing())
+        logger.error()
+              << "vidcap_v4l2_driver_interface::run(): Got exception running the video capture: "
+              << exp.what() << ". Aborting...";
+    } catch (...)
     {
-        if (!isterminated())
-        {
-            logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_start_capturing() FAILED. Terminating...";
-            set_error_terminated(true);
-        }
+        logger.error()
+              << "vidcap_v4l2_driver_interface::run(): General exception occurred running the video capture. Aborting...";
     }
-
-    if (Video::vcGlobals::profiling_enabled)
-    {
-        logger.debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
-        VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
-    }
-
-    if (isterminated() || !v4l2if_mainloop())
-    {
-        if (!isterminated())
-        {
-            logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_mainloop() FAILED. Terminating...";
-            set_error_terminated(true);
-        }
-    }
-
-    v4l2if_stop_capturing();
-    v4l2if_uninit_device();
-    v4l2if_close_device();
-
-    if (Video::vcGlobals::profiling_enabled)
-    {
-        logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
-        VideoCapture::vidcap_profiler::set_terminated(true);
-    }
-
-    if (iserror_terminated())
-    {
-        LOGGER_STDERR("vidcap_v4l2_driver_interface:\n\n"
-                      "        ****************************************\n"
-                      "        ***** ERROR TERMINATION REQUESTED. *****\n"
-                      "        ****************************************\n");
-    }
+    // Let things calm down before disappearing...
+    std::this_thread::sleep_for(std::chrono::milliseconds(800));
 }
 
 void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocopy)
@@ -192,6 +212,18 @@ void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocop
     std::string msg = std::string(s) + " error, errno=" + std::to_string(errnocopy) + ": "
                       + const_cast<const char *>(strerror(errnocopy)) + " ...aborting.";
     logger.error() << msg;
+    logger.error() << "vidcap_v4l2_driver_interface:\n\n"
+                      "        ****************************************\n"
+                      "        ***** ERROR TERMINATION REQUESTED. *****\n"
+                      "        ****************************************\n";
+    std::cerr << "\nException thrown: " << msg << std::endl;
+
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
+        VideoCapture::vidcap_profiler::set_terminated(true);
+    }
+
     v4l2if_cleanup_stop_capturing();
     v4l2if_cleanup_uninit_device();
     v4l2if_cleanup_close_device();
@@ -203,6 +235,19 @@ void vidcap_v4l2_driver_interface::v4l2if_error_exit(const char *s)
 {
     std::string msg = std::string("vidcap_v4l2_driver_interface: ERROR TERMINATION REQUESTED: ") + s;
     logger.error() << msg;
+
+    logger.error() << "vidcap_v4l2_driver_interface:\n\n"
+                      "        ****************************************\n"
+                      "        ***** ERROR TERMINATION REQUESTED. *****\n"
+                      "        ****************************************\n";
+    std::cerr << "\nException thrown: " << msg << std::endl;
+
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
+        VideoCapture::vidcap_profiler::set_terminated(true);
+    }
+
     v4l2if_cleanup_stop_capturing();
     v4l2if_cleanup_uninit_device();
     v4l2if_cleanup_close_device();
@@ -213,6 +258,7 @@ void vidcap_v4l2_driver_interface::v4l2if_error_exit(const char *s)
 void vidcap_v4l2_driver_interface::v4l2if_exit(const char *s)
 {
     logger.info() << "vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED";
+    std::cerr << "NORMAL TERMINATION..." << std::endl;
     set_terminated(true);
 }
 
@@ -222,7 +268,7 @@ int vidcap_v4l2_driver_interface::v4l2if_xioctl(int fh, int request, void *arg)
 
         do {
                 r = ioctl(fh, request, arg);
-        } while (-1 == r && EINTR == errno);
+        } while (r == -1 && errno == EINTR);
 
         return r;
 }
@@ -501,20 +547,16 @@ bool vidcap_v4l2_driver_interface::v4l2if_start_capturing(void)
             if (-1 == v4l2if_xioctl(fd, VIDIOC_QBUF, &buf))
             {
                 errnocopy = errno;
-                logger.error() << "v4l2if_start_capturing: ioctl VIDIOC_QBUF failed: errno="
-                               << errnocopy << ": " << std::strerror(errnocopy);
-                set_terminated(true);
-                return false;
+                v4l2if_errno_exit("v4l2if_start_capturing: ioctl VIDIOC_QBUF", errnocopy);
+                return false;   // Never gets here
             }
         }
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (-1 == v4l2if_xioctl(fd, VIDIOC_STREAMON, &type))
         {
             errnocopy = errno;
-            logger.error() << "v4l2if_start_capturing (MMAP): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE failed: errno="
-                           << errnocopy << ": " << std::strerror(errnocopy);
-            set_terminated(true);
-            return false;
+            v4l2if_errno_exit("v4l2if_start_capturing (MMAP): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE", errnocopy);
+            return false;  // Never gets here
         }
         break;
 
@@ -536,18 +578,16 @@ bool vidcap_v4l2_driver_interface::v4l2if_start_capturing(void)
             if (-1 == v4l2if_xioctl(fd, VIDIOC_QBUF, &buf))
             {
                 errnocopy = errno;
-                LOGGER_2Arg("v4l2if_start_capturing: ioctl VIDIOC_QBUF failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
-                set_terminated(true);
-                return false;
+                v4l2if_errno_exit("v4l2if_start_capturing: ioctl VIDIOC_QBUF", errnocopy);
+                return false;  // Never gets here
             }
         }
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (v4l2if_xioctl(fd, VIDIOC_STREAMON, &type) == -1)
         {
             errnocopy = errno;
-            LOGGER_2Arg("v4l2if_start_capturing(USRPTR): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE failed: errno=%d: %s", errnocopy, std::strerror(errnocopy));
-            set_terminated(true);
-            return false;
+            v4l2if_errno_exit("v4l2if_start_capturing(USRPTR): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE", errnocopy);
+            return false;  // Never gets here
         }
         break;
     }

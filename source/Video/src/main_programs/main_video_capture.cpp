@@ -440,41 +440,6 @@ int main(int argc, const char *argv[])
 
     // FINISHED:
 
-#if 0 // This is no longer relevant
-    if (! error_termination)
-    {
-        //      One for the display
-        std::cerr << "\n" <<
-                "To convert the output file to an mp4 file use: \n\n" <<
-                "For pixel format H264 use:\n\n" <<
-                "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4\n\n" <<
-                "Or, for pixel format YUYV use:\n\n" <<
-                "    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \\\n" <<
-                "             -i " << vcGlobals::output_file << " -c:v libx264 -preset ultrafast -qp 0 " << argv0 << ".mp4\n\n" <<
-                "Then view the mp4 file (as an example) with: \n\n" <<
-                "    $ vlc ./" << argv0 << ".mp4\n" <<
-                std::endl;
-
-        //    and one for the log file
-        ulogger.info() << "";
-        ulogger.info() << "To convert the output file to an mp4 file use: ";
-        ulogger.info() << "";
-        ulogger.info() << "For pixel format H264 use:";
-        ulogger.info() << "";
-        ulogger.info() << "    $ ffmpeg -f h264 -i " << vcGlobals::output_file << " -vcodec copy " << argv0 << ".mp4";
-        ulogger.info() << "";
-        ulogger.info() << "Or, for pixel format YUYV use:";
-        ulogger.info() << "";
-        ulogger.info() << "    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \\";
-        ulogger.info() << "             -i " << vcGlobals::output_file << " -c:v libx264 -preset ultrafast -qp 0 " << argv0 << ".mp4";
-        ulogger.info() << "";
-        ulogger.info() << "Then view the mp4 file (as an example) with: ";
-        ulogger.info() << "";
-        ulogger.info() << "    $ vlc ./" << argv0 << ".mp4";
-        ulogger.info() << "";
-    }
-#endif // 0
-
     #ifdef TEST_RAW_CAPTURE_CTL
     if (trcc.joinable()) trcc.join();
     #endif // TEST_RAW_CAPTURE_CTL
