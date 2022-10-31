@@ -13,15 +13,15 @@ Stream video frames from the source (a camera), through the linux driver, to (in
 
 
 
-## Introduction
+#### Introduction
 
 There are many many options and configurations that control how to get video from a camera to an end destination of a video pipeline.  As an example, run the help feature of the **ffmpeg** utility like this: **ffmpeg --help full**.  The scope is huge. In this project, the surface is barely skimmed, but it does a lot to demonstrate how to move data down the video pipline (currently only under linux), to be saved in a file, or piped to a cooperating application or utility (**ffmpeg** is used extensively), where it can be streamed to another process on the current system, or any other system on a connected network.  For exampele, in this project, the **main_video_player** uses **ffmpeg** internally to produce an mp4 file that any video player can pick up and display it on a screen.     
 
-## Starting Slowly
+#### Starting Slowly
 
 To get started, let's take a look on how to run the utility with a bit of setup and a couple of exmples.  Let's assume we have a camera connected to a USB port on our system, and which we know to be working.  For example, run the **vlc** utility, and under the **Media --> Open Capture Device** menu, set the capture device to "/dev/video0" (on linux).  If the device drop-down menu does not show any entries, then the setup for the camera is not yet complete, or a few other possibilities that we're not going to cover here (disconnect/reconnect the usb line to the system, etc).  The actual device name can be something else, depending on the camera configuration.   
      
-## Usage and the "--help" flag 
+#### Usage and the "--help" flag 
      
 The output shown below is from the utility run like this: **main_video_capture --help**.  Please take a look at the options to familiarize yourself with them, and we can then show a couple of examples.  Interspersed with the options are small sections of text that provide additional information about each:     
      
@@ -43,7 +43,7 @@ and the JSON configuration file that is needed by the app in order to run (*vide
      
 **A note about video_capture_commandline.cpp** and the associated other source file that use it:  What goes on in there does seem a bit unwieldy. And it kind of is.  However... (and in my defense), I've been developing (improving) and moving the command line parsing and configuration from "inline" code towards usage of C++ templates and specialized template functions. You can see evidence of that in the objects that the parser uses to do its job. By the time this is done, most if not all the parsing and organization of the data at runtime, will mostly be done by a base class (see *commandline.cpp/.hpp* in the **Util** project) which will do all of the parsing work, and leave it to the caller to check values, legal limits, etc.   
     
-## So what is covered by the JSON file, and what is covered by command line options?
+#### So what is covered by the JSON file, and what is covered by command line options?
   
 Glad you asked.  Most, if not all of the command line options are covered by the JSON configuration.  But not vice-versa. The JSON file has some complexity that is almost impossible to cover by the command line options in some sane fashion. Here's how this is managed:     
      
