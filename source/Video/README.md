@@ -8,7 +8,7 @@ Stream video frames from the source (a camera), through the linux driver, to (in
 [INTRODUCTION](#introduction) 
   * [Starting Slowly](#starting-slowly) 
   * [Usage and the --help flag](#usage-and-the---help-flag) 
-
+  * [Option Coverage: JSON file vs. command line](#so-what-is-covered-by-the-json-file-and-what-is-covered-by-command-line-options)
 
 
 
