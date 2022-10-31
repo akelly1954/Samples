@@ -1,7 +1,7 @@
 
 # Video Capture 
 
-Stream video frames from the source (a camera), through the linux driver, to (in this case) the process **main_video_capture**, which uses objects from this project (**Video**), as well as objects from the other projects in this repository.
+Stream video frames from the source (a camera), through the linux driver, to the process **main_video_capture**, which uses objects from this project (**Video**), as well as objects from the other projects in this repository.
 
 ### Table of Contents
 
