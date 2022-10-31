@@ -5,15 +5,16 @@ Stream video frames from the source (a camera), through the linux driver, to (in
 
 ### Table of Contents
 
-[Some Notes](#some-notes)     
--- [The --help flag](#the---help-flag)     
--- [Usage](#usage)     
+[Introduction](#introduction) 
+   [Starting Slowly][(#starting-slowly)
+   [Usage and the --help flag](#usage-and-the---help-flag)     
+   [Usage](#usage)     
 
 
 
 
 
-## Some Notes
+## Introduction
 
 There are many many options and configurations that control how to get video from a camera to an end destination of a video pipeline.  As an example, run the help feature of the **ffmpeg** utility like this: **ffmpeg --help full**.  The scope is huge. In this project, the surface is barely skimmed, but it does a lot to demonstrate how to move data down the video pipline (currently only under linux), to be saved in a file, or piped to a cooperating application or utility (**ffmpeg** is used extensively), where it can be streamed to another process on the current system, or any other system on a connected network.  For exampele, in this project, the **main_video_player** uses **ffmpeg** internally to produce an mp4 file that any video player can pick up and display it on a screen.     
      
@@ -21,7 +22,7 @@ There are many many options and configurations that control how to get video fro
 
 To get started, let's take a look on how to run the utility with a bit of setup and a couple of exmples.  Let's assume we have a camera connected to a USB port on our system, and which we know to be working.  For example, run the **vlc** utility, and under the **Media --> Open Capture Device** menu, set the capture device to "/dev/video0" (on linux).  If the device drop-down menu does not show any entries, then the setup for the camera is not yet complete, or a few other possibilities that we're not going to cover here (disconnect/reconnect the usb line to the system, etc).  The actual device name can be something else, depending on the camera configuration.   
      
-### The "--help" flag     
+### Usage and the "--help" flag     
      
 The output shown below is from the utility run like this: **main_video_capture --help**.  Please take a look at the options to familiarize yourself with them, and we can then show a couple of examples.  Interspersed with the options are small sections of text that provide additional information about each:     
      
@@ -34,8 +35,7 @@ The output shown below is from the utility run like this: **main_video_capture -
      Or:
      
        main_video_capture  [ options ]
-
-#### Usage:      
+      
 This is really an either/or situation. You either want "help" or you want to run the app with full functionality.
 The following section lists all the options available from the command line - around nine or ten at this time. This list
 tends to grow over time, and the README (this file) does not necessarily keep up in a timely manner. This also means that
