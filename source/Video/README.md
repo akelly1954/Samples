@@ -8,8 +8,8 @@ Stream video frames from the source (a camera), through the linux driver, to (in
 [INTRODUCTION](#introduction) 
   * [Starting Slowly](#starting-slowly) 
   * [Usage and the --help flag](#usage-and-the---help-flag) 
-  * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line)
-
+  * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line) 
+[Command Line Flags and Options](#command-line-flags-and-options) 
 
 
 
@@ -58,7 +58,7 @@ This means that the command line options are the most important - they have the 
 projects are being developed as I go along.  My apologies if this offends the sensibilities of anyone who wishes to 
 use this code for their own purpose.     
     
-##### Command Line Options:    
+### Command Line Flags and Options    
       
  In the descriptions listed below, I refer to the equivalent Json **Node** which contains the value used/modified 
  by the item in question like this:  **Root["Config"]["Logger"]["file-name"]** - which is
