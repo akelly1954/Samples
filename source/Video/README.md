@@ -5,11 +5,12 @@ Stream video frames from the source (a camera), through the linux driver, to (in
 
 ### Table of Contents
 
-[INTRODUCTION](#introduction) 
-  * [Starting Slowly](#starting-slowly) 
-  * [Usage and the --help flag](#usage-and-the---help-flag) 
-  * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line) 
-[Command Line Flags and Options](#command-line-flags-and-options) 
+[INTRODUCTION](#introduction)  
+  * [Starting Slowly](#starting-slowly)   
+  * [Usage and the --help flag](#usage-and-the---help-flag)   
+  * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line)   
+[Command Line Flags and Options](#command-line-flags-and-options)    
+  * [The -fn flag](#the--fn-flag)   
 
 
 
@@ -67,7 +68,7 @@ use this code for their own purpose.
  (Please have the file *video_capture.json* open 
  for reference as we go through this. You will see plenty of this syntax in the code - see *video_capture_globals.cpp* or *video_capture_thread.cpp* for examples).     
 
-    
+#### The -fn flag    
        [ -fn [ file-name ] ]     Turns on the "write-to-file" functionality (see JSON file).  The file-name 
                                  parameter is the file which will be created to hold image frames. If it exists, 
                                  the file will be truncated. If the file name is omitted, the default name used 
