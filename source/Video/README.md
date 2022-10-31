@@ -11,8 +11,15 @@ Stream video frames from the source (a camera), through the linux driver, to (in
   * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line)    
 
 [Command Line Flags and Options](#command-line-flags-and-options)    
-  * [The -fn flag](#the--fn-flag)   
-
+  * [The -fn flag](#the--fn-flag)     
+  * [The -pr flag](#the--pr-flag)     
+  * [The -lg flag](#the--lg-flag)    
+  * [The -loginit flag](#the--loginit-flag)     
+  * [The -fg flag](#the--fg-flag)     
+  * [The -fc flag](#the--fc-flag)    
+  * [The -proc-redir flag](#the--proc-redir-flag)    
+  * [The -use-other-proc flag](#the--use-other-proc-flag)     
+  * [The -pf flag](#the--pf-flag)     
 
 
 #### Introduction
@@ -93,8 +100,8 @@ The write-to-file capability operates completely independently from the write-to
 (**A note about bool**:  Although
 it is well defined enough in C++, values other than 0 or 1 can be used.  The way the JsonCpp *bool* is used in this project
 is like an int (in the Json file), but when it is to be assigned to a *C++ bool type*, the univesally accepted conversion takes place:  If the value is 0, then the bool is set to *false*.  Anything else means *true*).
-   
-      
+
+#### The -pr flag    
        [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number of 
                                  milliseconds between profiler snapshots. (The default is the runtime value of 
                                  "profile-timeslice-ms" in the Json config file).    
@@ -114,6 +121,7 @@ Although the linux driver dictates the fixed size of every memory mapped buffer 
      
 Profiling is **disabled** by default.  If the **-pr** flag is used on the command line, profiling is **enabled**. How many milliseconds pass between profiling runs depends on the **timeslice_ms** command line parameter if it is specified, or the value specified in the Json file if it is not specified on the command line.    
 
+#### The -lg flag    
        [ -lg log-level ]         Can be one of: {"DBUG", "INFO", "NOTE", "WARN", "EROR", "CRIT"}.
                                  (The default is the runtime value of "log-level" in the Json config file)    
      
@@ -127,7 +135,8 @@ Profiling is **disabled** by default.  If the **-pr** flag is used on the comman
 
 The log level determines the level of verbosity of information written to the log file (*Root["Config"]["Logger"]["file-name"]* in the Json config file).   Internally, the log level strings are translated to any of the enum values defined in the LoggerCpp source file *...Samples/source/3rdparty/include/LoggerCpp/Log.h* as *enum Level { eDebug = 0, eInfo, eNotice, eWarning, eError, eCritic }*.  Please note that the log file name itself does
 not change after the program starts running. It is fixed as the content of the Json file member mentioned above.    
-           
+
+#### The -loginit flag    
        [ -loginit ]              (no parameters) This flag enables the logging of initialization info.   
         
      Equivalent Json member(s):  None
@@ -142,6 +151,7 @@ one examines it.  This option causes all the log file information which is accum
 the logger is ready to write data into the log file, to be written into the log file.  Otherwise,
 by default, this initial (and volumenous) output is supressed, and does not show up in the log file.           
 
+#### The --fg flag    
        [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {"v4l2", "opencv"}. 
                                  (The default grabber is the runtime value of "preferred-interface" 
                                  in the Json config file).  
@@ -162,6 +172,7 @@ see evidence of **opencv** in the code, it is not quite ready for use.  But the 
      
 The **-fg** flag currently has two acceptable values: "v4l2" or "opencv".  The default is the only one that works at the moment - "v4l2".  If you exmine the *video_capture.json* file, you will see some nested sections under *"Video"* for which the frame grabber name (as well as the *pixel-format* - see below) act as keys, so that specifying the correct frame grabber on the command line (or by default) also resolves additional grabber-dependent (as well as pixel format- dependent) capabilities that have reasonable values which will be automatically configured once the grabber and the pixel formats are chosen.     
 
+#### The -fc flag    
        [ -fc frame-count ]       Number of frames to grab from the hardware. (The default is the runtime value of 
                                  "frame-count" in the Json config file).  
      
@@ -194,7 +205,8 @@ space in the file system. A multitude of gigabytes can be consumed in a short ti
 The equivalent Json member refered to here uses the *Video::vcGlobals::video_grabber_name* static variable to define
 the correct "device-name" Json member.  In actual fact, the static variable *Video::vcGlobals::str_dev_name* already has the correct string in it which is determined automatically during the Json parsing of the configuration
 file).  This can be examined easily in the log file after the run.  
-     
+
+#### The -proc-redir flag    
        [ -proc-redir [ file ]]   If the "write-to-process" member of the JSON config file is set to 1 (enabled),
                                  the process which is started and streamed to (typically ffmpeg) has its "standard
                                  error" still open to the controlling display (terminal).  To get rid of the extra
@@ -252,6 +264,7 @@ on with ffmpeg while it is converting the yuyv raw frames to an mp4 file.
      
 Please Note:  In this last case, you will not see the shell prompt showing that the app finished running, because ffmpeg most likely wrote over it.  You might think that the app got a "hang" - but it did not.  Just press the ENTER key and you will get the prompt.     
 
+#### The -use-other-proc flag    
        [ -use-other-proc ]       (no parameters) This flag directs the program to use the "other" entry (within the 
                                  "pixel-format" section of "preferred-interface" of the "frame-capture" section of 
                                  the JSON configuration file) as the command string to use for popen() instead of the 
@@ -269,6 +282,7 @@ parameter of *"dd"*, **should** always be identical to output produced in the fi
      
 As mentioned before, both flags (-use-other-proc and -fn) can be used at the same time. Of course other things can be done by setting *"other"* to some other command line.  YMMV.    
 
+#### The -pf flag    
        [ -pf pixel-format ]      The pixel format requested from the video driver, which can be "h264" or "yuyv".
                                  These are:
                                            V4L2_PIX_FMT_H264: H264 with start codes
