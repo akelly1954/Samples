@@ -6,7 +6,7 @@ Stream video frames from the source (a camera), through the linux driver, to (in
 ### Table of Contents
 
 [Introduction](#introduction)      
-   [Starting Slowly][(#starting-slowly)     
+   [Starting Slowly](#starting-slowly)     
    [Usage and the --help flag](#usage-and-the---help-flag)     
 
 
