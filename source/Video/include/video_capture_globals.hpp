@@ -67,6 +67,7 @@ namespace Video
         static std::string str_dev_name;
         static bool proc_redir;
         static std::string redir_filename;
+        static bool test_suspend_resume;
 
         // Indexed by enum pxl_formats values
         // has a string description for each enum value

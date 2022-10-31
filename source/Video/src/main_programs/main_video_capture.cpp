@@ -41,16 +41,9 @@
 #include <iostream>
 #include <vector>
 
-
-// #define TEST_RAW_CAPTURE_CTL
-
-#ifdef TEST_RAW_CAPTURE_CTL
-
 ////////////////////////////////////////////////////////////////////////////////
 // This is a debug-only short-lived thread which exercises pause/resume capture
-// If used, set frame count from the command line ("-fc 0").
-//
-// Un-comment-out this #define if a low-level test of pause/resume/finish capture is needed.
+// If used, the frame count is automatically set to 0 (like "-fc 0").
 //
 void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
 {
@@ -61,30 +54,38 @@ void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
 
     if (!ifptr)
     {
-        std::string str("test_raw_capture_ctl thread: Could not obtain video capture iterface pointer (is null).");
+        std::string str("test_raw_capture_ctl thread: Could not obtain video capture interface pointer (is null).");
         logger.warning() << str;
         throw std::runtime_error(str);
     }
 
     int slp = 3;
-    for (int i = 1; i <= 6; i++)
+    for (int i = 1; i <= 10 && !ifptr->isterminated(); i++)
     {
-        ::sleep(slp);
+        logger.debug() << "test_raw_capture_ctl: Waiting " << slp << " seconds before pausing. Pass # " << i;
+        ::sleep(slp);  if (ifptr->isterminated()) { break; }
         logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
         if (ifptr) ifptr->set_paused(true);
 
-        ::sleep(slp);
+        logger.debug() << "test_raw_capture_ctl: Waiting " << slp << " seconds before resuming. Pass # " << i;
+        ::sleep(slp);  if (ifptr->isterminated()) { break; }
         logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
         if (ifptr) ifptr->set_paused(false);
     }
 
-    ::sleep(slp);
+    if (!ifptr->isterminated())
+    {
+        ::sleep(slp);
+    }
+    else
+    {
+        logger.debug() << "test_raw_capture_ctl: ERROR TERMINATION...";
+        return;
+    }
+
     logger.debug() << "test_raw_capture_ctl: FINISH CAPTURE REQUEST...";
-    // TODO: Implement in new video_capture derived frame-grabbers
     if (ifptr) ifptr->set_terminated(true);
 }
-
-#endif // TEST_RAW_CAPTURE_CTL
 
 // CONFIGURATION
 //
@@ -137,7 +138,7 @@ int main(int argc, const char *argv[])
     int return_for_exit = EXIT_SUCCESS;
 
     const Util::StringVector allowedFlags ={
-            "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc"
+            "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc", "-test-suspend-resume"
     };
 
     Util::CommandLine cmdline(argc, argv, allowedFlags);
@@ -307,10 +308,7 @@ int main(int argc, const char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
     std::thread videocapturethread;
-
- #ifdef TEST_RAW_CAPTURE_CTL
     std::thread trcc;
- #endif // TEST_RAW_CAPTURE_CTL
 
     bool error_termination = false;
     try
@@ -344,10 +342,9 @@ int main(int argc, const char *argv[])
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
         VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
-#ifdef TEST_RAW_CAPTURE_CTL
-        // this will pause/sleep/resume/sleep a bunch of times, then exit.
+        // this will pause/sleep/resume/sleep a bunch of times, then signal the
+        // main thread to terminate normally.
         trcc = std::thread (test_raw_capture_ctl, ulogger, argv0);
-#endif // TEST_RAW_CAPTURE_CTL
 
         // This loop waits for video capture termination (normal or otherwise).  The first second or so of
         // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the
@@ -365,7 +362,7 @@ int main(int argc, const char *argv[])
                 }
                 else if ((waitforfinished % 7) == 0)
                 {
-                    ; // ulogger.debug() << "---------------------- While waiting, interface pointer is null... (counter = " << waitforfinished << ")";
+                    ; // ulogger.debug() << "While waiting, interface pointer is null... (counter = " << waitforfinished << ")";
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(300));
                 if (waitforfinished > 15)
@@ -440,9 +437,7 @@ int main(int argc, const char *argv[])
 
     // FINISHED:
 
-    #ifdef TEST_RAW_CAPTURE_CTL
     if (trcc.joinable()) trcc.join();
-    #endif // TEST_RAW_CAPTURE_CTL
 
     // Wait for the threads to finish
     if (queuethread.joinable()) queuethread.join();

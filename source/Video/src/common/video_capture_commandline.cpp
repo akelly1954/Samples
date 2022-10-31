@@ -66,7 +66,12 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::yuyv] << "\n"
             << "                                        Please see /usr/include/linux/videodev2.h for more information\n"
             << "                                        (The default pixel-format value is the runtime value of \"preferred-pixel-format\"\n"
-            << "                                        in the Json config file in the section named for the video-grabber used).\n";
+            << "                                        in the Json config file in the section named for the video-grabber used).\n"
+            << "              [ -test-suspend-resume ]  (no parameters) The program will run a special thread that first sets the frame-count\n"
+            << "                                        to 0 (regardless of command-line or JSON settings, and then it allows main() to run. It then \n"
+            << "                                        interrupts the flow of video frames every few seconds with a \"pause\" request, waits a few \n"
+            << "                                        seconds and then \"resume\"s. This goes on for 30 or 40 seconds, and then it terminates the program.\n"
+            << "                                        The effects on the program and data flow can be seen in the log file.\n";
 }
 
 bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdline)
@@ -302,6 +307,25 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
          << (Video::vcGlobals::use_other_proc == false? "false": "true") << "\n";
 
 
+    int testsuspendresume = static_cast<int>(Video::vcGlobals::test_suspend_resume);
+    switch(cmdline.get_template_arg("-test-suspend-resume", testsuspendresume))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // Do not change anything
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            strm << "ERROR: \"-test-suspend-resume\" has a parameter where none is allowed." << "\n";
+            return false;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            Video::vcGlobals::test_suspend_resume = true;
+            break;
+        default:
+            assert (fail_int == -677);   // Bug encountered. Will cause abnormal termination
+    }
+    strm << "    test_suspend_resume is set to "
+         << (Video::vcGlobals::test_suspend_resume == false? "false": "true") << "\n";
+    // See more on this below
+
     /////////////////
     // Check out the specified video frame grabber name
     /////////////////
@@ -336,9 +360,21 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         return false;
     }
 
-    Video::vcGlobals::framecount = fcount_value;
-    Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
-    strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
+    // Are we testing suspend/resume?
+    if (Video::vcGlobals::test_suspend_resume)
+    {
+        Video::vcGlobals::framecount = 0;
+        Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
+        strm << "WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread)." ;
+        std::cerr << "WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread)." << std::endl;
+    }
+    else
+    {
+        Video::vcGlobals::framecount = fcount_value;
+        Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
+        strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
+        std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
+    }
 
     return true;
 }
