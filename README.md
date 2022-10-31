@@ -2,9 +2,8 @@
 
 ## Going on now:   
       
-The README.md file in the **Video** project is beginning to take shape.  This will become a multi page (screenful) document
-full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is still a work in progress, but already recommended reading if you want to wade into these waters. 
-(See **...Samples/source/Video/README.md**).        
+The [README file in the Video project](source/Video/README.md) is beginning to take shape.  This will become a multi page (screenful) document
+full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is still a work in progress, but already recommended reading if you want to wade into these waters.             
      
 **Done with the following projects:**     
      

@@ -11,15 +11,16 @@ Stream video frames from the source (a camera), through the linux driver, to (in
   * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line)    
 
 [Command Line Flags and Options](#command-line-flags-and-options)    
-  * [The -fn flag](#the--fn-flag)     
-  * [The -pr flag](#the--pr-flag)     
-  * [The -lg flag](#the--lg-flag)    
-  * [The -loginit flag](#the--loginit-flag)     
-  * [The -fg flag](#the--fg-flag)     
-  * [The -fc flag](#the--fc-flag)    
-  * [The -proc-redir flag](#the--proc-redir-flag)    
-  * [The -use-other-proc flag](#the--use-other-proc-flag)     
-  * [The -pf flag](#the--pf-flag)     
+  * [The -fn flag:  write to file](#the--fn-flag)     
+  * [The -pr flag: profiling](#the--pr-flag)     
+  * [The -lg flag: log level](#the--lg-flag)    
+  * [The -loginit flag: log initial verbose lines](#the--loginit-flag)     
+  * [The -fg flag: select frame grabber](#the--fg-flag)     
+  * [The -fc flag: frame count](#the--fc-flag)    
+  * [The -dv flag: select device](#the--dv-flag)    
+  * [The -proc-redir flag: redirect stderr](#the--proc-redir-flag)    
+  * [The -use-other-proc flag: use different process for popen()](#the--use-other-proc-flag)     
+  * [The -pf flag: pixel format](#the--pf-flag)     
 
 
 #### Introduction
@@ -212,6 +213,9 @@ program, or by disconnecting the camera from the USB port, which will cause an e
 **CAUTION**:  Running the program with a large frame-count value or without limitation **WILL** take a huge amount of
 space in the file system. A multitude of gigabytes can be consumed in a short time.    
 
+[(Back to the top)](#video-capture)
+
+#### The -dv flag    
        [ -dv video-device ]      The /dev entry for the video camera. (The default value is the runtime value of
                                  "device-name" in the Json config file in the section named for the video-grabber used.
      
