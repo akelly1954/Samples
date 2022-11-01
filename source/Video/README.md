@@ -460,8 +460,12 @@ assembled before command line parsing was applied, so you can see, for example, 
          test_suspend_resume is set to false
          Video frame grabber name is set to v4l2
          Log level is set to 0 = DBUG
-         Frame count is set to 50(int) = 50(string)
-     
+         Frame count is set to 50(int) = 50(string) 
+      
+The above section shows the final value of all the configuration parameters that could be modified
+by command line flags.   The next section actually starts the main threads of the app and gets the 
+real work going.   
+
      2022-11-01 01:57:03.296  video_capture DBUG main_video_capture:  started video profiler thread
      2022-11-01 01:57:03.296  video_capture DBUG main_video_capture:  the video capture thread will kick-start the video_profiler operations.
      2022-11-01 01:57:03.296  video_capture DBUG Profiler thread started...
@@ -484,6 +488,19 @@ assembled before command line parsing was applied, so you can see, for example, 
      2022-11-01 01:57:03.369  video_capture DBUG driver: bytes required: 4147200
      2022-11-01 01:57:03.369  video_capture DBUG driver: I/O METHOD: IO_METHOD_MMAP
      2022-11-01 01:57:03.544  video_capture DBUG vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.
+     
+[(Back to the top)](#video-capture)
+
+The above section shows all of the participating threads logging their status and providing
+information as they start running.  The output below, shows mostly profiler output, as it takes
+a snapshot of some stats every few frames.      
+     
+**Please Note:**  the first few frame-rate reports
+show an unduly fast frame-rate.  The true number should be close to 25 frames per second (fps). 
+In reality, the driver does provide video buffers at a decaying rate, however in this case, the
+baseline for snapshot timing is not well established. So it it more informative (and accurate) to
+ignore the first couple of hundred frames before taking this number seriously.     
+     
      2022-11-01 01:57:03.544  video_capture NOTE Profiler info...
      2022-11-01 01:57:03.544  video_capture NOTE Shared pointers in the ring buffer: 0
      2022-11-01 01:57:03.544  video_capture NOTE Number of frames received: 0
@@ -522,29 +539,15 @@ assembled before command line parsing was applied, so you can see, for example, 
      2022-11-01 01:57:05.647  video_capture DBUG Profiler thread terminating ...
      2022-11-01 01:57:06.297  video_capture INFO Terminating the logger.
      
+Also, please note that there are constantly 0 buffers waiting in the ring-buffer.  This is because the video
+driver interface adds the video buffers' shared_ptr<>'s to the ring-buffer, and the queueing thread plucks them 
+out as soon as they come in, and before the profiler has had a chance to see them in the queue.   This is because 
+the driver takes much more time to provide video buffers than it takes the processing of buffers (piped to ffmpeg and/or written out to file).  That is 
+the way all this is meant to work (it's a good thing).  There are places in the code that interject sleeps (look 
+for commented out thread::sleep_for()'s which slow things down to the point where you could find dozens of members 
+in the queue ready to be processed (those sleeps are used for testing when needed).    
      
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+[(Back to the top)](#video-capture)
 
   
    ________   
