@@ -352,10 +352,17 @@ as well as the source hardware (camera).  This option is set automatically based
 
 [(Back to the top)](#video-capture)
    
-### EXAMPLES OF REAL USE     
+### EXAMPLES OF REAL USE   
+Don't be alarmed...   **THIS SECTION IS UNDER CONSTRUCTION....**     
+  
+This section will include examples run on my desktop, with real output and log file unchanged. 
+There are a few explanations and pointers interjected along the way.  The most definitive way to
+find out what exactly goes on during the run is to first, examine the output on the screen.  Then,
+look at file sizes (log file, data file, mp4 file, etc).  Lastly, go into the log file and examine
+the detail offered.  It's a lot of detail, but pretty much shows what happened.
 
 #### Example 1: A simple run   
-Don't be alarmed...   **THIS SECTION IS UNDER CONSTRUCTION....**     
+In this example, we run a capture of 50 frames, with profiling enabled. This is the output on the screen:       
      
      $ main_video_capture -fc 50 -pr
          Frame count is set to 50(int) = 50(string)
@@ -377,13 +384,22 @@ Don't be alarmed...   **THIS SECTION IS UNDER CONSTRUCTION....**
      driver: frame: 1920 x 1080
      driver: pixel format set to 0x34363248 - H264: H264 with start codes
      NORMAL TERMINATION...
-     $
+     $    
+
+Next, files and their sizes:    
+
      $ ls -ltrh 
          .  .  .  .  . . .
      -rwxr-xr-x 1 andrew andrew 630K Nov  1 01:53 main_video_capture
      -rw-r--r-- 1 andrew andrew 2.1M Nov  1 01:57 video_capture.mp4
      -rw-r--r-- 1 andrew andrew 8.0K Nov  1 01:57 video_capture_log.txt
-     $
+     $   
+
+[(Back to the top)](#video-capture)
+
+Now for the log file.  There are a few sections of text explaining what's going on below. 
+In particular, look for the profiling entries.  Something to say about that below.        
+   
      $ cat video_capture_log.txt
      
      2022-11-01 01:57:03.295  video_capture INFO START OF NEW VIDEO CAPTURE RUN
@@ -393,7 +409,9 @@ Don't be alarmed...   **THIS SECTION IS UNDER CONSTRUCTION....**
           Log channel name video_capture
           Log file name video_capture_log.txt
           Output to console disabled
-          Output to log file enabled
+          Output to log file enabled     
+
+The above section is all about setting up the logger.  This has to be done sooner rather than later at runtime.     
      
      2022-11-01 01:57:03.295  video_capture INFO 
      
@@ -419,8 +437,15 @@ Don't be alarmed...   **THIS SECTION IS UNDER CONSTRUCTION....**
      From JSON:  v4l2 is labeled as: V4L2
      From JSON:  Set v4l2 device name to /dev/video0
      From JSON:  Set v4l2 pixel format to V4L2_PIX_FMT_H264: H264 with start codes
-     From JSON:  Set raw video output process command to: ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4
+     From JSON:  Set raw video output process command to: ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec cop video_capture.mp4 
      
+The above section is all parsing the JSON config file, and assigning values to the global C++ struct (vcGlobals). 
+This gives you an idea of the default values included in the .json file this was run against.  But this was 
+assembled before command line parsing was applied, so you can see, for example, that in the JSON file, profiling is
+"false".  But that changes to "true" below, because of the "-pr" flag used on the command line.     
+
+[(Back to the top)](#video-capture)
+
      2022-11-01 01:57:03.295  video_capture INFO DELAYED: .  .  .  . . . .
      
      Command line parsing:
