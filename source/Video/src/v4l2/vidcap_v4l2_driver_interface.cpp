@@ -204,7 +204,7 @@ void vidcap_v4l2_driver_interface::run()
               << "vidcap_v4l2_driver_interface::run(): General exception occurred running the video capture. Aborting...";
     }
     // Let things calm down before disappearing...
-    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1200));
 }
 
 void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocopy)

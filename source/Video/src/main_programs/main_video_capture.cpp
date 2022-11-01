@@ -326,7 +326,7 @@ int main(int argc, const char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
     std::thread videocapturethread;
-    std::thread trcc;
+    std::thread trcc;  // gets activated only if vcGlobals::test_suspend_resume.
 
     bool error_termination = false;
     try
@@ -360,9 +360,13 @@ int main(int argc, const char *argv[])
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
         VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
-        // this will pause/sleep/resume/sleep a bunch of times, then signal the
-        // main thread to terminate normally.
-        trcc = std::thread (test_raw_capture_ctl, ulogger, argv0);
+        // Start the test for suspend/resume (-test-suspend-resume command line flag)
+        if (vcGlobals::test_suspend_resume)
+        {
+            // this will pause/sleep/resume/sleep a bunch of times, then signal the
+            // main thread to terminate normally.
+            trcc = std::thread (test_raw_capture_ctl, ulogger, argv0);
+        }
 
         // This loop waits for video capture termination (normal or otherwise).  The first second or so of
         // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the
@@ -455,7 +459,7 @@ int main(int argc, const char *argv[])
 
     // FINISHED:
 
-    if (trcc.joinable()) trcc.join();
+    if (vcGlobals::test_suspend_resume && trcc.joinable()) trcc.join();
 
     // Wait for the threads to finish
     if (queuethread.joinable()) queuethread.join();

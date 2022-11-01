@@ -520,8 +520,6 @@ assembled before command line parsing was applied, so you can see, for example, 
      2022-11-01 01:57:05.399  video_capture DBUG vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.
      2022-11-01 01:57:05.399  video_capture INFO vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED
      2022-11-01 01:57:05.647  video_capture DBUG Profiler thread terminating ...
-     2022-11-01 01:57:06.297  video_capture DBUG main_video_capture: In test_raw_capture_ctl: thread running
-     2022-11-01 01:57:06.297  video_capture DBUG test_raw_capture_ctl: other threads terminated before test finished. TERMINATING AFTER 1 PASSES...
      2022-11-01 01:57:06.297  video_capture INFO Terminating the logger.
      
      
