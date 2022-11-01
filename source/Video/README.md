@@ -22,6 +22,9 @@ Stream video frames from the source (a camera), through the linux driver, to the
   * [The -use-other-proc flag: use different process for popen()](#the--use-other-proc-flag)     
   * [The -pf flag: pixel format](#the--pf-flag)     
   * [The -test-suspend-resume flag: suspend/resume a few times for less than a minute](#the--test-suspend-resume-flag) 
+  
+[EXAMPLES OF REAL USE](#examples-of-real-use) 
+  * [Example 1: A simple run](#example-1-a-simple-run)
 
 
 #### Introduction
@@ -348,8 +351,180 @@ as well as the source hardware (camera).  This option is set automatically based
                                  static bool test_suspend_resume;    
 
 [(Back to the top)](#video-capture)
+   
+### EXAMPLES OF REAL USE     
+
+#### Example 1: A simple run   
+Don't be alarmed...   **THIS SECTION IS UNDER CONSTRUCTION....**     
      
-   __________________   
+     $ main_video_capture -fc 50 -pr
+         Frame count is set to 50(int) = 50(string)
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to false, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 300.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_H264: H264 with start codes
+         use_other_proc is set to false
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 50(int) = 50(string)
+     
+     Log file: video_capture_log.txt
+     driver: frame: 1920 x 1080
+     driver: pixel format set to 0x34363248 - H264: H264 with start codes
+     NORMAL TERMINATION...
+     $
+     $ ls -ltrh 
+         .  .  .  .  . . .
+     -rwxr-xr-x 1 andrew andrew 630K Nov  1 01:53 main_video_capture
+     -rw-r--r-- 1 andrew andrew 2.1M Nov  1 01:57 video_capture.mp4
+     -rw-r--r-- 1 andrew andrew 8.0K Nov  1 01:57 video_capture_log.txt
+     $
+     $ cat video_capture_log.txt
+     
+     2022-11-01 01:57:03.295  video_capture INFO START OF NEW VIDEO CAPTURE RUN
+     2022-11-01 01:57:03.295  video_capture DBUG Current option values after getting shared_ptr<> to Log::Logger:
+          Log Level 0
+          Log level string DBUG
+          Log channel name video_capture
+          Log file name video_capture_log.txt
+          Output to console disabled
+          Output to log file enabled
+     
+     2022-11-01 01:57:03.295  video_capture INFO 
+     
+     Logger setup is complete.
+     
+     2022-11-01 01:57:03.295  video_capture INFO 
+     2022-11-01 01:57:03.295  video_capture INFO The last few lines of deferred output from app initialization are shown here.   ******
+     2022-11-01 01:57:03.295  video_capture INFO For the full set of deferred lines, use the -loginit flag on the command line.  ******
+     2022-11-01 01:57:03.295  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     From JSON:  Getting available pixel formats for interface "v4l2":
+             {  h264  other  yuyv    }
+     From JSON:  Set logger channel-name to: video_capture
+     From JSON:  Set logger file-name to: video_capture_log.txt
+     From JSON:  Set default logger log level to: DBUG
+     From JSON:  Enable writing raw video frames to output file: false
+     From JSON:  Set raw video output file name to: video_capture.data
+     From JSON:  Enable writing raw video frames to process: true
+     From JSON:  Enable profiling: false
+     From JSON:  Set milliseconds between profile snapshots to: 300
+     From JSON:  Set default video-frame-grabber to: v4l2
+     From JSON:  Set number of frames to grab (framecount) to: 20
+     From JSON:  v4l2 is labeled as: V4L2
+     From JSON:  Set v4l2 device name to /dev/video0
+     From JSON:  Set v4l2 pixel format to V4L2_PIX_FMT_H264: H264 with start codes
+     From JSON:  Set raw video output process command to: ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4
+     
+     2022-11-01 01:57:03.295  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to false, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 300.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_H264: H264 with start codes
+         use_other_proc is set to false
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 50(int) = 50(string)
+     
+     2022-11-01 01:57:03.296  video_capture DBUG main_video_capture:  started video profiler thread
+     2022-11-01 01:57:03.296  video_capture DBUG main_video_capture:  the video capture thread will kick-start the video_profiler operations.
+     2022-11-01 01:57:03.296  video_capture DBUG Profiler thread started...
+     2022-11-01 01:57:03.296  video_capture DBUG main_video_capture: kick-starting the queue operations.
+     2022-11-01 01:57:03.296  video_capture NOTE Profiler thread: skipping first frame to establish a duration baseline.
+     2022-11-01 01:57:03.296  video_capture DBUG main_video_capture:  starting the video capture thread.
+     2022-11-01 01:57:03.296  video_capture DBUG 
+     raw_buffer_queue_handler: Updated output process to:  ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4 2> /dev/null
+     2022-11-01 01:57:03.296  video_capture DBUG main_video_capture:  kick-starting the video capture operations.
+     2022-11-01 01:57:03.296  video_capture INFO Video Capture thread: Requesting the v4l2 frame-grabber.
+     2022-11-01 01:57:03.297  video_capture INFO Video Capture thread: The list of available frame grabbers in the json config file is: opencv v4l2 
+     2022-11-01 01:57:03.297  video_capture INFO Video Capture thread: Picking the v4l2 frame-grabber.
+     2022-11-01 01:57:03.297  video_capture INFO Video Capture thread: Interface used is v4l2
+     2022-11-01 01:57:03.297  video_capture DBUG Started the process "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4 2> /dev/null".
+     2022-11-01 01:57:03.297  video_capture DBUG In VideoCapture::raw_buffer_queue_handler(): Successfully started "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4".
+     2022-11-01 01:57:03.368  video_capture INFO Device /dev/video0
+     2022-11-01 01:57:03.368  video_capture DBUG Set video format to (1920 x 1080), pixel format is V4L2_PIX_FMT_H264: H264 with start codes
+     2022-11-01 01:57:03.369  video_capture DBUG driver: frame: 1920 x 1080
+     2022-11-01 01:57:03.369  video_capture DBUG driver: pixel format set to 0x34363248 - H264: H264 with start codes
+     2022-11-01 01:57:03.369  video_capture DBUG driver: bytes required: 4147200
+     2022-11-01 01:57:03.369  video_capture DBUG driver: I/O METHOD: IO_METHOD_MMAP
+     2022-11-01 01:57:03.544  video_capture DBUG vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.
+     2022-11-01 01:57:03.544  video_capture NOTE Profiler info...
+     2022-11-01 01:57:03.544  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 01:57:03.544  video_capture NOTE Number of frames received: 0
+     2022-11-01 01:57:03.544  video_capture NOTE Current avg frame rate (per second): 0
+     2022-11-01 01:57:03.844  video_capture NOTE Profiler info...
+     2022-11-01 01:57:03.844  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 01:57:03.844  video_capture NOTE Number of frames received: 11
+     2022-11-01 01:57:03.845  video_capture NOTE Current avg frame rate (per second): 38.5965
+     2022-11-01 01:57:04.145  video_capture NOTE Profiler info...
+     2022-11-01 01:57:04.145  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 01:57:04.145  video_capture NOTE Number of frames received: 18
+     2022-11-01 01:57:04.145  video_capture NOTE Current avg frame rate (per second): 31.8584
+     2022-11-01 01:57:04.445  video_capture NOTE Profiler info...
+     2022-11-01 01:57:04.445  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 01:57:04.445  video_capture NOTE Number of frames received: 26
+     2022-11-01 01:57:04.445  video_capture NOTE Current avg frame rate (per second): 29.3785
+     2022-11-01 01:57:04.746  video_capture NOTE Profiler info...
+     2022-11-01 01:57:04.746  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 01:57:04.746  video_capture NOTE Number of frames received: 33
+     2022-11-01 01:57:04.746  video_capture NOTE Current avg frame rate (per second): 28.3262
+     2022-11-01 01:57:05.046  video_capture NOTE Profiler info...
+     2022-11-01 01:57:05.046  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 01:57:05.046  video_capture NOTE Number of frames received: 41
+     2022-11-01 01:57:05.046  video_capture NOTE Current avg frame rate (per second): 27.6094
+     2022-11-01 01:57:05.347  video_capture NOTE Profiler info...
+     2022-11-01 01:57:05.347  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 01:57:05.347  video_capture NOTE Number of frames received: 48
+     2022-11-01 01:57:05.347  video_capture NOTE Current avg frame rate (per second): 27.1955
+     2022-11-01 01:57:05.390  video_capture INFO v4l2if_mainloop: CAPTURE TERMINATION REQUESTED.
+     2022-11-01 01:57:05.398  video_capture DBUG MAIN: Video Capture thread is done. Cleanup and terminate.
+     2022-11-01 01:57:05.398  video_capture DBUG main_video_capture:  terminating queue thread.
+     2022-11-01 01:57:05.398  video_capture DBUG Queue thread terminating ...
+     2022-11-01 01:57:05.398  video_capture DBUG Shutting down the process "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4" (fflush, pclose(): 
+     2022-11-01 01:57:05.399  video_capture DBUG vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.
+     2022-11-01 01:57:05.399  video_capture INFO vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED
+     2022-11-01 01:57:05.647  video_capture DBUG Profiler thread terminating ...
+     2022-11-01 01:57:06.297  video_capture DBUG main_video_capture: In test_raw_capture_ctl: thread running
+     2022-11-01 01:57:06.297  video_capture DBUG test_raw_capture_ctl: other threads terminated before test finished. TERMINATING AFTER 1 PASSES...
+     2022-11-01 01:57:06.297  video_capture INFO Terminating the logger.
+     
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+   ________   
     
     
 # Please Note:

@@ -47,7 +47,10 @@
 //
 void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
 {
-    ::sleep(3);
+    int sleep_seconds = 3;
+    int i = 0;
+
+    ::sleep(sleep_seconds);
     logger.debug() << argv0 << ": In test_raw_capture_ctl: thread running";
 
     VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
@@ -59,15 +62,15 @@ void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
         throw std::runtime_error(str);
     }
 
-    int slp = 3;
-    for (int i = 1; i <= 10 && !ifptr->isterminated(); i++)
+    int slp = sleep_seconds;
+    for (i = 1; i <= 10 && !ifptr->isterminated(); i++)
     {
-        logger.debug() << "test_raw_capture_ctl: Waiting " << slp << " seconds before pausing. Pass # " << i;
+        logger.debug() << "test_raw_capture_ctl: RESUMED/RUNNING: waiting " << slp << " seconds before pausing. Pass # " << i;
         ::sleep(slp);  if (ifptr->isterminated()) { break; }
         logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
         if (ifptr) ifptr->set_paused(true);
 
-        logger.debug() << "test_raw_capture_ctl: Waiting " << slp << " seconds before resuming. Pass # " << i;
+        logger.debug() << "test_raw_capture_ctl: PAUSED: waiting " << slp << " seconds before resuming. Pass # " << i;
         ::sleep(slp);  if (ifptr->isterminated()) { break; }
         logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
         if (ifptr) ifptr->set_paused(false);
@@ -79,7 +82,7 @@ void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
     }
     else
     {
-        logger.debug() << "test_raw_capture_ctl: ERROR TERMINATION...";
+        logger.debug() << "test_raw_capture_ctl: other threads terminated before test finished. TERMINATING AFTER " << i << " PASSES...";
         return;
     }
 
@@ -208,7 +211,7 @@ int main(int argc, const char *argv[])
     // Everything in the vector will be written to the log file
     // as soon as the logger is initialized.
     delayedLinesForLogger.push_back(configstrm.str());
-
+    std::string ConfigOutputString;
     try {
 
         std::stringstream strm;
@@ -219,13 +222,14 @@ int main(int argc, const char *argv[])
             return EXIT_FAILURE;
         }
 
-        std::string constring = strm.str();
+        ConfigOutputString = strm.str();
+
         // TODO:  This just clutters up the screen.  Leave it in the log file:
-        // std::cerr << constring << std::endl;
+        // std::cerr << ConfigOutputString << std::endl;
 
         // Everything in the vector will be written to the log file
         // as soon as the logger is initialized.
-        delayedLinesForLogger.push_back(constring);
+        delayedLinesForLogger.push_back(ConfigOutputString);
     }
     catch (const std::exception& e)
     {
@@ -239,6 +243,7 @@ int main(int argc, const char *argv[])
     // Parse the command line part 2
     /////////////////
 
+    std::string ParseOutputString;
     std::stringstream lstrm;
     if (! VidCapCommandLine::parse(lstrm, cmdline))
     {
@@ -246,9 +251,9 @@ int main(int argc, const char *argv[])
         return EXIT_FAILURE;
     }
 
-    std::string lstr = std::string("Command line parsing:\n") + lstrm.str();
-    std::cerr << lstr << std::endl;
-    delayedLinesForLogger.push_back(lstr);
+    ParseOutputString = std::string("Command line parsing:\n") + lstrm.str();
+    std::cerr << ParseOutputString << std::endl;
+    delayedLinesForLogger.push_back(ParseOutputString);
 
     /////////////////
     // Set up the logger
@@ -275,6 +280,10 @@ int main(int argc, const char *argv[])
     //////////////////////////////////////////////////////////////
     Log::Logger& ulogger = *(Util::UtilLogger::getLoggerPtr());
 
+    //////////////////////////////////////////////////////////////
+    // Start Logging
+    //////////////////////////////////////////////////////////////
+
     ulogger.info() << "START OF NEW VIDEO CAPTURE RUN";
 
     {
@@ -288,17 +297,26 @@ int main(int argc, const char *argv[])
 
     // The logger is now set up.
     ulogger.info() << "\n\nLogger setup is complete.\n";
-    ulogger.info() << "    ******  Deferred output from app initialization (will be logged ******";
-    ulogger.info() << "    ******    when the -loginit flag is used on the command line).  ******";
     ulogger.info() << "";
 
     if (vcGlobals::log_initialization_info)     // -loginit flag
     {
+        ulogger.info() << "\n\n    ******  Deferred output from app initialization:  ******\n";
+
         // Empty out the delayed-lines' vector...
         for(auto line : delayedLinesForLogger)
         {
-            ulogger.info() << line;
+            ulogger.info() << "DELAYED: " << line;
         }
+    }
+    else
+    {
+        // -loginit flag was not specified: Capture the last few lines into the log file
+        ulogger.info() << "The last few lines of deferred output from app initialization are shown here.   ******";
+        ulogger.info() << "For the full set of deferred lines, use the -loginit flag on the command line.  ******";
+
+        ulogger.info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
+        ulogger.info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
     }
 
     /////////////////
