@@ -21,7 +21,7 @@ Stream video frames from the source (a camera), through the linux driver, to the
   * [The -proc-redir flag: redirect stderr](#the--proc-redir-flag)    
   * [The -use-other-proc flag: use different process for popen()](#the--use-other-proc-flag)     
   * [The -pf flag: pixel format](#the--pf-flag)     
-  * [The -test-suspend-resume flag: automatically suspend/resume a few times for 30 - 40 seconds](#the--test-suspend-resume-flag) 
+  * [The -test-suspend-resume flag: suspend/resume a few times for less than a minute](#the--test-suspend-resume-flag) 
 
 
 #### Introduction
@@ -337,11 +337,11 @@ as well as the source hardware (camera).  This option is set automatically based
 
 #### The -test-suspend-resume flag    
        [ -test-suspend-resume ]  (no parameters) The program will run a special thread that first sets the frame-count
-                                 to 0 (regardless of command-line or JSON settings, and then it allows main() to run. It then 
-                                 interrupts the flow of video frames every few seconds with a "pause" request, waits a few 
-                                 seconds and then "resume"s. This goes on for 30 or 40 seconds, and then it terminates the program.
-                                 The effects on the program and data flow can be seen in the log file.     
-     
+                                 to 0 (regardless of command-line or JSON settings), and then it allows main() to run. It 
+                                 then interrupts the flow of video frames every few seconds with a "pause" request, waits
+                                 a few seconds and then "resume"s. This goes on for 30 or 40 seconds, and then it terminates
+                                 the program. The effects on the program and data flow can be seen in the log file.     
+       
      Equivalent Json member(s):  None     
           
      Equivalent C++ Video::vcGlobals member(s):  
@@ -361,9 +361,9 @@ Thank you.
      
 **SEE ALSO:**    
 
-The README.md file in the root **Samples** folder (./README.md).    
-The README.md file in the **source** folder (./source/README.md).    
-The file **./LICENSE** contains the legal language covering distribution and use of the sources in this project (that belong to me). 
+The [README.md file](../../README.md) in the root **Samples** folder.    
+The [README.md file](../README.md) in the **source** folder.    
+The file [LICENSE](../../LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
 The software that does not belong to me, is covered by its own license which is clearly marked in the code and in the README files.     
      
      
