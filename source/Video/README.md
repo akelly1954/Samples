@@ -25,6 +25,7 @@ Stream video frames from the source (a camera), through the linux driver, to the
   
 [EXAMPLES OF REAL USE](#examples-of-real-use) 
   * [Example 1: A simple run](#example-1-a-simple-run)
+  * [Example 2: A longer run With YUYV Pixel Format](#example-2-a-longer-run-with-yuyv-pixel-format)
 
 
 #### Introduction
@@ -549,6 +550,208 @@ in the queue ready to be processed (those sleeps are used for testing when neede
      
 [(Back to the top)](#video-capture)
 
+#### Example 2: A longer run With YUYV Pixel Format 
+
+In this example, we switch from default H264 format to YUYV, with profiling enabled. Also, the frame count will be high. See the text explaining things down below.  This is the output on the screen:    
+
+     $ main_video_capture -fc 3000 -pr 1000 -pf yuyv
+     Frame count is set to 3000(int) = 3000(string)
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to false, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 1000.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2
+         use_other_proc is set to false
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 3000(int) = 3000(string)
+     
+     Log file: video_capture_log.txt
+     driver: frame: 640 x 480
+     driver: pixel format set to 0x56595559 - YUYV: aka "YUV 4:2:2": Packed format with ½ horizontal chroma resolution
+     NORMAL TERMINATION...
+     
+Notice the increased number of frames (from 50 in the previous run, to 3000 in this run), and the profiling
+slice (milliseconds between snapshots) has increased from 300ms to 1000ms (= 1 second).  And here are the 
+file sizes:    
+
+     -rwxr-xr-x 1 andrew andrew 631K Nov  1 08:54 main_video_capture
+     -rw-r--r-- 1 andrew andrew  42K Nov  1 12:51 video_capture_log.txt
+     -rw-r--r-- 1 andrew andrew 401M Nov  1 12:51 video_capture.mp4
+
+Notice the mp4 file is now a bit bigger.  At 401Mb, the file contains 3000 frames, and will run for 
+approximately 2 minutes.  All things being equal, if the video were to run for an hour, the file size then 
+would be approximately 120Gb.  Just sayin'.    
+     
+[(Back to the top)](#video-capture)
+
+The next section shows an abbreviated log file - just trying to save some virtual trees. The section showing the 
+profiling snapshot numbers is from the very end of the run:
+     
+     $ 
+     $ cat video_capture_log.txt  
+     2022-11-01 12:49:13.593  video_capture INFO START OF NEW VIDEO CAPTURE RUN
+     2022-11-01 12:49:13.594  video_capture DBUG Current option values after getting shared_ptr<> to Log::Logger:
+          Log Level 0
+          Log level string DBUG
+          Log channel name video_capture
+          Log file name video_capture_log.txt
+          Output to console disabled
+          Output to log file enabled
+     
+     2022-11-01 12:49:13.594  video_capture INFO 
+     
+     Logger setup is complete.
+     
+     2022-11-01 12:49:13.594  video_capture INFO 
+     2022-11-01 12:49:13.594  video_capture INFO The last few lines of deferred output from app initialization are shown here.   ******
+     2022-11-01 12:49:13.594  video_capture INFO For the full set of deferred lines, use the -loginit flag on the command line.  ******
+     2022-11-01 12:49:13.594  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     From JSON:  Getting available pixel formats for interface "v4l2":
+             {  h264  other  yuyv    }
+     From JSON:  Set logger channel-name to: video_capture
+     From JSON:  Set logger file-name to: video_capture_log.txt
+     From JSON:  Set default logger log level to: DBUG
+     From JSON:  Enable writing raw video frames to output file: false
+     From JSON:  Set raw video output file name to: video_capture.data
+     From JSON:  Enable writing raw video frames to process: true
+     From JSON:  Enable profiling: false
+     From JSON:  Set milliseconds between profile snapshots to: 300
+     From JSON:  Set default video-frame-grabber to: v4l2
+     From JSON:  Set number of frames to grab (framecount) to: 20
+     From JSON:  v4l2 is labeled as: V4L2
+     From JSON:  Set v4l2 device name to /dev/video0
+     From JSON:  Set v4l2 pixel format to V4L2_PIX_FMT_H264: H264 with start codes
+     From JSON:  Set raw video output process command to: ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4
+     
+[(Back to the top)](#video-capture)
+
+     2022-11-01 12:49:13.594  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to false, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 1000.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2
+         use_other_proc is set to false
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 3000(int) = 3000(string)
+     
+     2022-11-01 12:49:13.594  video_capture DBUG main_video_capture:  started video profiler thread
+     2022-11-01 12:49:13.594  video_capture DBUG main_video_capture:  the video capture thread will kick-start the video_profiler operations.
+     2022-11-01 12:49:13.594  video_capture DBUG Profiler thread started...
+     2022-11-01 12:49:13.594  video_capture DBUG main_video_capture: kick-starting the queue operations.
+     2022-11-01 12:49:13.594  video_capture NOTE Profiler thread: skipping first frame to establish a duration baseline.
+     2022-11-01 12:49:13.594  video_capture DBUG 
+     raw_buffer_queue_handler: Updated output process to:  ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo \
+                               -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast \
+                               -qp 0 video_capture.mp4 2> /dev/null
+     2022-11-01 12:49:13.594  video_capture DBUG main_video_capture:  starting the video capture thread.
+     2022-11-01 12:49:13.594  video_capture DBUG main_video_capture:  kick-starting the video capture operations.
+     2022-11-01 12:49:13.594  video_capture INFO Video Capture thread: Requesting the v4l2 frame-grabber.
+     2022-11-01 12:49:13.594  video_capture INFO Video Capture thread: The list of available frame grabbers in the json config file is: opencv v4l2 
+     2022-11-01 12:49:13.594  video_capture INFO Video Capture thread: Picking the v4l2 frame-grabber.
+     2022-11-01 12:49:13.594  video_capture INFO Video Capture thread: Interface used is v4l2
+     2022-11-01 12:49:13.595  video_capture DBUG Started the process "ffmpeg -nostdin -y -f rawvideo \
+                              -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 \
+                              -preset ultrafast -qp 0 video_capture.mp4 2> /dev/null".
+     2022-11-01 12:49:13.595  video_capture DBUG In VideoCapture::raw_buffer_queue_handler(): Successfully \
+                              started "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 \
+                              -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4".
+     
+[(Back to the top)](#video-capture)
+
+Notice that with this being the V4L2 interface, but with YUYV pixel format, the appropriate **ffmpeg** command 
+was picked from the JSON config file.
+     
+     2022-11-01 12:49:13.664  video_capture INFO Device /dev/video0
+     2022-11-01 12:49:13.664  video_capture DBUG Set video format to (640 x 480), pixel format is V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2
+     2022-11-01 12:49:13.664  video_capture DBUG driver: frame: 640 x 480
+     2022-11-01 12:49:13.664  video_capture DBUG driver: pixel format set to 0x56595559 - YUYV: aka "YUV 4:2:2": Packed format with ½ horizontal chroma resolution
+     2022-11-01 12:49:13.664  video_capture DBUG driver: bytes required: 614400
+     2022-11-01 12:49:13.664  video_capture DBUG driver: I/O METHOD: IO_METHOD_MMAP
+     2022-11-01 12:49:14.140  video_capture DBUG vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.
+     2022-11-01 12:49:14.140  video_capture NOTE Profiler info...
+     2022-11-01 12:49:14.140  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:49:14.140  video_capture NOTE Number of frames received: 0
+     2022-11-01 12:49:14.140  video_capture NOTE Current avg frame rate (per second): 0
+     2022-11-01 12:49:15.141  video_capture NOTE Profiler info...
+     2022-11-01 12:49:15.141  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:49:15.141  video_capture NOTE Number of frames received: 28
+     2022-11-01 12:49:15.141  video_capture NOTE Current avg frame rate (per second): 28.2543
+     2022-11-01 12:49:16.141  video_capture NOTE Profiler info...
+     2022-11-01 12:49:16.141  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:49:16.141  video_capture NOTE Number of frames received: 53
+     2022-11-01 12:49:16.141  video_capture NOTE Current avg frame rate (per second): 26.5797
+     2022-11-01 12:49:17.141  video_capture NOTE Profiler info...
+     2022-11-01 12:49:17.141  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:49:17.141  video_capture NOTE Number of frames received: 77
+     2022-11-01 12:49:17.141  video_capture NOTE Current avg frame rate (per second): 25.9872
+     2022-11-01 12:49:18.142  video_capture NOTE Profiler info...
+     2022-11-01 12:49:18.142  video_capture NOTE Shared pointers in the ring buffer: 0
+     
+Notes for the section of the logfile shown above:  The frame rate, again, starts out being higher 
+than it should be (28+ fps).   
+     
+[(Back to the top)](#video-capture)
+
+            . . . . . SNNIPPED OUT A BUNCH OF SIMILAR LOG LINES . . . . . 
+                                 (Praise the trees) 
+      
+     2022-11-01 12:51:07.176  video_capture NOTE Profiler info...
+     2022-11-01 12:51:07.176  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:07.176  video_capture NOTE Number of frames received: 2821
+     2022-11-01 12:51:07.176  video_capture NOTE Current avg frame rate (per second): 24.9648
+     2022-11-01 12:51:08.176  video_capture NOTE Profiler info...
+     2022-11-01 12:51:08.176  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:08.176  video_capture NOTE Number of frames received: 2846
+     2022-11-01 12:51:08.176  video_capture NOTE Current avg frame rate (per second): 24.9634
+     2022-11-01 12:51:09.177  video_capture NOTE Profiler info...
+     2022-11-01 12:51:09.177  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:09.177  video_capture NOTE Number of frames received: 2871
+     2022-11-01 12:51:09.177  video_capture NOTE Current avg frame rate (per second): 24.9648
+     2022-11-01 12:51:10.177  video_capture NOTE Profiler info...
+     2022-11-01 12:51:10.177  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:10.177  video_capture NOTE Number of frames received: 2897
+     2022-11-01 12:51:10.177  video_capture NOTE Current avg frame rate (per second): 24.9666
+     2022-11-01 12:51:11.177  video_capture NOTE Profiler info...
+     2022-11-01 12:51:11.177  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:11.177  video_capture NOTE Number of frames received: 2921
+     2022-11-01 12:51:11.177  video_capture NOTE Current avg frame rate (per second): 24.9656
+     2022-11-01 12:51:12.177  video_capture NOTE Profiler info...
+     2022-11-01 12:51:12.177  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:12.178  video_capture NOTE Number of frames received: 2946
+     2022-11-01 12:51:12.178  video_capture NOTE Current avg frame rate (per second): 24.965
+     2022-11-01 12:51:13.178  video_capture NOTE Profiler info...
+     2022-11-01 12:51:13.178  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:13.178  video_capture NOTE Number of frames received: 2970
+     2022-11-01 12:51:13.178  video_capture NOTE Current avg frame rate (per second): 24.9576
+     2022-11-01 12:51:14.178  video_capture NOTE Profiler info...
+     2022-11-01 12:51:14.178  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-01 12:51:14.178  video_capture NOTE Number of frames received: 2996
+     2022-11-01 12:51:14.178  video_capture NOTE Current avg frame rate (per second): 24.9592
+     2022-11-01 12:51:14.344  video_capture INFO v4l2if_mainloop: CAPTURE TERMINATION REQUESTED.
+     2022-11-01 12:51:14.350  video_capture DBUG vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.
+     2022-11-01 12:51:14.350  video_capture INFO vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED
+     2022-11-01 12:51:14.547  video_capture DBUG MAIN: Video Capture thread is done. Cleanup and terminate.
+     2022-11-01 12:51:14.547  video_capture DBUG main_video_capture:  terminating queue thread.
+     2022-11-01 12:51:14.547  video_capture INFO Terminating the logger.
+     
+[(Back to the top)](#video-capture)
+
+     
+     
+  
   
    ________   
     
