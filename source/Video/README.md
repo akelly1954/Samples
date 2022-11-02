@@ -27,6 +27,7 @@ Stream video frames from the source (a camera), through the linux driver, to the
   * [Example 1: A simple run](#example-1-a-simple-run)
   * [Example 2: A longer run With YUYV Pixel Format](#example-2-a-longer-run-with-yuyv-pixel-format)
   * [Example 3: When Things Go Terribly Wrong](#example-3-when-things-go-terribly-wrong)
+  * [Example 4: Is This Working? - Write frames to file](#example-4-is-this-working)    
 
 
 #### Introduction
@@ -928,6 +929,286 @@ files which should be identical.  See the next example (but don't expect answers
 that is not the focus of this document.  More work to be done, and not too satisfying. Almost like 
 one of those detective movies on TV, but you haven't figured out by the end of the movie "so who dunnit?".  To be 
 continued.    
+
+[(Back to the top)](#video-capture)
+
+#### Example 4: Is This Working?  
+
+This example shows a quick "sanity test" on the system. The question "is this thing working at all?" does come up 
+when doing battle with a nasty bug, or json syntax issues, or whatever, and this example puts that question to rest very quickly 
+(one way or another).
+
+The **main_video_capture** app has two different and unrelated ways to write the raw video stream that comes from 
+the driver, to a file.  By convention (here), the data file suffix is ".data".     
+
+One way, is to write the stream out to a .data file using the **-fn** flag.
+
+The other is to write the stream out to a (different) .data file, using the **-proc-redir** and **-use-other-proc** 
+flags in conjunction with each other.   
+
+As an aside, during this operation, when the two different methods are both enabled, only a single copy of the data is done. 
+Any new buffer presented to the driver interface code, is copied into a **new** fixed array of identical size to the 
+driver's buffer, and a std::shared_ptr<> is established for it.  The shared_ptr<> is added to the ring buffer (also 
+referred to here as "the queue"), where the queue thread finds it, and uses the shared_ptr<> to both write the data 
+to the output (.data) file, as well as to write the data to a process established and running 
+which in this case is the linux **dd** utility, which in turn writes the output to a different .data file.     
+
+Back to our example. Please look up the description for these three flags in the first sections of this document, 
+as well as the **video_capture.json** configuration file, to make the connections between the flags, the file names, 
+as well as the specific actions that are dependent on the pixel format chosen for this opration.    
+
+The end result is that this is what happens to both data streams:    
+  * The *-fn* flag causes the video stream data to be written to the file **video_capture.data** (regardless of which pixel format is used). 
+  * The **-proc-redir** and **-use-other-proc** flags cause the video stream data to be piped to the process "**dd of=video_capture.dd.data 2>/dev/null**", which writes out the stream in the file **video_capture.dd.data**.  
+
+**BOTH FILES SHOULD BE IDENTICAL**.  If they're not, then something is wrong.  
+
+[(Back to the top)](#video-capture)
+
+Let's run the program:     
+ 
+     $ main_video_capture -fn -pr -fc 200 -use-other-proc -pf h264 
+         Frame count is set to 200(int) = 200(string)
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to true, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 800.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_H264: H264 with start codes
+         use_other_proc is set to true
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 200(int) = 200(string)
+     
+     Log file: video_capture_log.txt
+     driver: frame: 1920 x 1080
+     driver: pixel format set to 0x34363248 - H264: H264 with start codes
+     $
+
+The output on the diplay shows the options selected. The first thing to check are the 
+existence and size of both output .data files.     
+     
+     $ ls -ltrh 
+         .  .  .  .
+     -rwxr-xr-x 1 andrew andrew  645144 Nov  1 08:54 main_video_capture
+     -rw-r--r-- 1 andrew andrew    8340 Nov  2 03:28 video_capture_log.txt
+     -rw-r--r-- 1 andrew andrew 8319479 Nov  2 03:28 video_capture.dd.data
+     -rw-r--r-- 1 andrew andrew 8319479 Nov  2 03:28 video_capture.data
+
+This shows that both files have an identical size (which is a good thing). If the sizes were 
+not identical in size (to the byte), this would indicate a problem.  Next, use the linux **cmp** 
+utility to compare both files byte for byte. The **cmp** utility is terse, and if everything compared well, it 
+stays silent and exits with a 0 exit code.    
+     
+     $ cmp video_capture.dd.data video_capture.data; echo $?
+     0
+
+[(Back to the top)](#video-capture)
+
+At this point, the test is done, and the result was **success!**. If you're like me, though, you check 
+a few more things just to make sure that the **cmp** utility is still working after all these years (joking).   
+
+Next, you can convert one of the .data files to a .mp4 file so it can be viewed.  Either of the files can 
+be used, because **cmp** compared them and found them identical.     
+
+There's an undocumented (by me) script installed in the same directory that the program is run out of, called 
+**convert_raw_capture.bash**.   You should NOT run this file, but just pick one of the **ffmpeg** commands listed 
+in it (based on whether the pixel format used during the run was **h264** or **yuyv**):     
+
+     $ cat convert_raw_capture.bash 
+     #!/bin/bash
+     
+     # This converts the H264 output from video_capture.dd.data to video_capture_dd.mp4.
+     
+     ffmpeg -nostdin -y -f h264 -i video_capture.dd.data -vcodec copy video_capture_dd.mp4.
+     
+     # Alternatively, this converts the YUYV output from video_capture.dd.data to video_capture_dd.mp4.
+     
+     ffmpeg  -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i video_capture.dd.data \
+            -c:v libx264 -preset ultrafast -qp 0 video_capture_dd.mp4    
+
+We're going to pick the first (**H264**) version of the command, since we used h264 pixel format during the test.    
+
+     $
+     $ ffmpeg -nostdin -y -f h264 -i video_capture.dd.data -vcodec copy video_capture_dd.mp4 
+     ffmpeg version 4.3.4-0+deb11u1 Copyright (c) 2000-2021 the FFmpeg developers
+       built with gcc 10 (Debian 10.2.1-6)
+       configuration: --prefix=/usr --extra-version=0+deb11u1 --toolchain=hardened \
+                      --libdir=/usr/lib/x86_64-linux-gnu --incdir=/usr/include/x86_64-linux-gnu --arch=amd64 \
+                      --enable-gpl --disable-stripping --enable-avresample --disable-filter=resample \
+                      --enable-gnutls --enable-ladspa --enable-libaom --enable-libass --enable-libbluray \
+                      --enable-libbs2b --enable-libcaca --enable-libcdio --enable-libcodec2 --enable-libdav1d \
+                      --enable-libflite --enable-libfontconfig --enable-libfreetype --enable-libfribidi \
+                      --enable-libgme --enable-libgsm --enable-libjack --enable-libmp3lame --enable-libmysofa \
+                      --enable-libopenjpeg --enable-libopenmpt --enable-libopus --enable-libpulse \
+                      --enable-librabbitmq --enable-librsvg --enable-librubberband --enable-libshine \
+                      --enable-libsnappy --enable-libsoxr --enable-libspeex --enable-libsrt --enable-libssh \
+                      --enable-libtheora --enable-libtwolame --enable-libvidstab --enable-libvorbis \
+                      --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx265 --enable-libxml2 \
+                      --enable-libxvid --enable-libzmq --enable-libzvbi --enable-lv2 --enable-omx --enable-openal \
+                      --enable-opencl --enable-opengl --enable-sdl2 --enable-pocketsphinx --enable-libmfx \
+                      --enable-libdc1394 --enable-libdrm --enable-libiec61883 --enable-chromaprint --enable-frei0r \
+                      --enable-libx264 --enable-shared
+       libavutil      56. 51.100 / 56. 51.100
+       libavcodec     58. 91.100 / 58. 91.100
+       libavformat    58. 45.100 / 58. 45.100
+       libavdevice    58. 10.100 / 58. 10.100
+       libavfilter     7. 85.100 /  7. 85.100
+       libavresample   4.  0.  0 /  4.  0.  0
+       libswscale      5.  7.100 /  5.  7.100
+       libswresample   3.  7.100 /  3.  7.100
+       libpostproc    55.  7.100 / 55.  7.100
+     [h264 @ 0x563e55abe2c0] Stream #0: not enough frames to estimate rate; consider increasing probesize
+     Input #0, h264, from 'video_capture.dd.data':
+       Duration: N/A, bitrate: N/A
+         Stream #0:0: Video: h264 (Baseline), yuvj420p(pc, bt709, progressive), 1920x1080, 25 fps, 25 tbr, \
+         1200k tbn, 50 tbc
+     Output #0, mp4, to 'video_capture_dd.mp4':
+       Metadata:
+         encoder         : Lavf58.45.100
+         Stream #0:0: Video: h264 (Baseline) (avc1 / 0x31637661), yuvj420p(pc, bt709, progressive), 1920x1080, \
+         q=2-31, 25 fps, 25 tbr, 1200k tbn, 1200k tbc
+     Stream mapping:
+       Stream #0:0 -> #0:0 (copy)
+     [mp4 @ 0x563e55ae2f40] Timestamps are unset in a packet for stream 0. This is deprecated and will stop \
+     working in the future. Fix your code to set the timestamps properly
+     frame=  200 fps=0.0 q=-1.0 Lsize=    8126kB time=00:00:07.96 bitrate=8363.0kbits/s speed= 316x    
+     video:8124kB audio:0kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.020638%
+     $
+
+[(Back to the top)](#video-capture)
+
+Next, run the resulting mp4 file with a viewer, for a satisfying 8 second video clip of something (it's 
+usually a wall in my case):     
+
+     $ vlc video_capture_dd.mp4
+
+And we're done.  The next section is quite unneccesary, but is provided for the sake of completeness.     
+
+     $ cat video_capture_log.txt
+     
+     2022-11-02 03:28:43.998  video_capture INFO START OF NEW VIDEO CAPTURE RUN
+     2022-11-02 03:28:43.998  video_capture DBUG Current option values after getting shared_ptr<> to Log::Logger:
+          Log Level 0
+          Log level string DBUG
+          Log channel name video_capture
+          Log file name video_capture_log.txt
+          Output to console disabled
+          Output to log file enabled
+     
+     2022-11-02 03:28:43.998  video_capture INFO 
+     
+     Logger setup is complete.
+     
+     2022-11-02 03:28:43.998  video_capture INFO 
+     2022-11-02 03:28:43.998  video_capture INFO The last few lines of deferred output from app initialization are shown here.   ******
+     2022-11-02 03:28:43.998  video_capture INFO For the full set of deferred lines, use the -loginit flag on the command line.  ******
+     2022-11-02 03:28:43.998  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     From JSON:  Getting available pixel formats for interface "v4l2":
+             {  h264  other  yuyv    }
+     From JSON:  Set logger channel-name to: video_capture
+     From JSON:  Set logger file-name to: video_capture_log.txt
+     From JSON:  Set default logger log level to: DBUG
+     From JSON:  Enable writing raw video frames to output file: false
+     From JSON:  Set raw video output file name to: video_capture.data
+     From JSON:  Enable writing raw video frames to process: true
+     From JSON:  Enable profiling: false
+     From JSON:  Set milliseconds between profile snapshots to: 800
+     From JSON:  Set default video-frame-grabber to: v4l2
+     From JSON:  Set number of frames to grab (framecount) to: 20
+     From JSON:  v4l2 is labeled as: V4L2
+     From JSON:  Set v4l2 device name to /dev/video0
+     From JSON:  Set v4l2 pixel format to V4L2_PIX_FMT_H264: H264 with start codes
+     From JSON:  Set raw video output process command to: ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4
+     
+     2022-11-02 03:28:43.998  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to true, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 800.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_H264: H264 with start codes
+         use_other_proc is set to true
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 200(int) = 200(string)
+     
+     2022-11-02 03:28:43.998  video_capture DBUG main_video_capture:  started video profiler thread
+     2022-11-02 03:28:43.998  video_capture DBUG main_video_capture:  the video capture thread will kick-start the video_profiler operations.
+     2022-11-02 03:28:43.998  video_capture DBUG Profiler thread started...
+     2022-11-02 03:28:43.998  video_capture NOTE Profiler thread: skipping first frame to establish a duration baseline.
+     2022-11-02 03:28:43.998  video_capture DBUG main_video_capture: kick-starting the queue operations.
+     2022-11-02 03:28:43.998  video_capture DBUG main_video_capture:  starting the video capture thread.
+     2022-11-02 03:28:43.999  video_capture DBUG main_video_capture:  kick-starting the video capture operations.
+     2022-11-02 03:28:43.999  video_capture DBUG Created/truncated output file "video_capture.data"
+     2022-11-02 03:28:43.999  video_capture DBUG In VideoCapture::raw_buffer_queue_handler(): created video_capture.data.
+     2022-11-02 03:28:43.999  video_capture DBUG 
+     raw_buffer_queue_handler: Updated output process to:  dd of=video_capture.dd.data 2> /dev/null
+     2022-11-02 03:28:43.999  video_capture INFO Video Capture thread: Requesting the v4l2 frame-grabber.
+     2022-11-02 03:28:43.999  video_capture INFO Video Capture thread: The list of available frame grabbers in the json config file is: opencv v4l2 
+     2022-11-02 03:28:43.999  video_capture INFO Video Capture thread: Picking the v4l2 frame-grabber.
+     2022-11-02 03:28:43.999  video_capture INFO Video Capture thread: Interface used is v4l2
+     2022-11-02 03:28:43.999  video_capture DBUG Started the process "dd of=video_capture.dd.data 2> /dev/null".
+     2022-11-02 03:28:43.999  video_capture DBUG In VideoCapture::raw_buffer_queue_handler(): Successfully started "dd of=video_capture.dd.data".
+     2022-11-02 03:28:44.068  video_capture INFO Device /dev/video0
+     2022-11-02 03:28:44.070  video_capture DBUG Set video format to (1920 x 1080), pixel format is V4L2_PIX_FMT_H264: H264 with start codes
+     2022-11-02 03:28:44.070  video_capture DBUG driver: frame: 1920 x 1080
+     2022-11-02 03:28:44.070  video_capture DBUG driver: pixel format set to 0x34363248 - H264: H264 with start codes
+     2022-11-02 03:28:44.070  video_capture DBUG driver: bytes required: 4147200
+     2022-11-02 03:28:44.070  video_capture DBUG driver: I/O METHOD: IO_METHOD_MMAP
+     2022-11-02 03:28:44.262  video_capture DBUG vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.
+     2022-11-02 03:28:44.263  video_capture NOTE Profiler info...
+     2022-11-02 03:28:44.263  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:44.263  video_capture NOTE Number of frames received: 0
+     2022-11-02 03:28:44.263  video_capture NOTE Current avg frame rate (per second): 0
+     2022-11-02 03:28:45.063  video_capture NOTE Profiler info...
+     2022-11-02 03:28:45.063  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:45.063  video_capture NOTE Number of frames received: 23
+     2022-11-02 03:28:45.063  video_capture NOTE Current avg frame rate (per second): 30.2234
+     2022-11-02 03:28:45.864  video_capture NOTE Profiler info...
+     2022-11-02 03:28:45.864  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:45.864  video_capture NOTE Number of frames received: 44
+     2022-11-02 03:28:45.864  video_capture NOTE Current avg frame rate (per second): 27.6208
+     2022-11-02 03:28:46.664  video_capture NOTE Profiler info...
+     2022-11-02 03:28:46.664  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:46.664  video_capture NOTE Number of frames received: 63
+     2022-11-02 03:28:46.664  video_capture NOTE Current avg frame rate (per second): 26.6385
+     2022-11-02 03:28:47.465  video_capture NOTE Profiler info...
+     2022-11-02 03:28:47.465  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:47.465  video_capture NOTE Number of frames received: 84
+     2022-11-02 03:28:47.465  video_capture NOTE Current avg frame rate (per second): 26.3158
+     2022-11-02 03:28:48.265  video_capture NOTE Profiler info...
+     2022-11-02 03:28:48.265  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:48.265  video_capture NOTE Number of frames received: 103
+     2022-11-02 03:28:48.265  video_capture NOTE Current avg frame rate (per second): 25.9773
+     2022-11-02 03:28:49.065  video_capture NOTE Profiler info...
+     2022-11-02 03:28:49.066  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:49.066  video_capture NOTE Number of frames received: 123
+     2022-11-02 03:28:49.066  video_capture NOTE Current avg frame rate (per second): 25.8132
+     2022-11-02 03:28:49.866  video_capture NOTE Profiler info...
+     2022-11-02 03:28:49.866  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:49.866  video_capture NOTE Number of frames received: 143
+     2022-11-02 03:28:49.866  video_capture NOTE Current avg frame rate (per second): 25.7518
+     2022-11-02 03:28:50.666  video_capture NOTE Profiler info...
+     2022-11-02 03:28:50.666  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:50.666  video_capture NOTE Number of frames received: 163
+     2022-11-02 03:28:50.667  video_capture NOTE Current avg frame rate (per second): 25.6088
+     2022-11-02 03:28:51.467  video_capture NOTE Profiler info...
+     2022-11-02 03:28:51.467  video_capture NOTE Shared pointers in the ring buffer: 0
+     2022-11-02 03:28:51.467  video_capture NOTE Number of frames received: 183
+     2022-11-02 03:28:51.467  video_capture NOTE Current avg frame rate (per second): 25.5551
+     2022-11-02 03:28:52.103  video_capture INFO v4l2if_mainloop: CAPTURE TERMINATION REQUESTED.
+     2022-11-02 03:28:52.104  video_capture DBUG MAIN: Video Capture thread is done. Cleanup and terminate.
+     2022-11-02 03:28:52.104  video_capture DBUG main_video_capture:  terminating queue thread.
+     2022-11-02 03:28:52.104  video_capture INFO Terminating the logger.
 
 [(Back to the top)](#video-capture)
 

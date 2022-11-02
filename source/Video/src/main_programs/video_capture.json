@@ -16,7 +16,7 @@
             "write-to-file":            0,
             "write-to-process":         1,
             "profiling":                0,
-            "profile-timeslice-ms":     300
+            "profile-timeslice-ms":     800
         },
 
         "Video": {
