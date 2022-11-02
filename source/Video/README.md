@@ -26,6 +26,7 @@ Stream video frames from the source (a camera), through the linux driver, to the
 [EXAMPLES OF REAL USE](#examples-of-real-use) 
   * [Example 1: A simple run](#example-1-a-simple-run)
   * [Example 2: A longer run With YUYV Pixel Format](#example-2-a-longer-run-with-yuyv-pixel-format)
+  * [Example 3: When Things Go Terribly Wrong](#example-3-when-things-go-terribly-wrong)
 
 
 #### Introduction
@@ -746,13 +747,190 @@ than it should be (28+ fps).
      2022-11-01 12:51:14.547  video_capture DBUG MAIN: Video Capture thread is done. Cleanup and terminate.
      2022-11-01 12:51:14.547  video_capture DBUG main_video_capture:  terminating queue thread.
      2022-11-01 12:51:14.547  video_capture INFO Terminating the logger.
-     
+
 [(Back to the top)](#video-capture)
 
+#### Example 3: When Things Go Terribly Wrong  
+
+This example focuses on one way to get to the cause of something that went wrong.  This is just one
+example, but it does point to a decent way to get some answers.   Dealing with an anomaly, I try to 
+find out what actually caused a problem, regardless of who's at fault.  Plenty of time to blame someone 
+else later.  This particular example happens occasionally, and has to do with the USB connection to the 
+camera, the V4L2 driver, and the software layers "above" that, which include a lot of software I've 
+written.  To reproduce the problem, I configure the system to grab frames in YUYV pixel format (much like 
+I do in the previous example), and then switch back to H264 (much like I do in this example below). Here's what happens:       
      
+First, run the command:   
+
+     $ main_video_capture -fc 300 -pr 100
+          
+This is meant to go to the default H264 pixel format. The Output on the screen:     
      
-  
-  
+     Frame count is set to 300(int) = 300(string)
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to false, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 100.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_H264: H264 with start codes
+         use_other_proc is set to false
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 300(int) = 300(string)
+     
+     Log file: video_capture_log.txt
+     driver: frame: 1920 x 1080
+     driver: pixel format set to 0x34363248 - H264: H264 with start codes
+     
+     Exception thrown: v4l2if_start_capturing (MMAP): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE \
+                       error, errno=110: Connection timed out ...aborting.
+     ERROR:  Program terminated.
+
+So there's one problem. The V4L2 linux driver is being asked to connect to the USB camera, and fails on one of 
+the **ioctl()** system calls that is needed. I know exactly where this error came from, since I wrote the 
+**throw** code to throw this 
+exception, as well as the **try/catch** statements that produce this output.  Yet there are no conclusions to be drawn 
+from this at this time.  We have to see the files created, as well as the detail in the log file to give us more 
+information.  
+
+[(Back to the top)](#video-capture)
+
+The list of files created during the run: 
+
+     # ls -ltrh 
+         . . . . 
+     -rwxr-xr-x 1 andrew andrew 631K Nov  1 08:54 main_video_capture
+     -rw-r--r-- 1 andrew andrew 401M Nov  1 12:51 video_capture.mp4
+     -rw-r--r-- 1 andrew andrew 6.0K Nov  1 14:26 video_capture_log.txt
+     
+Notice the timestamp on the mp4 file.  It is more than an hour before the timestamp on the log file.  It must be 
+the mp4 file created in the previous YUYV run, and is irrelevant to this run.  The conclusion is that the driver interface 
+code never even came to the point of writing any data to the **ffmpeg** utility.  Viewing the file with **vlc** 
+indeed shows the 640x480 video produced for YUYV, not the 1920x1080 format we're expecting.    
+
+The log file exists, though, so let's take a look at it:  
+
+     $ cat video_capture_log.txt
+     2022-11-01 14:26:40.872  video_capture INFO START OF NEW VIDEO CAPTURE RUN
+     2022-11-01 14:26:40.872  video_capture DBUG Current option values after getting shared_ptr<> to Log::Logger:
+          Log Level 0
+          Log level string DBUG
+          Log channel name video_capture
+          Log file name video_capture_log.txt
+          Output to console disabled
+          Output to log file enabled
+     
+     2022-11-01 14:26:40.873  video_capture INFO 
+     
+     Logger setup is complete.
+     
+     2022-11-01 14:26:40.873  video_capture INFO 
+     2022-11-01 14:26:40.873  video_capture INFO The last few lines of deferred output from app initialization are shown here.   ******
+     2022-11-01 14:26:40.873  video_capture INFO For the full set of deferred lines, use the -loginit flag on the command line.  ******
+     2022-11-01 14:26:40.873  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     From JSON:  Getting available pixel formats for interface "v4l2":
+             {  h264  other  yuyv    }
+     From JSON:  Set logger channel-name to: video_capture
+     From JSON:  Set logger file-name to: video_capture_log.txt
+     From JSON:  Set default logger log level to: DBUG
+     From JSON:  Enable writing raw video frames to output file: false
+     From JSON:  Set raw video output file name to: video_capture.data
+     From JSON:  Enable writing raw video frames to process: true
+     From JSON:  Enable profiling: false
+     From JSON:  Set milliseconds between profile snapshots to: 300
+     From JSON:  Set default video-frame-grabber to: v4l2
+     From JSON:  Set number of frames to grab (framecount) to: 20
+     From JSON:  v4l2 is labeled as: V4L2
+     From JSON:  Set v4l2 device name to /dev/video0
+     From JSON:  Set v4l2 pixel format to V4L2_PIX_FMT_H264: H264 with start codes
+     From JSON:  Set raw video output process command to: ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4
+     
+     2022-11-01 14:26:40.873  video_capture INFO DELAYED: .  .  .  . . . .
+     
+     Command line parsing:
+         Logging of initialization lines is set to false.
+         redirect stderr to file is set to true
+         Stderr output from the process streamed to, will be redirected to /dev/null
+         write-frames-to-file is set to false, file name is video_capture.data
+         Profiling is set to enabled, timeslice = 100.
+         Video frame grabber device name is set to /dev/video0
+         Video pixel format is set to: V4L2_PIX_FMT_H264: H264 with start codes
+         use_other_proc is set to false
+         test_suspend_resume is set to false
+         Video frame grabber name is set to v4l2
+         Log level is set to 0 = DBUG
+         Frame count is set to 300(int) = 300(string)
+
+So far so good.  All the options and settings are configured correctly for this run.
+
+[(Back to the top)](#video-capture)
+
+     2022-11-01 14:26:40.873  video_capture DBUG main_video_capture:  started video profiler thread
+     2022-11-01 14:26:40.873  video_capture DBUG main_video_capture:  the video capture thread will kick-start the video_profiler operations.
+     2022-11-01 14:26:40.873  video_capture DBUG Profiler thread started...
+     2022-11-01 14:26:40.873  video_capture NOTE Profiler thread: skipping first frame to establish a duration baseline.
+     2022-11-01 14:26:40.873  video_capture DBUG main_video_capture: kick-starting the queue operations.
+     2022-11-01 14:26:40.873  video_capture DBUG main_video_capture:  starting the video capture thread.
+     2022-11-01 14:26:40.873  video_capture DBUG raw_buffer_queue_handler: Updated output process to: \
+                              ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4 2> /dev/null 
+     2022-11-01 14:26:40.876  video_capture DBUG main_video_capture:  kick-starting the video capture operations.
+     2022-11-01 14:26:40.876  video_capture INFO Video Capture thread: Requesting the v4l2 frame-grabber.
+     2022-11-01 14:26:40.876  video_capture INFO Video Capture thread: The list of available frame grabbers in the json \
+                                                                       config file is: opencv v4l2 
+     2022-11-01 14:26:40.876  video_capture INFO Video Capture thread: Picking the v4l2 frame-grabber.
+     2022-11-01 14:26:40.876  video_capture INFO Video Capture thread: Interface used is v4l2
+     2022-11-01 14:26:40.876  video_capture DBUG Started the process "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec \
+                                                                             copy video_capture.mp4 2> /dev/null".
+     2022-11-01 14:26:40.876  video_capture DBUG In VideoCapture::raw_buffer_queue_handler(): Successfully started \
+                                                "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4".
+     2022-11-01 14:26:40.948  video_capture INFO Device /dev/video0
+     2022-11-01 14:26:40.949  video_capture DBUG Set video format to (1920 x 1080), pixel format is V4L2_PIX_FMT_H264: H264 with start codes
+     2022-11-01 14:26:40.949  video_capture DBUG driver: frame: 1920 x 1080
+     2022-11-01 14:26:40.949  video_capture DBUG driver: pixel format set to 0x34363248 - H264: H264 with start codes
+     2022-11-01 14:26:40.949  video_capture DBUG driver: bytes required: 4147200
+     2022-11-01 14:26:40.949  video_capture DBUG driver: I/O METHOD: IO_METHOD_MMAP
+     2022-11-01 14:26:51.116  video_capture EROR v4l2if_start_capturing (MMAP): \
+                   ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE error, errno=110: Connection timed out ...aborting.
+     2022-11-01 14:26:51.116  video_capture EROR vidcap_v4l2_driver_interface:   
+
+And there's the error.  (**Hint:** to find the error in a long log file, search for the string **EROR** - this is the token printed 
+out by *LoggerCpp* for log line that the programmer classifies as an error).  So the first error that shows up in the log originates 
+with the V4L2 linux driver, and it shows the same error we saw on the display after starting this run.     
+
+             ****************************************
+             ***** ERROR TERMINATION REQUESTED. *****
+             ****************************************
+     
+     2022-11-01 14:26:51.116  video_capture DBUG vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.
+     2022-11-01 14:26:51.117  video_capture EROR vidcap_v4l2_driver_interface::run(): Got exception running the video capture: \
+                       v4l2if_start_capturing (MMAP): ioctl VIDIOC_STREAMON/V4L2_BUF_TYPE_VIDEO_CAPTURE error, errno=110: \
+                       Connection timed out ...aborting.. Aborting...
+     2022-11-01 14:26:51.381  video_capture DBUG MAIN: ERROR: Video Capture thread terminating. Cleanup and terminate.
+     2022-11-01 14:26:51.381  video_capture DBUG main_video_capture:  terminating queue thread.
+     2022-11-01 14:26:51.381  video_capture EROR ERROR:  Program terminated.
+     2022-11-01 14:26:51.381  video_capture DBUG Queue thread terminating ...
+     2022-11-01 14:26:51.381  video_capture DBUG Shutting down the process "ffmpeg -nostdin -y -f h264 \
+                                                   -i  pipe:0 -vcodec copy video_capture.mp4" (fflush, pclose(): 
+     2022-11-01 14:26:51.381  video_capture INFO Terminating the logger.   
+
+So it seems like the main thread acted appropriately, with the only difference is that it knows that an error occured.   
+    
+It would be easy to blame either the V4L2 driver at this point, or the USB driver/subsystem, but there is a lot more work 
+to be done here to narrow down the possibilities:  Connect a different USB camera to the system and try to reproduce.  Or, 
+move the USB connection from the USB hub it was connected to, to one of the computer's USB connections (which is also a hub,
+but internal to the system). Another possibility is to run a test scenario that I use regularly, where the **-fn** flag is 
+used on the command line, as well as the **-use-other-proc** flag which, if configured properly, would create **two** .data 
+files which should be identical.  See the next example (but don't expect answers for the issue just shown above, since 
+that is not the focus of this document.  More work to be done, and not too satisfying. Almost like 
+one of those detective movies on TV, but you haven't figured out by the end of the movie "so who dunnit?".  To be 
+continued.    
+
+[(Back to the top)](#video-capture)
+
    ________   
     
     
