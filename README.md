@@ -1,12 +1,12 @@
 # Samples
 
 ## Going on now:   
-      
-The [README file in the Video project](source/Video/README.md) is beginning to take shape.  This will become a multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is still a work in progress, but already recommended reading if you want to wade into these waters.    
-      
+
 **Done with the following projects:**     
      
-* Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
+ * The [README file in the Video project](source/Video/README.md) is complete in its current form.  This is a  multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is recommended reading if you want to wade into these waters. 
+
+ * Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
      
 * Done with the restructure of the Video project source files (as well as the associated *CMake* files.   
         
@@ -194,24 +194,15 @@ This is work in progress -- I'm writing code and uploading the sources to the re
 Thank you.     
      
 **SEE ALSO:**    
-      
-The README.md file in the **source** folder (./source/README.md).    
-The file **./LICENSE** contains the legal language covering distribution and use of the sources in this project (that belong to me). 
-The software that does not belong to me, is covered by its own license which is clearly marked in the code and in the README files.     
-     
-     
+
+The [README.md file](source/README.md) in the **source** folder.    
+The [README file in the Video project](source/Video/README.md) in the **Video** project.     
+The file [LICENSE](./LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
+The file [LICENSE](source/3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
+The file [LICENSE.txt](source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
+    
 ### Current deficiencies:
 
 Currently the Windows' WIN32 configuration has not been built and tested yet. 
 This may be added in the future.
-
-**NEXT**: Read the **source/README.md** information for more info. 
-
-
-
-
-
-
-
-
 

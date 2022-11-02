@@ -355,9 +355,8 @@ as well as the source hardware (camera).  This option is set automatically based
 
 [(Back to the top)](#video-capture)
    
-### EXAMPLES OF REAL USE   
-Don't be alarmed...   **THIS SECTION IS UNDER CONSTRUCTION....**     
-  
+### EXAMPLES OF REAL USE 
+
 This section will include examples run on my desktop, with real output and log file unchanged. 
 There are a few explanations and pointers interjected along the way.  The most definitive way to
 find out what exactly goes on during the run is to first, examine the output on the screen.  Then,
@@ -1227,9 +1226,9 @@ Thank you.
 The [README.md file](../../README.md) in the root **Samples** folder.    
 The [README.md file](../README.md) in the **source** folder.    
 The file [LICENSE](../../LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
-The software that does not belong to me, is covered by its own license which is clearly marked in the code and in the README files.     
-     
-     
+The file [LICENSE](../3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
+The file [LICENSE.txt](../3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
+
 ### Current deficiencies:
 
 Currently the Windows' WIN32 configuration has not been built and tested yet. 
