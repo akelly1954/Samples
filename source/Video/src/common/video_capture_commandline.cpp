@@ -373,7 +373,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         Video::vcGlobals::framecount = fcount_value;
         Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
         strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
-        std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
+        // TODO:  remove this???   std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
     }
 
     return true;
