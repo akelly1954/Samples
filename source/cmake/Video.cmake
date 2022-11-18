@@ -14,7 +14,8 @@ if (NOT WIN32)
 else()
     message (STATUS "WINDOWS system detected. - NOT IMPLEMENTED FOR THIS PROJECT YET" )
 endif()
+find_package( OpenCV REQUIRED )
 
 set (Video "Video${DBG}")
-set (Video_HEADERS "${SampleRoot_DIR}/source/Video/include")
+set (Video_HEADERS "${SampleRoot_DIR}/source/Video/include" ${OpenCV_INCLUDE_DIRS} )
 

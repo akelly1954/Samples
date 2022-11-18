@@ -25,10 +25,11 @@ include_directories( ${Video_HEADERS}
 
 add_library( ${Video} ${LIBTYPE} ${SOURCES} )
 target_link_libraries( ${Video}
-                        ${EnetUtil_LIB}
-                        ${Util_LIB}
-                        ${LoggerCpp_LIB}
-                        ${JsonCpp_LIB}
+                       ${EnetUtil_LIB}
+                       ${Util_LIB}
+                       ${LoggerCpp_LIB}
+                       ${JsonCpp_LIB}
+                       ${OpenCV_LIBS}
                        ${CMAKE_THREAD_LIBS_INIT} ${LINKOPTIONS}
                      )
 
@@ -62,6 +63,7 @@ target_link_libraries( main_video_capture
                             ${Util_LIB}
                             ${LoggerCpp_LIB}
                             ${JsonCpp_LIB}
+                            ${OpenCV_LIBS}
                             ${CMAKE_THREAD_LIBS_INIT} 
                             ${LINKOPTIONS}
                      )

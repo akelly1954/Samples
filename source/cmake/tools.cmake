@@ -32,6 +32,8 @@ else()
     message (STATUS "WINDOWS system detected. - NOT IMPLEMENTED FOR THIS PROJECT YET" )
 endif()
 
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
 set( TOOLS_INCLUDED:BOOL ON )
 
 set( LoggerCpp_HEADERS "${LoggerCppSource_DIR}/include" )

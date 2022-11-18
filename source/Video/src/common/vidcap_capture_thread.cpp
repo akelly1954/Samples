@@ -1,6 +1,7 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_capture_thread.hpp>
 #include <vidcap_v4l2_driver_interface.hpp>
+#include <vidcap_opencv_stream.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -115,9 +116,17 @@ void VideoCapture::video_capture(Log::Logger logger)
     }
     else if (interfaceName == "opencv")
     {
-        std::string str = std::string("Video Capture thread: UNIMPLEMENTED interface requested: ") + interfaceName + ".  Aborting...";
-        logger.warning() << str;
-        throw std::runtime_error(str);
+        logger.info() << "Video Capture thread: Interface used is " << interfaceName;
+        vidcap_capture_base::sp_interface_pointer = new vidcap_opencv_stream(logger);
+
+        // Start the video interface:
+        vidcap_capture_base::sp_interface_pointer->initialize();
+        if (vidcap_capture_base::sp_interface_pointer->isterminated())
+        {
+            logger.error() <<  "Video Capture thread: Opencv VideoCapture object could not be initialized. Terminating...";
+            throw std::runtime_error("Video Capture thread: Opencv VideoCapture object could not be initialized.");
+        }
+        vidcap_capture_base::sp_interface_pointer->run();
     }
     else
     {

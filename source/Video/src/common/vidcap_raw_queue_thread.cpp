@@ -168,7 +168,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
     if (Video::vcGlobals::write_frames_to_process && processstream != NULL)
     {
         logger.debug() << "Shutting down the process \""
-                       << Video::vcGlobals::output_process << "\" (fflush, pclose(): ";
+                       << Video::vcGlobals::output_process << "\" (fflush, pclose()): ";
         fflush(processstream);
         int errnocopy = 0;
         if (::pclose(processstream) == -1)
