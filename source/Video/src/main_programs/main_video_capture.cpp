@@ -31,7 +31,7 @@
 #include <ConfigSingleton.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <vidcap_raw_queue_thread.hpp>
-#include <vidcap_capture_thread.hpp>
+#include <vidcap_plugin_factory.hpp>
 #include <json/json.h>
 #include <thread>
 #include <stdio.h>
@@ -53,8 +53,10 @@ void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
     ::sleep(sleep_seconds);
     logger.debug() << argv0 << ": In test_raw_capture_ctl: thread running";
 
-    VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
+    // TODO: ZZZ VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
 
+    return;
+#if 0
     if (!ifptr)
     {
         std::string str("test_raw_capture_ctl thread: Could not obtain video capture interface pointer (is null).");
@@ -88,6 +90,7 @@ void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
 
     logger.debug() << "test_raw_capture_ctl: FINISH CAPTURE REQUEST...";
     if (ifptr) ifptr->set_terminated(true);
+#endif // 0
 }
 
 // CONFIGURATION
@@ -335,7 +338,7 @@ int main(int argc, const char *argv[])
         // by the condition variable (see below vidcap_profiler::s_condvar.send_ready().
         if (Video::vcGlobals::profiling_enabled)
         {
-            profilingthread = std::thread(VideoCapture::video_profiler, ulogger);
+            // TODO: XXX       profilingthread = std::thread(VideoCapture::video_profiler, ulogger);
             ulogger.debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
             ulogger.debug() << argv0 << ":  the video capture thread will kick-start the video_profiler operations.";
@@ -354,11 +357,12 @@ int main(int argc, const char *argv[])
         //
         /////////////////////////////////////////////////////////////////////
         ulogger.debug() << argv0 << ":  starting the video capture thread.";
-        videocapturethread = std::thread(VideoCapture::video_capture, ulogger);
+        // TODO: XXX               videocapturethread = std::thread(VideoCapture::video_capture, ulogger);
         videocapturethread.detach();
 
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
-        VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+
+        // TODO: ZZZ             VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
         // Start the test for suspend/resume (-test-suspend-resume command line flag)
         if (vcGlobals::test_suspend_resume)
@@ -368,12 +372,14 @@ int main(int argc, const char *argv[])
             trcc = std::thread (test_raw_capture_ctl, ulogger, argv0);
         }
 
+#if 0
         // This loop waits for video capture termination (normal or otherwise).  The first second or so of
         // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the
         // logged messages are commented out since they're not needed unless a runtime issue occurs.
         for (int waitforfinished = 1; ; waitforfinished++)
         {
-            auto ptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
+            auto ptr = nullptr;              // TODO: ZZZ get rid of this
+
             if (ptr == nullptr)
             {
                 if (waitforfinished == 1)
@@ -423,6 +429,7 @@ int main(int argc, const char *argv[])
             // grabber (v4l2 or opencv at this time) to terminate.
             ifptr->set_terminated(true);
         }
+#endif // 0
 
         if (error_termination)
         {

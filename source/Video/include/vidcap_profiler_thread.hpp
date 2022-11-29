@@ -1,11 +1,12 @@
 #pragma once
 
+#if 0
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
 #include <LoggerCpp/LoggerCpp.h>
-#include <vidcap_capture_thread.hpp>
+// TODO:     #include <vidcap_capture_thread.hpp>
 #include <stdio.h>
 #include <thread>
 #include <mutex>
@@ -117,8 +118,6 @@ public:
 } // end of namespace VideoCapture
 
 
-
-
-
+#endif // 0
 
 

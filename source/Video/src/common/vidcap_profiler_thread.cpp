@@ -1,22 +1,4 @@
-#include <vidcap_raw_queue_thread.hpp>
-#include <vidcap_profiler_thread.hpp>
-#include <Utility.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
-#include <video_capture_globals.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-#include <chrono>
-#include <vector>
-#include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <assert.h>
-
+#if 0
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -40,6 +22,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
+
+#include <vidcap_raw_queue_thread.hpp>
+#include <vidcap_profiler_thread.hpp>
+#include <Utility.hpp>
+#include <NtwkUtil.hpp>
+#include <NtwkFixedArray.hpp>
+#include <video_capture_globals.hpp>
+#include <LoggerCpp/LoggerCpp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <iostream>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <assert.h>
 
 using namespace VideoCapture;
 
@@ -88,4 +89,4 @@ void vidcap_profiler::set_terminated(bool t)
     vidcap_profiler::s_terminated = t;
 }
 
-
+#endif // 0

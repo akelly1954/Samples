@@ -5,7 +5,9 @@ project (Video)
 include (${SampleRoot_DIR}/source/cmake/Video.cmake)
 
 file(GLOB TEST_SCRIPTS "src/main_programs/*.bash")
-file(GLOB SOURCEFILES "src/*.c*" "src/common/*.c*" "src/opencv/*.c*" "src/v4l2/*.c*" )
+file(GLOB SOURCEFILES "src/*.c*" "src/common/*.c*" )
+file(GLOB PLUGIN_V4L2_SOuRCEFILES "src/plugins/v4l2/*.c*" )
+file(GLOB PLUGIN_OPENCV_SOuRCEFILES "src/plugins/opencv/*.c*" )
 
 file(GLOB HEADERS "include/*.h*")
 file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
