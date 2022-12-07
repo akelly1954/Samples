@@ -1,5 +1,3 @@
-#include <LoggerCpp/LoggerCpp.h>
-#include <vidcap_plugin_factory.hpp>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -29,8 +27,68 @@
 // NOTE: This is a different thread to the main thread.
 /////////////////////////////////////////////////////////////////
 
-void VideoCapture::video_capture_factory(Log::Logger logger)
+#include <LoggerCpp/LoggerCpp.h>
+#include <vidcap_plugin_factory.hpp>
+#include <iostream>
+#include <dlfcn.h>
+#include <unistd.h>
+
+const char *v4l2_plugin_so = "libVideoPlugin_V4L2.so";
+
+// TODO: XXX   void VideoCapture::video_capture_factory(Log::Logger logger)
+void video_capture_factory(Log::Logger logger)
 {
-    ;
+    // TODO: XXX  using namespace VideoCapture;
+::sleep(4);
+logger.info() << "XXXX Starting video_capture_factory()";
+    // load the plugin library
+    const char* dlsym_error = nullptr;
+    void* v4l2plugin_handle = dlopen(v4l2_plugin_so, RTLD_LAZY);                 // (RTLD_NOW | RTLD_GLOBAL));    // TODO: XXX     , RTLD_LAZY);
+    if (!v4l2plugin_handle) {
+        dlsym_error = dlerror();
+        std::cerr << "Cannot load plugin library " << v4l2_plugin_so << ": " << dlsym_error << std::endl;
+        logger.info() << "XXXX Cannot load plugin library: " << dlsym_error;
+        return;
+    }
+
+    // reset errors
+    dlerror();
+
+    // load the symbols
+    create_t* create_plugin = (create_t*) dlsym(v4l2plugin_handle, "create");
+    dlsym_error = dlerror();
+    if (dlsym_error) {
+        std::cerr << "Cannot load plugin library " << v4l2_plugin_so << ": " << dlsym_error << std::endl;
+        logger.info() << "Cannot load symbol create: " << dlsym_error;
+        return;
+    }
+
+    destroy_t* destroy_plugin = (destroy_t*) dlsym(v4l2plugin_handle, "destroy");
+    dlsym_error = dlerror();
+    if (dlsym_error) {
+        std::cerr << "Cannot load symbol destroy: " << dlsym_error << std::endl;
+        logger.info() << "Cannot load symbol destroy: " << dlsym_error;
+        return;
+    }
+
+    logger.info() << "XXXX Creating plugin";
+    // create an instance of the class
+    video_plugin_base* vplugin = create_plugin(logger);
+
+    // use the class
+    logger.info() << "XXXX Using the plugin";
+    vplugin->set_plugin_type("v4l2");
+    std::cout << "The plugin type is: " << vplugin->get_type() << std::endl;
+    logger.info() << "The plugin type is: " << vplugin->get_type();
+
+    logger.info() << "XXXX Destroying the plugin";
+
+    // destroy the class
+    destroy_plugin(vplugin);
+
+    logger.info() << "XXXX dlclose()'ing the plugin";
+    // unload the triangle library
+    ::sleep(4);
+    dlclose(v4l2plugin_handle);
 }
 

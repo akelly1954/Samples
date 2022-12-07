@@ -25,7 +25,7 @@ the [README](source/Video/README.md) in the **Video** project.
      
 **Next Steps**:    
     
-1. Focus on the video frame grabber using opencv (currently planning on **opencv version 4.6.0**) in addition to **V4L2**.     
+1. Focus on the video frame grabber using opencv (currently planning on **opencv version 4.5.1**) in addition to **V4L2**. It was originally planned to use opencv version 4.6.0, however 4.5.1 is available through the **apt* utility from the Debian repositories with no relevant loss of functionality (currently using Debian 11 bullseye**).     
      
 2. Add a Qt 5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
      

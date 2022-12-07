@@ -23,11 +23,14 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <video_capture_commandline.hpp>
+#include <parse_tools.hpp>
 #include <video_capture_globals.hpp>
+#include <suspend_resume_test_thread.hpp>
 #include <JsonCppUtil.hpp>
 #include <commandline.hpp>
 #include <Utility.hpp>
 #include <MainLogger.hpp>
+#include <config_tools.hpp>
 #include <ConfigSingleton.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <vidcap_raw_queue_thread.hpp>
@@ -40,58 +43,6 @@
 #include <unistd.h>
 #include <iostream>
 #include <vector>
-
-////////////////////////////////////////////////////////////////////////////////
-// This is a debug-only short-lived thread which exercises pause/resume capture
-// If used, the frame count is automatically set to 0 (like "-fc 0").
-//
-void test_raw_capture_ctl(Log::Logger logger, std::string argv0)
-{
-    int sleep_seconds = 3;
-    int i = 0;
-
-    ::sleep(sleep_seconds);
-    logger.debug() << argv0 << ": In test_raw_capture_ctl: thread running";
-
-    // TODO: ZZZ VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
-
-    return;
-#if 0
-    if (!ifptr)
-    {
-        std::string str("test_raw_capture_ctl thread: Could not obtain video capture interface pointer (is null).");
-        logger.warning() << str;
-        throw std::runtime_error(str);
-    }
-
-    int slp = sleep_seconds;
-    for (i = 1; i <= 10 && !ifptr->isterminated(); i++)
-    {
-        logger.debug() << "test_raw_capture_ctl: RESUMED/RUNNING: waiting " << slp << " seconds before pausing. Pass # " << i;
-        ::sleep(slp);  if (ifptr->isterminated()) { break; }
-        logger.debug() << "test_raw_capture_ctl: PAUSING CAPTURE: " << i;
-        if (ifptr) ifptr->set_paused(true);
-
-        logger.debug() << "test_raw_capture_ctl: PAUSED: waiting " << slp << " seconds before resuming. Pass # " << i;
-        ::sleep(slp);  if (ifptr->isterminated()) { break; }
-        logger.debug() << "test_raw_capture_ctl: RESUMING CAPTURE: " << i;
-        if (ifptr) ifptr->set_paused(false);
-    }
-
-    if (!ifptr->isterminated())
-    {
-        ::sleep(slp);
-    }
-    else
-    {
-        logger.debug() << "test_raw_capture_ctl: other threads terminated before test finished. TERMINATING AFTER " << i << " PASSES...";
-        return;
-    }
-
-    logger.debug() << "test_raw_capture_ctl: FINISH CAPTURE REQUEST...";
-    if (ifptr) ifptr->set_terminated(true);
-#endif // 0
-}
 
 // CONFIGURATION
 //
@@ -136,72 +87,43 @@ int main(int argc, const char *argv[])
     // up - we will accumulate logger lines until it is.
     std::vector<std::string> delayedLinesForLogger;
 
-    /////////////////
-    // Parse the command line part 1 (print out the --help or parse-error info asap)
-    /////////////////
-
     std::string argv0 = argv[0];
     int return_for_exit = EXIT_SUCCESS;
+
+    ///////////////////////////////////////////////////////////
+    // Initial processing of parsing the command line - set up the Util::CommandLine object
+    // and determine whether to emit errors and/or the help feature.
+    ///////////////////////////////////////////////////////////
 
     const Util::StringVector allowedFlags ={
             "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc", "-test-suspend-resume"
     };
 
     Util::CommandLine cmdline(argc, argv, allowedFlags);
-
-    if(cmdline.isError())
+    if (! Video::initial_commandline_parse(cmdline, argc, argv0, std::cout))
     {
-        std::cout << "\n" << argv0 << ": " << cmdline.getErrorString() << "\n" << std::endl;
-        VidCapCommandLine::Usage(std::cout, argv0);
-        std::cout << std::endl;
-        return EXIT_FAILURE;
+        std::cout << std::endl;     // flush out std::cout
+        return 0;
     }
+    std::cout << std::endl;         // flush out std::cout
 
-    if(cmdline.isHelp())
-    {
-        if (argc > 2)
-        {
-            std::cout << "\nWARNING: using the --help flag cancels all other flags and parameters.  Exiting...\n" << std::endl;
-        }
-        VidCapCommandLine::Usage(std::cout, argv0);
-        std::cout << std::endl;
-        return EXIT_SUCCESS;
-    }
-
-    /////////////////
-    // Set up the application configuration:
+    ///////////////////////////////////////////////////////////
+    // Set up the application (JSON-based) configuration:
     //
     // Before we do the actual parsing of the command line, the initial json/config
-    // has to be done so that the command line can overwrite its values in the following step.
-    /////////////////
-    std::stringstream loggerStream;
+    // has to be done so that the command line can overwrite its values that are set
+    // in the following step.
+    ///////////////////////////////////////////////////////////
 
-    try {
-        /////////////////
-        // Set up config
-        /////////////////
-
-        // The assignment is unnecessary - It's here to silence g++ warnings
-        // (about discarding the return value)...
-        auto thesp = Config::ConfigSingleton::create(Video::vcGlobals::config_file_name, loggerStream);
-
-        // At this point the json root node has been set up - after parsing, checking syntax, etc.
-        // If ANY errors are encountered along the way, they will be catch()ed below and the
-        // program aborted.
-        //
-        // The root node can be accessed by reference with
-        //
-        //              Json::Value& ConfigSingleton::instance()->JsonRoot();
-        //
-
-    } catch (const std::exception& e) {
-        std::cerr << "ERROR: Exception while trying to create config singleton: \n    " << e.what() << std::endl;
-        std::cerr << "Previously logged info: " << loggerStream.str() << std::endl;
+    std::string config_results;
+    if (! Config::setup_config_singleton(config_results))
+    {
+        std::cerr << "Config Singleton setup result: " << config_results << std::endl;
         return EXIT_FAILURE;
     }
 
     // We will log this as soon as the logger is configured and operational.
-    std::string parse_output = std::string("\n\nParsed JSON nodes:") + loggerStream.str();
+    std::string parse_output = std::string("\n\nParsed JSON nodes:") + config_results;
 
     // Everything in the vector will be written to the log file
     // as soon as the logger is initialized.
@@ -328,7 +250,7 @@ int main(int argc, const char *argv[])
 
     std::thread queuethread;
     std::thread profilingthread;
-    std::thread videocapturethread;
+    std::thread videocapturethread;  // TODO: XXX
     std::thread trcc;  // gets activated only if vcGlobals::test_suspend_resume.
 
     bool error_termination = false;
@@ -357,8 +279,13 @@ int main(int argc, const char *argv[])
         //
         /////////////////////////////////////////////////////////////////////
         ulogger.debug() << argv0 << ":  starting the video capture thread.";
+
         // TODO: XXX               videocapturethread = std::thread(VideoCapture::video_capture, ulogger);
-        videocapturethread.detach();
+        // The plugin factory runs in its own thread, loads the plugin and initializes it.
+        // TODO: XXX               videocapturethread = std::thread(VideoCapture::video_capture_factory, ulogger);
+        videocapturethread = std::thread(video_capture_factory, ulogger);
+
+        //  TODO: XXX                videocapturethread.detach();
 
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
 
@@ -369,7 +296,7 @@ int main(int argc, const char *argv[])
         {
             // this will pause/sleep/resume/sleep a bunch of times, then signal the
             // main thread to terminate normally.
-            trcc = std::thread (test_raw_capture_ctl, ulogger, argv0);
+            trcc = std::thread (VideoCapture::test_raw_capture_ctl, ulogger, argv0);
         }
 
 #if 0

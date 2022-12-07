@@ -1,4 +1,3 @@
-#pragma once
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -24,32 +23,37 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <LoggerCpp/LoggerCpp.h>
+#include <config_tools.hpp>
+#include <video_capture_globals.hpp>
+#include <ConfigSingleton.hpp>
+#include <iostream>
 
-// TODO: XXX        namespace VideoCapture {
+bool Config::setup_config_singleton(std::string& restring)
+{
+    std::stringstream ostrm;
+    try {
+        /////////////////
+        // Set up config
+        /////////////////
 
-    void video_capture_factory(Log::Logger logger);
+        // The assignment is unnecessary - It's here to silence g++ warnings
+        // (about discarding the return value)...
+        auto thesp = Config::ConfigSingleton::create(Video::vcGlobals::config_file_name, ostrm);
 
-    class video_plugin_base {
-    protected:
-        std::string plugin_type;
+        // At this point the json root node has been set up - after parsing, checking syntax, etc.
+        // If ANY errors are encountered along the way, they will be catch()ed below and the
+        // program aborted.
+        //
+        // The root node can be accessed by reference with
+        //
+        //              Json::Value& ConfigSingleton::instance()->JsonRoot();
+        //
 
-    public:
-        video_plugin_base()
-            : plugin_type("undefined") {}
+    } catch (const std::exception& e) {
+        ostrm << "\nERROR: Exception while trying to create config singleton: \n    " << e.what() << "\n";
+        restring += ostrm.str();
+        return false;
+    }
+    return true;
+}
 
-        virtual ~video_plugin_base() {}
-
-        void set_plugin_type(std::string name)
-        {
-            plugin_type = name;
-        }
-
-        virtual std::string get_type() const = 0;
-    };
-
-    // the types of the class factories
-    typedef video_plugin_base* create_t(Log::Logger logger);
-    typedef void destroy_t(video_plugin_base*);
-
-    // TODO: XXX         } // end of namespace VideoCapture

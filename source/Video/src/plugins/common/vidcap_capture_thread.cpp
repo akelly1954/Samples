@@ -1,23 +1,3 @@
-#include <vidcap_raw_queue_thread.hpp>
-#include <vidcap_capture_thread.hpp>
-#include <vidcap_v4l2_driver_interface.hpp>
-#include <vidcap_opencv_stream.hpp>
-#include <Utility.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <ConfigSingleton.hpp>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-#include <chrono>
-#include <vector>
-#include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <assert.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -43,6 +23,30 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+
+#if 0 // TODO: XXX
+
+#include <vidcap_raw_queue_thread.hpp>
+#include <plugins/vidcap_capture_thread.hpp>
+// TODO: XXX #include <vidcap_v4l2_driver_interface.hpp>
+// TODO: XXX #include <vidcap_opencv_stream.hpp>
+#include <Utility.hpp>
+#include <NtwkUtil.hpp>
+#include <NtwkFixedArray.hpp>
+#include <LoggerCpp/LoggerCpp.h>
+#include <ConfigSingleton.hpp>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <iostream>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <assert.h>
+
 /////////////////////////////////////////////////////////////////
 // NOTE: This is a different thread to the main thread.
 /////////////////////////////////////////////////////////////////
@@ -58,6 +62,7 @@ VideoCapture::vidcap_capture_base *VideoCapture::vidcap_capture_base::sp_interfa
 void VideoCapture::video_capture(Log::Logger logger)
 {
     using namespace VideoCapture;
+
 
     vidcap_capture_base::sp_interface_pointer = nullptr;
 
@@ -134,4 +139,6 @@ void VideoCapture::video_capture(Log::Logger logger)
         throw std::runtime_error(std::string("Video Capture thread: Unknown video interface specified in the json configuration: " + videoInterface + ".  Aborting..."));
     }
 }
+
+#endif // 0
 

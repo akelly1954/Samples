@@ -1,5 +1,3 @@
-#pragma once
-
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -24,32 +22,30 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <LoggerCpp/LoggerCpp.h>
+#include <parse_tools.hpp>
+#include <video_capture_commandline.hpp>
+#include <video_capture_globals.hpp>
+#include <iostream>
 
-// TODO: XXX        namespace VideoCapture {
 
-    void video_capture_factory(Log::Logger logger);
+bool Video::initial_commandline_parse(Util::CommandLine& cmdline, int argc, std::string argv0, std::ostream& strm)
+{
+    if(cmdline.isError())
+    {
+        strm << "\n" << argv0 << ": " << cmdline.getErrorString() << "\n";
+        VidCapCommandLine::Usage(strm, argv0);
+        return false;
+    }
 
-    class video_plugin_base {
-    protected:
-        std::string plugin_type;
-
-    public:
-        video_plugin_base()
-            : plugin_type("undefined") {}
-
-        virtual ~video_plugin_base() {}
-
-        void set_plugin_type(std::string name)
+    if(cmdline.isHelp())
+    {
+        if (argc > 2)
         {
-            plugin_type = name;
+            strm << "\nWARNING: using the --help flag cancels all other flags and parameters.  Exiting...\n";
         }
+        VidCapCommandLine::Usage(strm, argv0);
+        return false;
+    }
+    return true;
+}
 
-        virtual std::string get_type() const = 0;
-    };
-
-    // the types of the class factories
-    typedef video_plugin_base* create_t(Log::Logger logger);
-    typedef void destroy_t(video_plugin_base*);
-
-    // TODO: XXX         } // end of namespace VideoCapture

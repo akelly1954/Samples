@@ -19,7 +19,10 @@ if (NOT WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${JsonCppSource_DIR}/include")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fPIC -std=c++17")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D \"DBG_BUILD=\\\"${DBG}\\\"\"" )
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread -ldl")
+
+    #####        TODO:  I think this can go:     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread -ldl")
+
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
 
     set (CMAKE_C_COMPILER /usr/bin/gcc)
     set (CMAKE_CXX_COMPILER /usr/bin/g++)

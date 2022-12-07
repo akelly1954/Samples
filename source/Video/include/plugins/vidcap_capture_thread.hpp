@@ -1,17 +1,5 @@
 #pragma once
 
-#include <Utility.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
-#include <condition_data.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <stdio.h>
-#include <thread>
-#include <mutex>
-#include <chrono>
-#include <vector>
-#include <algorithm>
-
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -36,7 +24,19 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <Utility.hpp>
+#include <NtwkUtil.hpp>
+#include <NtwkFixedArray.hpp>
+#include <condition_data.hpp>
+#include <LoggerCpp/LoggerCpp.h>
+#include <stdio.h>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include <vector>
+#include <algorithm>
 
+#if 0  // TODO: XXX
 namespace VideoCapture {
 
 // video capture base thread
@@ -70,4 +70,6 @@ public:
 };  // end of class vidcap_capture_base
 
 } // end of namespace VideoCapture
+
+#endif // 0
 

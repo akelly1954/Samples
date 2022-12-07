@@ -1,4 +1,3 @@
-#pragma once
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -24,32 +23,14 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <LoggerCpp/LoggerCpp.h>
+#include <iostream>
 
-// TODO: XXX        namespace VideoCapture {
+#if 0
 
-    void video_capture_factory(Log::Logger logger);
+// Empty .cpp file
 
-    class video_plugin_base {
-    protected:
-        std::string plugin_type;
+#endif // 0
 
-    public:
-        video_plugin_base()
-            : plugin_type("undefined") {}
 
-        virtual ~video_plugin_base() {}
 
-        void set_plugin_type(std::string name)
-        {
-            plugin_type = name;
-        }
 
-        virtual std::string get_type() const = 0;
-    };
-
-    // the types of the class factories
-    typedef video_plugin_base* create_t(Log::Logger logger);
-    typedef void destroy_t(video_plugin_base*);
-
-    // TODO: XXX         } // end of namespace VideoCapture

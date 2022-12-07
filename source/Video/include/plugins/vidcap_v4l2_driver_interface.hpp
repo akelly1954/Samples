@@ -36,6 +36,58 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <MainLogger.hpp>
+#include <vidcap_plugin_factory.hpp>
+
+#if 0
+namespace VideoCapture
+{
+    class video_plugin_base {
+    protected:
+        std::string plugin_type;
+
+    public:
+        video_plugin_base()
+            : plugin_type("undefined") {}
+
+        virtual ~video_plugin_base() {}
+
+        void set_plugin_type(std::string name)
+        {
+            plugin_type = name;
+        }
+
+        virtual std::string get_type() const = 0;
+    };
+#endif // 0
+
+    class vidcap_v4l2_driver_interface : virtual public video_plugin_base
+    {
+    private:
+        vidcap_v4l2_driver_interface() = delete;
+    public:
+        vidcap_v4l2_driver_interface(Log::Logger lg) : logger(lg) { };
+        virtual ~vidcap_v4l2_driver_interface() = default;
+
+        virtual std::string get_type() const { return video_plugin_base::plugin_type; }
+
+    private:
+        Log::Logger logger;
+
+    };
+
+
+    // the class factories
+    extern "C" video_plugin_base* create(/* Log::Logger logger*/) {
+        Log::Logger& logger = *(Util::UtilLogger::getLoggerPtr());
+        return new vidcap_v4l2_driver_interface(logger);
+    }
+
+    extern "C" void destroy(video_plugin_base* p) {
+        if (p) delete p;
+    }
+
+#if 0
 #include <video_capture_commandline.hpp>
 #include <video_capture_globals.hpp>
 #include <JsonCppUtil.hpp>
@@ -118,8 +170,9 @@ namespace VideoCapture {
         unsigned int    numbufs = 0;
         bool            m_errorterminated = false;
     };
-
 } // end of namespace VideoCapture
+
+#endif // 0
 
 
 

@@ -9,7 +9,7 @@ file(GLOB SOURCEFILES "src/*.c*" "src/common/*.c*" )
 file(GLOB PLUGIN_V4L2_SOuRCEFILES "src/plugins/v4l2/*.c*" )
 file(GLOB PLUGIN_OPENCV_SOuRCEFILES "src/plugins/opencv/*.c*" )
 
-file(GLOB HEADERS "include/*.h*")
+file(GLOB HEADERS "include/*.h*" "src/main_programs/*.h*" )
 file(GLOB LOGGER_HEADERS "${LoggerCpp_HEADERS}/LoggerCpp/*.h*")
 file(GLOB JSONCPP_HEADERS "${JsonCpp_HEADERS}/JsonCpp/*.h*")
 set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" ${JSONCPP_HEADERS} )
@@ -17,9 +17,11 @@ set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" ${JSONCPP_HEADERS} )
 file(GLOB JSON_FILES "src/main_programs/*.json")
 
 set ( LIBTYPE "${Video_LIBTYPE}" )
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+#####   TODO:  added -ldl here: test:     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
 
 include_directories( ${Video_HEADERS} 
+                     src/main_programs
                      ../Util/include
                      ../EnetUtil/include
                      ${LoggerCpp_HEADERS}
@@ -32,6 +34,7 @@ target_link_libraries( ${Video}
                        ${LoggerCpp_LIB}
                        ${JsonCpp_LIB}
                        ${OpenCV_LIBS}
+                       -ldl
                        ${CMAKE_THREAD_LIBS_INIT} ${LINKOPTIONS}
                      )
 
@@ -58,7 +61,12 @@ set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
 ##############################
 
 set (main_video_capture "main_video_capture${DBG}")
-add_executable (main_video_capture src/main_programs/main_video_capture.cpp)
+add_executable (main_video_capture src/main_programs/main_video_capture.cpp
+                                   src/main_programs/config_tools.cpp
+                                   src/main_programs/logger_tools.cpp
+                                   src/main_programs/parse_tools.cpp
+)
+
 target_link_libraries( main_video_capture 
                             ${Video_LIB}
                             ${EnetUtil_LIB}
