@@ -115,52 +115,11 @@ int main(int argc, const char *argv[])
     // in the following step.
     ///////////////////////////////////////////////////////////
 
+    std::string ConfigOutputString;
     std::string config_results;
-    if (! Config::setup_config_singleton(config_results))
+    if (! Config::setup_config_singleton(config_results, ConfigOutputString, delayedLinesForLogger))
     {
         std::cerr << "Config Singleton setup result: " << config_results << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    // We will log this as soon as the logger is configured and operational.
-    std::string parse_output = std::string("\n\nParsed JSON nodes:") + config_results;
-
-    // Everything in the vector will be written to the log file
-    // as soon as the logger is initialized.
-    delayedLinesForLogger.push_back(parse_output);
-
-    std::stringstream configstrm;
-    configstrm << "\n\nParsed JSON file " << Video::vcGlobals::config_file_name << " successfully.  Contents: \n\n"
-                      << Config::ConfigSingleton::instance()->JsonRoot() << "\n";
-
-    // Everything in the vector will be written to the log file
-    // as soon as the logger is initialized.
-    delayedLinesForLogger.push_back(configstrm.str());
-    std::string ConfigOutputString;
-    try {
-
-        std::stringstream strm;
-        if (! Video::updateInternalConfigsWithJsonValues(strm, Config::ConfigSingleton::instance()->JsonRoot()))
-        {
-            std::cerr << strm.str() << std::endl;
-            std::cerr << "\nError while accessing json values read from " << Video::vcGlobals::config_file_name << "." << std::endl;
-            return EXIT_FAILURE;
-        }
-
-        ConfigOutputString = strm.str();
-
-        // TODO:  This just clutters up the screen.  Leave it in the log file:
-        // std::cerr << ConfigOutputString << std::endl;
-
-        // Everything in the vector will be written to the log file
-        // as soon as the logger is initialized.
-        delayedLinesForLogger.push_back(ConfigOutputString);
-    }
-    catch (const std::exception& e)
-    {
-        std::cerr << "Error:  Exception caught while accessing json values read from "
-                  << Video::vcGlobals::config_file_name << ": "
-                  << e.what() << std::endl;
         return EXIT_FAILURE;
     }
 

@@ -25,12 +25,15 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <ConfigSingleton.hpp>
+#include <vector>
 #include <iostream>
 
 namespace Config
 {
 
-    bool setup_config_singleton(std::string& restring);
+    bool setup_config_singleton(std::string& restring,
+                                std::string& ConfigOutputString,
+                                std::vector<std::string>& delayedLinesForLogger);
 
 } // end of namespace Config
 
