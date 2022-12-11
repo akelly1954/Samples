@@ -39,47 +39,35 @@
 #include <MainLogger.hpp>
 #include <vidcap_plugin_factory.hpp>
 
-#if 0
 namespace VideoCapture
 {
-    class video_plugin_base {
-    protected:
-        std::string plugin_type;
-
-    public:
-        video_plugin_base()
-            : plugin_type("undefined") {}
-
-        virtual ~video_plugin_base() {}
-
-        void set_plugin_type(std::string name)
-        {
-            plugin_type = name;
-        }
-
-        virtual std::string get_type() const = 0;
-    };
-#endif // 0
-
     class vidcap_v4l2_driver_interface : virtual public video_plugin_base
     {
     private:
         vidcap_v4l2_driver_interface() = delete;
     public:
-        vidcap_v4l2_driver_interface(Log::Logger lg) : logger(lg) { };
+        vidcap_v4l2_driver_interface(Log::Logger lg);
         virtual ~vidcap_v4l2_driver_interface() = default;
 
         virtual std::string get_type() const { return video_plugin_base::plugin_type; }
 
+    public:
+        virtual void initialize();
+        virtual void run();
+        virtual void set_terminated(bool t)             { video_plugin_base::s_terminated = t; };
+        virtual bool isterminated(void)                 { return video_plugin_base::s_terminated; };
+        virtual void set_error_terminated (bool t)      { video_plugin_base::s_errorterminated = t; set_terminated(t); };
+        virtual bool iserror_terminated(void)           { return video_plugin_base::s_errorterminated; };
+        virtual void set_paused(bool t)                 { video_plugin_base::s_paused = t; };
+        virtual bool ispaused(void)                     { return video_plugin_base::s_paused; };
+
     private:
         Log::Logger logger;
-
     };
 
-
     // the class factories
-    extern "C" video_plugin_base* create(/* Log::Logger logger*/) {
-        Log::Logger& logger = *(Util::UtilLogger::getLoggerPtr());
+    extern "C" video_plugin_base* create(Log::Logger logger) {
+//        Log::Logger& logger = *(Util::UtilLogger::getLoggerPtr());
         return new vidcap_v4l2_driver_interface(logger);
     }
 
@@ -170,9 +158,8 @@ namespace VideoCapture {
         unsigned int    numbufs = 0;
         bool            m_errorterminated = false;
     };
-} // end of namespace VideoCapture
 
 #endif // 0
 
-
+} // end of namespace VideoCapture
 

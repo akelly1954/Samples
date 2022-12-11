@@ -16,5 +16,4 @@ else()
 endif()
 
 set (Util "Util${DBG}")
-set (Util_HEADERS "${SampleRoot_DIR}/source/Util/include")
 

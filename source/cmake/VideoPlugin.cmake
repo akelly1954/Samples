@@ -7,13 +7,14 @@ cmake_minimum_required(VERSION 3.10)
 include (${SampleRoot_DIR}/source/cmake/tools.cmake)
 
 if (NOT WIN32)
-    set (EnetUtil_LIB "${SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
-    set (Enet_LIBTYPE "SHARED")
+    set (Video_LIB "${SampleRoot_DIR}/build/Video/libVideo.so")
+    set (VideoPlugin_LIBTYPE "SHARED")
 
     find_package( Threads )
 else()
     message (STATUS "WINDOWS system detected. - NOT IMPLEMENTED FOR THIS PROJECT YET" )
 endif()
+find_package( OpenCV REQUIRED )
 
-set (EnetUtil "EnetUtil${DBG}")
+set (Video "Video${DBG}")
 

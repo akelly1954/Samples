@@ -39,13 +39,18 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 set( TOOLS_INCLUDED:BOOL ON )
 
-set( LoggerCpp_HEADERS "${LoggerCppSource_DIR}/include" )
-set( LoggerCpp_BASE "${SampleRoot_DIR}/source/3rdparty/LoggerCpp" )
-set( LoggerCpp_LIB "${LoggerCpp_BASE}/build/libLoggerCpp.a")
+set (EnetUtil_HEADERS         "${SampleRoot_DIR}/source/EnetUtil/include" )
+set (Util_HEADERS             "${SampleRoot_DIR}/source/Util/include")
+set (VideoPlugin_V4L2_HEADERS "${SampleRoot_DIR}/source/Video/include" )    ##########   ${OpenCV_INCLUDE_DIRS} )
+set (Video_HEADERS            "${SampleRoot_DIR}/source/Video/include" ) ########   ${OpenCV_INCLUDE_DIRS} )
 
-set( JsonCpp_HEADERS "${JsonCppSource_DIR}/include" )
-set( JsonCpp_BASE "${SampleRoot_DIR}/source/3rdparty/JsonCpp" )
-set( JsonCpp_LIB "${JsonCpp_BASE}/build/lib/libjsoncpp.a")
+set( LoggerCpp_HEADERS        "${LoggerCppSource_DIR}/include" )
+set( LoggerCpp_BASE           "${SampleRoot_DIR}/source/3rdparty/LoggerCpp" )
+set( LoggerCpp_LIB            "${LoggerCpp_BASE}/build/libLoggerCpp.a")
+
+set( JsonCpp_HEADERS          "${JsonCppSource_DIR}/include" )
+set( JsonCpp_BASE             "${SampleRoot_DIR}/source/3rdparty/JsonCpp" )
+set( JsonCpp_LIB              "${JsonCpp_BASE}/build/lib/libjsoncpp.a")
 
 set( LoggerCpp_LIBTYPE "STATIC")
 set( JsonCpp_LIBTYPE "SHARED")

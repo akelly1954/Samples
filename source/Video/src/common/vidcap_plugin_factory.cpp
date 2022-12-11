@@ -33,13 +33,15 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+bool VideoCapture::video_plugin_base::s_terminated = false;
+bool VideoCapture::video_plugin_base::s_errorterminated = false;
+bool VideoCapture::video_plugin_base::s_paused = false;
+
 const char *v4l2_plugin_so = "libVideoPlugin_V4L2.so";
 
 // TODO: XXX   void VideoCapture::video_capture_factory(Log::Logger logger)
-void video_capture_factory(Log::Logger logger)
+bool VideoCapture::video_capture_factory(Log::Logger logger)
 {
-    // TODO: XXX  using namespace VideoCapture;
-::sleep(4);
 logger.info() << "XXXX Starting video_capture_factory()";
     // load the plugin library
     const char* dlsym_error = nullptr;
@@ -48,11 +50,10 @@ logger.info() << "XXXX Starting video_capture_factory()";
         dlsym_error = dlerror();
         std::cerr << "Cannot load plugin library " << v4l2_plugin_so << ": " << dlsym_error << std::endl;
         logger.info() << "XXXX Cannot load plugin library: " << dlsym_error;
-        return;
+        return false;
     }
 
-    // reset errors
-    dlerror();
+    dlerror();      // reset errors
 
     // load the symbols
     create_t* create_plugin = (create_t*) dlsym(v4l2plugin_handle, "create");
@@ -60,15 +61,17 @@ logger.info() << "XXXX Starting video_capture_factory()";
     if (dlsym_error) {
         std::cerr << "Cannot load plugin library " << v4l2_plugin_so << ": " << dlsym_error << std::endl;
         logger.info() << "Cannot load symbol create: " << dlsym_error;
-        return;
+        return false;
     }
+
+    dlerror();      // reset errors
 
     destroy_t* destroy_plugin = (destroy_t*) dlsym(v4l2plugin_handle, "destroy");
     dlsym_error = dlerror();
     if (dlsym_error) {
         std::cerr << "Cannot load symbol destroy: " << dlsym_error << std::endl;
         logger.info() << "Cannot load symbol destroy: " << dlsym_error;
-        return;
+        return false;
     }
 
     logger.info() << "XXXX Creating plugin";
@@ -88,7 +91,7 @@ logger.info() << "XXXX Starting video_capture_factory()";
 
     logger.info() << "XXXX dlclose()'ing the plugin";
     // unload the triangle library
-    ::sleep(4);
     dlclose(v4l2plugin_handle);
+    return true;
 }
 

@@ -26,10 +26,10 @@
 
 #if 0 // TODO: XXX
 
-#include <vidcap_raw_queue_thread.hpp>
+#include <plugins/vidcap_raw_queue_thread.hpp>
 #include <plugins/vidcap_capture_thread.hpp>
-// TODO: XXX #include <vidcap_v4l2_driver_interface.hpp>
-// TODO: XXX #include <vidcap_opencv_stream.hpp>
+// TODO: XXX #include <pluginns/vidcap_v4l2_driver_interface.hpp>
+// TODO: XXX #include <plugins/vidcap_opencv_stream.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>

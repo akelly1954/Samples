@@ -26,9 +26,9 @@
 
 #include <LoggerCpp/LoggerCpp.h>
 
-// TODO: XXX        namespace VideoCapture {
+namespace VideoCapture {
 
-    void video_capture_factory(Log::Logger logger);
+    bool video_capture_factory(Log::Logger logger);
 
     class video_plugin_base {
     protected:
@@ -46,10 +46,41 @@
         }
 
         virtual std::string get_type() const = 0;
+
+    public:
+        virtual void initialize() = 0;
+        virtual void run() = 0;
+        virtual void set_terminated(bool t) = 0;
+        virtual bool isterminated() = 0;
+        virtual void set_error_terminated (bool t) = 0;
+        virtual bool iserror_terminated(void) = 0;
+        virtual void set_paused(bool t) = 0;
+        virtual bool ispaused(void) = 0;
+protected:
+        static bool s_terminated;
+        static bool s_errorterminated;
+        static bool s_paused;
     };
 
     // the types of the class factories
     typedef video_plugin_base* create_t(Log::Logger logger);
     typedef void destroy_t(video_plugin_base*);
 
-    // TODO: XXX         } // end of namespace VideoCapture
+    extern "C" video_plugin_base* create(Log::Logger logger);
+    extern "C" void destroy(video_plugin_base* p);
+
+} // end of namespace VideoCapture
+
+
+
+
+
+
+
+
+
+
+
+
+
+
