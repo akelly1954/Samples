@@ -43,13 +43,13 @@ namespace VideoCapture
 {
     class vidcap_v4l2_driver_interface : virtual public video_plugin_base
     {
-    private:
-        vidcap_v4l2_driver_interface() = delete;
     public:
-        vidcap_v4l2_driver_interface(Log::Logger lg);
+        vidcap_v4l2_driver_interface();
         virtual ~vidcap_v4l2_driver_interface() = default;
 
-        virtual std::string get_type() const { return video_plugin_base::plugin_type; }
+        virtual std::string get_type() const                        { return video_plugin_base::plugin_type; }
+        virtual std::string get_filename() const                    { return video_plugin_base::plugin_filename; }
+        video_plugin_base* get_interface_pointer() const            { return video_plugin_base::interface_ptr; }
 
     public:
         virtual void initialize();
@@ -62,13 +62,12 @@ namespace VideoCapture
         virtual bool ispaused(void)                     { return video_plugin_base::s_paused; };
 
     private:
-        Log::Logger logger;
+        Log::Logger *logger = nullptr;
     };
 
     // the class factories
-    extern "C" video_plugin_base* create(Log::Logger logger) {
-//        Log::Logger& logger = *(Util::UtilLogger::getLoggerPtr());
-        return new vidcap_v4l2_driver_interface(logger);
+    extern "C" video_plugin_base* create() {
+        return new vidcap_v4l2_driver_interface();
     }
 
     extern "C" void destroy(video_plugin_base* p) {

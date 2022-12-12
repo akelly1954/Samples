@@ -1,4 +1,5 @@
-#if 0
+
+
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -60,8 +61,10 @@ bool profiler_frame::initialized = false;
 bool vidcap_profiler::s_terminated = false;
 Util::condition_data<int> vidcap_profiler::s_condvar(0);
 
-void VideoCapture::video_profiler(Log::Logger logger)
+void VideoCapture::video_profiler(/* Log::Logger logger*/ )
 {
+    Log::Logger logger = *(Util::UtilLogger::getLoggerPtr());
+
     int slp = Video::vcGlobals::profile_timeslice_ms;   //milliseconds
     profiler_frame::initialize();
 
@@ -88,5 +91,3 @@ void vidcap_profiler::set_terminated(bool t)
 {
     vidcap_profiler::s_terminated = t;
 }
-
-#endif // 0

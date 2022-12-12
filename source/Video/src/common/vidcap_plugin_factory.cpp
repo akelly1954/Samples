@@ -27,11 +27,14 @@
 // NOTE: This is a different thread to the main thread.
 /////////////////////////////////////////////////////////////////
 
-#include <LoggerCpp/LoggerCpp.h>
 #include <vidcap_plugin_factory.hpp>
 #include <iostream>
 #include <dlfcn.h>
 #include <unistd.h>
+
+std::string VideoCapture::video_plugin_base::plugin_type = "undefined";
+std::string VideoCapture::video_plugin_base::plugin_filename;
+VideoCapture::video_plugin_base* VideoCapture::video_plugin_base::interface_ptr = nullptr;
 
 bool VideoCapture::video_plugin_base::s_terminated = false;
 bool VideoCapture::video_plugin_base::s_errorterminated = false;
@@ -39,59 +42,68 @@ bool VideoCapture::video_plugin_base::s_paused = false;
 
 const char *v4l2_plugin_so = "libVideoPlugin_V4L2.so";
 
-// TODO: XXX   void VideoCapture::video_capture_factory(Log::Logger logger)
-bool VideoCapture::video_capture_factory(Log::Logger logger)
+VideoCapture::video_plugin_base* VideoCapture::video_capture_factory(std::ostream& ostrm)
 {
-logger.info() << "XXXX Starting video_capture_factory()";
     // load the plugin library
+    ostrm << "Plugin Factory: Starting video_capture_factory()\n";
+
     const char* dlsym_error = nullptr;
-    void* v4l2plugin_handle = dlopen(v4l2_plugin_so, RTLD_LAZY);                 // (RTLD_NOW | RTLD_GLOBAL));    // TODO: XXX     , RTLD_LAZY);
+    void* v4l2plugin_handle = dlopen(v4l2_plugin_so, RTLD_LAZY);     // (RTLD_NOW | RTLD_GLOBAL));
     if (!v4l2plugin_handle) {
         dlsym_error = dlerror();
-        std::cerr << "Cannot load plugin library " << v4l2_plugin_so << ": " << dlsym_error << std::endl;
-        logger.info() << "XXXX Cannot load plugin library: " << dlsym_error;
-        return false;
+        ostrm << "Plugin Factory: Cannot load plugin library " << v4l2_plugin_so << ": " << dlsym_error << "\n";
+        return nullptr;
     }
-
+    ostrm << "Plugin Factory: dlopen(\"" << v4l2_plugin_so << "\"): SUCCESS\n";
     dlerror();      // reset errors
 
     // load the symbols
     create_t* create_plugin = (create_t*) dlsym(v4l2plugin_handle, "create");
     dlsym_error = dlerror();
     if (dlsym_error) {
-        std::cerr << "Cannot load plugin library " << v4l2_plugin_so << ": " << dlsym_error << std::endl;
-        logger.info() << "Cannot load symbol create: " << dlsym_error;
-        return false;
+        ostrm << "Plugin Factory: Cannot find symbol \"create\" in loaded plugin library " << v4l2_plugin_so << ": " << dlsym_error << "\n";
+        return nullptr;
     }
 
+    ostrm << "Plugin Factory: Find create() in " << v4l2_plugin_so << ": SUCCESS\n";
     dlerror();      // reset errors
 
     destroy_t* destroy_plugin = (destroy_t*) dlsym(v4l2plugin_handle, "destroy");
     dlsym_error = dlerror();
     if (dlsym_error) {
-        std::cerr << "Cannot load symbol destroy: " << dlsym_error << std::endl;
-        logger.info() << "Cannot load symbol destroy: " << dlsym_error;
-        return false;
+        ostrm << "Plugin Factory: Cannot find symbol \"destroy\" in loaded plugin library " << v4l2_plugin_so << ": " << dlsym_error << "\n";
+        return nullptr;
     }
+    ostrm << "Plugin Factory: Find destroy() in " << v4l2_plugin_so << ": SUCCESS" << "\n";
 
-    logger.info() << "XXXX Creating plugin";
     // create an instance of the class
-    video_plugin_base* vplugin = create_plugin(logger);
+    ostrm << "Plugin Factory: Creating plugin" << "\n";
+    video_plugin_base* vplugin = create_plugin();
 
     // use the class
-    logger.info() << "XXXX Using the plugin";
-    vplugin->set_plugin_type("v4l2");
-    std::cout << "The plugin type is: " << vplugin->get_type() << std::endl;
-    logger.info() << "The plugin type is: " << vplugin->get_type();
+    ostrm << "Plugin Factory: Updating the " << v4l2_plugin_so << " plugin with type/interface information." << "\n";
 
-    logger.info() << "XXXX Destroying the plugin";
+    vplugin->set_plugin_type("v4l2");
+    vplugin->set_plugin_filename(v4l2_plugin_so);
+    vplugin->set_plugin_interface_pointer(vplugin);
+
+    std::cout << "Plugin Factory: The plugin type is: " << vplugin->get_type() << std::endl;
+    ostrm << "Plugin Factory: The plugin type is: " << vplugin->get_type() << "\n";
+    ostrm << "Plugin Factory: The plugin filename is: " << vplugin->get_filename() << "\n";
+    ostrm << "Plugin Factory: The plugin interface ptr is: " << vplugin->get_interface_pointer() << "\n";
+
+    // Set the static interface pointer (see vidcap_plugin_factory.hpp/.cpp
+    VideoCapture::video_plugin_base::interface_ptr = vplugin;
+
+    // TODO: XXX ostrm << "Plugin Factory: Destroying the loaded " << v4l2_plugin_so << " plugin\n";
 
     // destroy the class
-    destroy_plugin(vplugin);
+    // TODO: XXX destroy_plugin(vplugin);
 
-    logger.info() << "XXXX dlclose()'ing the plugin";
     // unload the triangle library
-    dlclose(v4l2plugin_handle);
-    return true;
+    // TODO: XXX ostrm << "Plugin Factory: dlclose()'ing the plugin\n";
+    // TODO: XXX dlclose(v4l2plugin_handle);
+
+    return vplugin;
 }
 

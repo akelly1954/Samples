@@ -1,12 +1,11 @@
 #pragma once
 
-#if 0
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
 #include <LoggerCpp/LoggerCpp.h>
-// TODO:     #include <vidcap_capture_thread.hpp>
+#include <vidcap_plugin_factory.hpp>
 #include <stdio.h>
 #include <thread>
 #include <mutex>
@@ -42,7 +41,7 @@
 namespace VideoCapture {
 
 // Queue handler thread
-void video_profiler(Log::Logger logger);
+void video_profiler(/* Log::Logger logger */);
 
 class vidcap_profiler
 {
@@ -69,7 +68,7 @@ public:
     {
         using namespace std::chrono;
 
-        auto ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
+        auto ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
         if (!ifptr || ifptr->ispaused())
         {
             // if we're paused, there are not changes to the stats.
@@ -117,7 +116,5 @@ public:
 
 } // end of namespace VideoCapture
 
-
-#endif // 0
 
 

@@ -62,9 +62,7 @@ using namespace VideoCapture;
 // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
 // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
-vidcap_v4l2_driver_interface::vidcap_v4l2_driver_interface(Log::Logger lg)
-    :
-        logger(lg)
+vidcap_v4l2_driver_interface::vidcap_v4l2_driver_interface()
 {
     set_terminated(false);
 }

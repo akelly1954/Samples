@@ -24,19 +24,21 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <LoggerCpp/LoggerCpp.h>
+#include <MainLogger.hpp>
+#include <sstream>
 
 namespace VideoCapture {
 
-    bool video_capture_factory(Log::Logger logger);
-
     class video_plugin_base {
     protected:
-        std::string plugin_type;
+        static std::string plugin_type;
+        static std::string plugin_filename;
 
     public:
-        video_plugin_base()
-            : plugin_type("undefined") {}
+        static video_plugin_base* interface_ptr;
+
+    public:
+        video_plugin_base() {}
 
         virtual ~video_plugin_base() {}
 
@@ -45,7 +47,19 @@ namespace VideoCapture {
             plugin_type = name;
         }
 
+        void set_plugin_filename(std::string filename)
+        {
+            plugin_filename = filename;
+        }
+
+        void set_plugin_interface_pointer(video_plugin_base* interfaceptr)
+        {
+            interface_ptr = interfaceptr;
+        }
+
         virtual std::string get_type() const = 0;
+        virtual std::string get_filename() const = 0;
+        static video_plugin_base* get_interface_pointer() { return interface_ptr; }
 
     public:
         virtual void initialize() = 0;
@@ -62,25 +76,15 @@ protected:
         static bool s_paused;
     };
 
+    video_plugin_base* video_capture_factory(std::ostream& ostrm);
+
     // the types of the class factories
-    typedef video_plugin_base* create_t(Log::Logger logger);
+    typedef video_plugin_base* create_t();
     typedef void destroy_t(video_plugin_base*);
 
-    extern "C" video_plugin_base* create(Log::Logger logger);
+    extern "C" video_plugin_base* create();
     extern "C" void destroy(video_plugin_base* p);
 
 } // end of namespace VideoCapture
-
-
-
-
-
-
-
-
-
-
-
-
 
 

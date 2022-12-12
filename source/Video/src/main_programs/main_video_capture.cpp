@@ -63,6 +63,7 @@ int main(int argc, const char *argv[])
 
     std::string argv0 = argv[0];
     int return_for_exit = EXIT_SUCCESS;
+    VideoCapture::video_plugin_base *ifptr = nullptr;
 
     ///////////////////////////////////////////////////////////
     // Initial processing of parsing the command line - set up the Util::CommandLine object
@@ -77,9 +78,34 @@ int main(int argc, const char *argv[])
     if (! Video::initial_commandline_parse(cmdline, argc, argv0, std::cout))
     {
         std::cout << std::endl;     // flush out std::cout
-        return 0;
+        return EXIT_SUCCESS;
     }
     std::cout << std::endl;         // flush out std::cout
+
+    // As soon as possible after a possible Usage message, load the video capture plugin
+    std::string fromFactory;
+    try
+    {
+        std::stringstream sstrm;
+        if ((ifptr = VideoCapture::video_capture_factory(sstrm)) == nullptr)
+        {
+            std::cerr << "From Plugin Factory:\n" << sstrm.str() << std::endl;
+            std::cerr << "video_capture main:  Could not load video capture plugin. Aborting..." << std::endl;
+            return EXIT_FAILURE;
+        }
+        fromFactory = sstrm.str();
+    }
+    catch (std::exception &exp)
+    {
+        std::cerr << argv0 << ": Got exception loading the video capture plugin: " << exp.what() << ". Aborting...";
+        return EXIT_FAILURE;
+    }
+    catch (...) {
+       std::cerr << argv0 << ": General exception occurred in MAIN() loading the video capture plugin. Aborting...";
+       return EXIT_FAILURE;
+    }
+
+    std::cout << "Plugin Factory: plugin was loaded and initialized successfully." << std::endl;
 
     ///////////////////////////////////////////////////////////
     // Set up the application (JSON-based) configuration:
@@ -117,7 +143,11 @@ int main(int argc, const char *argv[])
     // Set up the logger
     ///////////////////////////////////////////////////////////
     setup_video_capture_logger(ParseOutputString, ConfigOutputString, delayedLinesForLogger);
-    Log::Logger& ulogger = *(Util::UtilLogger::getLoggerPtr());
+    Log::Logger ulogger = *(Util::UtilLogger::getLoggerPtr());
+
+    // Logger lines from the plugin factory up above
+    ulogger.debug() << "\nFrom Plugin Factory:\n" << fromFactory << "\n";
+    std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
 
     /////////////////
     // Finally, get to work
@@ -125,23 +155,17 @@ int main(int argc, const char *argv[])
 
     std::thread queuethread;
     std::thread profilingthread;
-    std::thread videocapturethread;  // TODO: XXX
+    std::thread videocapturethread;
     std::thread trcc;  // gets activated only if vcGlobals::test_suspend_resume.
 
     bool error_termination = false;
     try
     {
-        if (! VideoCapture::video_capture_factory(ulogger))
-        {
-            std::cerr << "video_capture main:  Could not load video capture plugin.  See log file for details." << std::endl;
-            return EXIT_FAILURE;
-        }
-
         // Start the profiling thread if it's enabled. It wont do anything until it's kicked
         // by the condition variable (see below vidcap_profiler::s_condvar.send_ready().
         if (Video::vcGlobals::profiling_enabled)
         {
-            // TODO: XXX       profilingthread = std::thread(VideoCapture::video_profiler, ulogger);
+            profilingthread = std::thread(VideoCapture::video_profiler /*, ulogger*/);
             ulogger.debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
             ulogger.debug() << argv0 << ":  the video capture thread will kick-start the video_profiler operations.";
@@ -162,7 +186,6 @@ int main(int argc, const char *argv[])
         ulogger.debug() << argv0 << ":  starting the video capture thread.";
 
         // TODO: XXX               videocapturethread = std::thread(VideoCapture::video_capture, ulogger);
-        // The plugin factory runs in its own thread, loads the plugin and initializes it.
         // TODO: XXX               videocapturethread = std::thread(VideoCapture::video_capture_factory, ulogger);
         // TODO: XXX videocapturethread = std::thread(video_capture_factory, ulogger);
 
@@ -180,7 +203,8 @@ int main(int argc, const char *argv[])
             trcc = std::thread (VideoCapture::test_raw_capture_ctl, ulogger, argv0);
         }
 
-#if 0
+    #if 0
+
         // This loop waits for video capture termination (normal or otherwise).  The first second or so of
         // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the
         // logged messages are commented out since they're not needed unless a runtime issue occurs.
@@ -237,7 +261,6 @@ int main(int argc, const char *argv[])
             // grabber (v4l2 or opencv at this time) to terminate.
             ifptr->set_terminated(true);
         }
-#endif // 0
 
         if (error_termination)
         {
@@ -254,6 +277,7 @@ int main(int argc, const char *argv[])
 
         // Make sure the ring buffer gets emptied
         VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+#endif // 0
     }
     catch (std::exception &exp)
     {
@@ -264,8 +288,7 @@ int main(int argc, const char *argv[])
               << exp.what()
               << ". Aborting...";
         return_for_exit = EXIT_FAILURE;
-    } catch (...)
-    {
+    } catch (...) {
        error_termination = true;
        ulogger.error()
               << argv0 << ": General exception occurred in MAIN() starting the queueing and profiling threads. Aborting...";

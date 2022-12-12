@@ -75,7 +75,7 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
     //////////////////////////////////////////////////////////////
     // Reference to THE logger object
     //////////////////////////////////////////////////////////////
-    Log::Logger& ulogger = *(Util::UtilLogger::getLoggerPtr());
+    Log::Logger ulogger = *(Util::UtilLogger::getLoggerPtr());
 
     //////////////////////////////////////////////////////////////
     // Start Logging
@@ -88,7 +88,7 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
         std::stringstream ostr;
         logopt = Util::UtilLogger::getLoggerOptions();
 
-        Util::UtilLogger::streamLoggerOptions(ostr, logopt, "after defining theinstance of Log::Logger");
+        Util::UtilLogger::streamLoggerOptions(ostr, logopt, "after defining the instance of Log::Logger");
         ulogger.debug() << ostr.str();
     }
 
