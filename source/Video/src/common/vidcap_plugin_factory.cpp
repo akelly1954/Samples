@@ -32,6 +32,8 @@
 #include <dlfcn.h>
 #include <unistd.h>
 
+// Static data
+Util::condition_data<int> VideoCapture::video_plugin_base::s_condvar(0);
 std::string VideoCapture::video_plugin_base::plugin_type = "undefined";
 std::string VideoCapture::video_plugin_base::plugin_filename;
 VideoCapture::video_plugin_base* VideoCapture::video_plugin_base::interface_ptr = nullptr;
@@ -58,16 +60,22 @@ VideoCapture::video_plugin_base* VideoCapture::video_capture_factory(std::ostrea
     dlerror();      // reset errors
 
     // load the symbols
+
+    ////////////////////////////
+    // create()
+    ////////////////////////////
     create_t* create_plugin = (create_t*) dlsym(v4l2plugin_handle, "create");
     dlsym_error = dlerror();
     if (dlsym_error) {
         ostrm << "Plugin Factory: Cannot find symbol \"create\" in loaded plugin library " << v4l2_plugin_so << ": " << dlsym_error << "\n";
         return nullptr;
     }
-
     ostrm << "Plugin Factory: Find create() in " << v4l2_plugin_so << ": SUCCESS\n";
     dlerror();      // reset errors
 
+    ////////////////////////////
+    // destroy()
+    ////////////////////////////
     destroy_t* destroy_plugin = (destroy_t*) dlsym(v4l2plugin_handle, "destroy");
     dlsym_error = dlerror();
     if (dlsym_error) {

@@ -39,7 +39,7 @@
 namespace VideoCapture {
 
 // Queue handler thread
-void raw_buffer_queue_handler(Log::Logger logger);
+void raw_buffer_queue_handler();
 
 FILE *create_output_file(Log::Logger logger);
 
@@ -60,6 +60,7 @@ public:
     // It's called from the specific video raw capture driver on its thread.
     static void add_buffer_to_raw_queue(void *p, size_t bsize);
 
+    static std::mutex capture_queue_mutex;
     static bool s_terminated;
     static Util::condition_data<int> s_condvar;
     static Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>> s_ringbuf;

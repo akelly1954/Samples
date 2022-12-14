@@ -50,11 +50,12 @@
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <exception>
 #include <thread>
 #include <Utility.hpp>
 #include <plugins/vidcap_v4l2_driver_interface.hpp>
 #include <vidcap_raw_queue_thread.hpp>
-#include <LoggerCpp/LoggerCpp.h>
+#include <MainLogger.hpp>
 #include <linux/videodev2.h>
 
 using namespace VideoCapture;
@@ -64,16 +65,33 @@ using namespace VideoCapture;
 
 vidcap_v4l2_driver_interface::vidcap_v4l2_driver_interface()
 {
+    auto logger = Util::UtilLogger::getLoggerPtr();
     set_terminated(false);
 }
 
 void vidcap_v4l2_driver_interface::initialize()
 {
+    if (!logger)
+    {
+        throw std::runtime_error("vidcap_v4l2_driver_interface: ERROR: found NULL logger pointer.");
+    }
+    logger->debug() << "vidcap_v4l2_driver_interface: Initialized.";
 }
 
 void vidcap_v4l2_driver_interface::run()
 {
+    if (!logger)
+    {
+        throw std::runtime_error("vidcap_v4l2_driver_interface::run() ERROR: found NULL logger pointer.");
+    }
+    logger->debug() << "vidcap_v4l2_driver_interface: Running.";
+
+    logger->debug() << "vidcap_v4l2_driver_interface: Terminating profile thread.";
+    VideoCapture::vidcap_profiler::set_terminated(true);
+
+}
 #if 0
+{
     try {
         if (isterminated() || !v4l2if_open_device())
         {
@@ -179,12 +197,8 @@ void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocop
     v4l2if_cleanup_close_device();
     set_error_terminated(true);
     throw std::runtime_error(msg);
-#endif // 0
 }
 
-
-
-#if 0
 void vidcap_v4l2_driver_interface::v4l2if_error_exit(const char *s)
 {
     std::string msg = std::string("vidcap_v4l2_driver_interface: ERROR TERMINATION REQUESTED: ") + s;

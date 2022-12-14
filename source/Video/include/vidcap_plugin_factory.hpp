@@ -24,7 +24,10 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <vidcap_capture_thread.hpp>
 #include <MainLogger.hpp>
+#include <Utility.hpp>
+#include <condition_data.hpp>
 #include <sstream>
 
 namespace VideoCapture {
@@ -59,7 +62,7 @@ namespace VideoCapture {
 
         virtual std::string get_type() const = 0;
         virtual std::string get_filename() const = 0;
-        static video_plugin_base* get_interface_pointer() { return interface_ptr; }
+        static video_plugin_base* get_interface_pointer()    { return interface_ptr; }
 
     public:
         virtual void initialize() = 0;
@@ -70,6 +73,10 @@ namespace VideoCapture {
         virtual bool iserror_terminated(void) = 0;
         virtual void set_paused(bool t) = 0;
         virtual bool ispaused(void) = 0;
+
+    public:
+        static Util::condition_data<int> s_condvar;
+
 protected:
         static bool s_terminated;
         static bool s_errorterminated;

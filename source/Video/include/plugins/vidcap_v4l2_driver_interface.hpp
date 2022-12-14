@@ -36,8 +36,10 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <MainLogger.hpp>
 #include <vidcap_plugin_factory.hpp>
+#include <MainLogger.hpp>
+#include <Utility.hpp>
+#include <condition_data.hpp>
 
 namespace VideoCapture
 {
@@ -54,7 +56,7 @@ namespace VideoCapture
     public:
         virtual void initialize();
         virtual void run();
-        virtual void set_terminated(bool t)             { video_plugin_base::s_terminated = t; };
+        void set_terminated(bool t)                     { video_plugin_base::s_terminated = t; };
         virtual bool isterminated(void)                 { return video_plugin_base::s_terminated; };
         virtual void set_error_terminated (bool t)      { video_plugin_base::s_errorterminated = t; set_terminated(t); };
         virtual bool iserror_terminated(void)           { return video_plugin_base::s_errorterminated; };

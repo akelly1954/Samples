@@ -2,7 +2,6 @@
 
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <vidcap_plugin_factory.hpp>
@@ -41,7 +40,7 @@
 namespace VideoCapture {
 
 // Queue handler thread
-void video_profiler(/* Log::Logger logger */);
+void video_profiler();
 
 class vidcap_profiler
 {
@@ -50,6 +49,7 @@ public:
     static bool s_terminated;
     static std::chrono::steady_clock::time_point s_profiler_start_timepoint;
     static Util::condition_data<int> s_condvar;
+    static std::mutex profiler_mutex;
 };  // end of class vidcap_profiler
 
 class profiler_frame

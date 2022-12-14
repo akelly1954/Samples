@@ -53,6 +53,8 @@ using namespace VideoCapture;
 
 std::chrono::steady_clock::time_point
 vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
+
+std::mutex vidcap_profiler::profiler_mutex;
 std::mutex profiler_frame::stats_frames_mutex;
 long long profiler_frame::stats_total_num_frames;
 std::chrono::milliseconds profiler_frame::stats_total_frame_duration_milliseconds;
@@ -61,7 +63,7 @@ bool profiler_frame::initialized = false;
 bool vidcap_profiler::s_terminated = false;
 Util::condition_data<int> vidcap_profiler::s_condvar(0);
 
-void VideoCapture::video_profiler(/* Log::Logger logger*/ )
+void VideoCapture::video_profiler()
 {
     Log::Logger logger = *(Util::UtilLogger::getLoggerPtr());
 
@@ -69,17 +71,24 @@ void VideoCapture::video_profiler(/* Log::Logger logger*/ )
     profiler_frame::initialize();
 
     logger.debug() << "Profiler thread started...";
-    logger.notice() << "Profiler thread: skipping first frame to establish a duration baseline.";
+    logger.info() << "Profiler thread: skipping first frame to establish a duration baseline.";
 
-    // Wait for main() to signal us to start
-    vidcap_profiler::s_condvar.wait_for_ready();
+    {
+        std::lock_guard<std::mutex> lock(vidcap_profiler::profiler_mutex);
+
+        if (!vidcap_profiler::s_terminated)
+        {
+            // Wait for main() to signal us to start
+            vidcap_profiler::s_condvar.wait_for_ready();
+        }
+    }
 
     while (!vidcap_profiler::s_terminated)
     {
-        logger.notice() << "Profiler info...";
-        logger.notice() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
-        logger.notice() << "Number of frames received: " << profiler_frame::stats_total_num_frames;
-        logger.notice() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
+        logger.info() << "Profiler info...";
+        logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
+        logger.info() << "Number of frames received: " << profiler_frame::stats_total_num_frames;
+        logger.info() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
 
         std::this_thread::sleep_for(std::chrono::milliseconds(slp));
     }
@@ -89,5 +98,14 @@ void VideoCapture::video_profiler(/* Log::Logger logger*/ )
 
 void vidcap_profiler::set_terminated(bool t)
 {
+    std::lock_guard<std::mutex> lock(vidcap_profiler::profiler_mutex);
+
     vidcap_profiler::s_terminated = t;
+
+    // Free up a potential wait on the condition variable
+    // so that the thread can be terminated (otherwise it may hang).
+    VideoCapture::vidcap_profiler::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
 }
+
+
+

@@ -33,6 +33,7 @@
 #include <MainLogger.hpp>
 #include <config_tools.hpp>
 #include <ConfigSingleton.hpp>
+#include <vidcap_capture_thread.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_plugin_factory.hpp>
@@ -82,7 +83,11 @@ int main(int argc, const char *argv[])
     }
     std::cout << std::endl;         // flush out std::cout
 
-    // As soon as possible after a possible Usage message, load the video capture plugin
+    ///////////////////////////////////////////////////////////
+    // Loading the video capture plugin happens as early as possible
+    // in the program execution.  We do this right after a potential
+    // emitting of the Usage message followed by termination.
+    ///////////////////////////////////////////////////////////
     std::string fromFactory;
     try
     {
@@ -93,11 +98,14 @@ int main(int argc, const char *argv[])
             std::cerr << "video_capture main:  Could not load video capture plugin. Aborting..." << std::endl;
             return EXIT_FAILURE;
         }
+        // If all goes well, the log lines reported from the plugin
+        // factory will be written into the log file (the logger does
+        // not yet exist at this point in time.
         fromFactory = sstrm.str();
     }
     catch (std::exception &exp)
     {
-        std::cerr << argv0 << ": Got exception loading the video capture plugin: " << exp.what() << ". Aborting...";
+        std::cerr << argv0 << ": Got exception loading the video capture plugin. ERROR: \n" << exp.what() << ". Aborting...";
         return EXIT_FAILURE;
     }
     catch (...) {
@@ -162,17 +170,18 @@ int main(int argc, const char *argv[])
     try
     {
         // Start the profiling thread if it's enabled. It wont do anything until it's kicked
-        // by the condition variable (see below vidcap_profiler::s_condvar.send_ready().
+        // by the condition variable. See loaded plugin source - look for:
+        // VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
         if (Video::vcGlobals::profiling_enabled)
         {
-            profilingthread = std::thread(VideoCapture::video_profiler /*, ulogger*/);
+            profilingthread = std::thread(VideoCapture::video_profiler);
             ulogger.debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
             ulogger.debug() << argv0 << ":  the video capture thread will kick-start the video_profiler operations.";
         }
 
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
-        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler, ulogger);
+        queuethread = std::thread(VideoCapture::raw_buffer_queue_handler);
         queuethread.detach();
 
         ulogger.debug() << argv0 << ": kick-starting the queue operations.";
@@ -185,15 +194,11 @@ int main(int argc, const char *argv[])
         /////////////////////////////////////////////////////////////////////
         ulogger.debug() << argv0 << ":  starting the video capture thread.";
 
-        // TODO: XXX               videocapturethread = std::thread(VideoCapture::video_capture, ulogger);
-        // TODO: XXX               videocapturethread = std::thread(VideoCapture::video_capture_factory, ulogger);
-        // TODO: XXX videocapturethread = std::thread(video_capture_factory, ulogger);
-
-        //  TODO: XXX                videocapturethread.detach();
-
+        videocapturethread = std::thread(VideoCapture::video_capture);
+        videocapturethread.detach();
         ulogger.debug() << argv0 << ":  kick-starting the video capture operations.";
 
-        // TODO: ZZZ             VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+        VideoCapture::vidcap_capture_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
         // Start the test for suspend/resume (-test-suspend-resume command line flag)
         if (vcGlobals::test_suspend_resume)
@@ -204,6 +209,7 @@ int main(int argc, const char *argv[])
         }
 
     #if 0
+        // TODO: I think this is now going away.  Delete the lines when ready.
 
         // This loop waits for video capture termination (normal or otherwise).  The first second or so of
         // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the
@@ -246,21 +252,19 @@ int main(int argc, const char *argv[])
                 break;
             }
         }
+#endif // 0
+
         // CLEANUP VIDEO CAPTURE AND ITS QUEUE:
 
-        VideoCapture::vidcap_capture_base *ifptr = VideoCapture::vidcap_capture_base::get_interface_ptr();
-        if (ifptr)
+        if (ifptr->iserror_terminated())
         {
-            if (ifptr->iserror_terminated())
-            {
-                error_termination = true;
-                return_for_exit = EXIT_FAILURE;
-            }
-
-            // This signals the derived instance of the frame
-            // grabber (v4l2 or opencv at this time) to terminate.
-            ifptr->set_terminated(true);
+            error_termination = true;
+            return_for_exit = EXIT_FAILURE;
         }
+
+        // This signals the derived instance of the frame
+        // grabber (v4l2 or opencv at this time) to terminate.
+        ifptr->set_terminated(true);
 
         if (error_termination)
         {
@@ -277,21 +281,15 @@ int main(int argc, const char *argv[])
 
         // Make sure the ring buffer gets emptied
         VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
-#endif // 0
     }
     catch (std::exception &exp)
     {
         error_termination = true;
-        ulogger.error()
-              << argv0
-              << ": Got exception starting threads: "
-              << exp.what()
-              << ". Aborting...";
+        ulogger.error() << argv0 << ": Got exception starting threads: " << exp.what() << ". Aborting...";
         return_for_exit = EXIT_FAILURE;
     } catch (...) {
        error_termination = true;
-       ulogger.error()
-              << argv0 << ": General exception occurred in MAIN() starting the queueing and profiling threads. Aborting...";
+       ulogger.error() << argv0 << ": General exception occurred in MAIN() starting the queueing and profiling threads. Aborting...";
        return_for_exit = EXIT_FAILURE;
     }
 
@@ -300,8 +298,18 @@ int main(int argc, const char *argv[])
     if (vcGlobals::test_suspend_resume && trcc.joinable()) trcc.join();
 
     // Wait for the threads to finish
-    if (queuethread.joinable()) queuethread.join();
-    if (vcGlobals::profiling_enabled && profilingthread.joinable()) profilingthread.join();
+    if (queuethread.joinable())
+    {
+        VideoCapture::video_capture_queue::set_terminated(true);
+        queuethread.join();
+    }
+
+    if (vcGlobals::profiling_enabled)
+    {
+        VideoCapture::vidcap_profiler::set_terminated(true);
+        if(profilingthread.joinable()) profilingthread.join();
+    }
+
     if (videocapturethread.joinable()) videocapturethread.join();
 
     if (error_termination)

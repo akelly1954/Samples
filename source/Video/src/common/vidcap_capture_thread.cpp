@@ -24,10 +24,8 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 
-#if 0 // TODO: XXX
-
-#include <plugins/vidcap_raw_queue_thread.hpp>
-#include <plugins/vidcap_capture_thread.hpp>
+// TODO: XXX #include <plugins/vidcap_raw_queue_thread.hpp>
+#include <vidcap_capture_thread.hpp>
 // TODO: XXX #include <pluginns/vidcap_v4l2_driver_interface.hpp>
 // TODO: XXX #include <plugins/vidcap_opencv_stream.hpp>
 #include <Utility.hpp>
@@ -35,6 +33,7 @@
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <ConfigSingleton.hpp>
+#include <MainLogger.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,22 +46,45 @@
 #include <sys/socket.h>
 #include <assert.h>
 
+void VideoCapture::video_capture()
+{
+    using namespace VideoCapture;
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+    loggerp->debug() << "VideoCapture::video_capture: Running.";
+    ::sleep(1);
+    loggerp->debug() << "VideoCapture::video_capture: Terminating...";
+    VideoCapture::vidcap_capture_base::set_terminated(true);
+    {
+        std::lock_guard<std::mutex> lock(vidcap_capture_base::video_capture_mutex);
+
+        if (!vidcap_capture_base::s_terminated)
+        {
+            // Wait for main() to signal us to start
+            vidcap_capture_base::s_condvar.wait_for_ready();
+        }
+    }
+}
+
 /////////////////////////////////////////////////////////////////
 // NOTE: This is a different thread to the main thread.
 /////////////////////////////////////////////////////////////////
 
 // static members
 
+std::mutex VideoCapture::vidcap_capture_base::video_capture_mutex;
 bool VideoCapture::vidcap_capture_base::s_terminated = false;
 bool VideoCapture::vidcap_capture_base::s_errorterminated = false;
 bool VideoCapture::vidcap_capture_base::s_paused = false;
 Util::condition_data<int> VideoCapture::vidcap_capture_base::s_condvar(0);
 VideoCapture::vidcap_capture_base *VideoCapture::vidcap_capture_base::sp_interface_pointer = nullptr;
 
-void VideoCapture::video_capture(Log::Logger logger)
+#if 0 // TODO: XXX
+
+void VideoCapture::video_capture()
 {
     using namespace VideoCapture;
-
 
     vidcap_capture_base::sp_interface_pointer = nullptr;
 
@@ -141,4 +163,19 @@ void VideoCapture::video_capture(Log::Logger logger)
 }
 
 #endif // 0
+
+void VideoCapture::vidcap_capture_base::set_terminated(bool t)
+{
+    // std::lock_guard<std::mutex> lock(VideoCapture::vidcap_capture_base::video_capture_mutex);
+
+    VideoCapture::vidcap_capture_base::s_terminated = t;
+
+    // Free up a potential wait on the condition variable
+    // so that the thread can be terminated (otherwise it may hang).
+    VideoCapture::vidcap_capture_base::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+}
+
+
+
+
 
