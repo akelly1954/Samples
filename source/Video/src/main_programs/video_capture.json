@@ -30,6 +30,7 @@
                     "name":                         "V4L2",
                     "device-name" :                 "/dev/video0",
                     "preferred-pixel-format":       "h264",
+                    "plugin-file-name"    :         "libVideoPlugin_V4L2.so",
 
                     "pixel-format": {
                         "h264": {
@@ -48,6 +49,8 @@
                     "name":                         "OPENCV",
                     "device-name" :                 "/dev/video0",
                     "preferred-pixel-format":       "other",
+                    "plugin-file-name"    :         "notfound_OPENCV.so",
+
                     "pixel-format": {
                         "h264": {
                             "output-process":   "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4"

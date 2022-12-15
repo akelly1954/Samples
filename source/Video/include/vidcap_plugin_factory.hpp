@@ -32,62 +32,23 @@
 
 namespace VideoCapture {
 
-    class video_plugin_base {
-    protected:
-        static std::string plugin_type;
-        static std::string plugin_filename;
-
-    public:
-        static video_plugin_base* interface_ptr;
-
-    public:
-        video_plugin_base() {}
-
-        virtual ~video_plugin_base() {}
-
-        void set_plugin_type(std::string name)
-        {
-            plugin_type = name;
-        }
-
-        void set_plugin_filename(std::string filename)
-        {
-            plugin_filename = filename;
-        }
-
-        void set_plugin_interface_pointer(video_plugin_base* interfaceptr)
-        {
-            interface_ptr = interfaceptr;
-        }
-
-        virtual std::string get_type() const = 0;
-        virtual std::string get_filename() const = 0;
-        static video_plugin_base* get_interface_pointer()    { return interface_ptr; }
-
-    public:
-        virtual void initialize() = 0;
-        virtual void run() = 0;
-        virtual void set_terminated(bool t) = 0;
-        virtual bool isterminated() = 0;
-        virtual void set_error_terminated (bool t) = 0;
-        virtual bool iserror_terminated(void) = 0;
-        virtual void set_paused(bool t) = 0;
-        virtual bool ispaused(void) = 0;
-
-    public:
-        static Util::condition_data<int> s_condvar;
-
-protected:
-        static bool s_terminated;
-        static bool s_errorterminated;
-        static bool s_paused;
-    };
-
-    video_plugin_base* video_capture_factory(std::ostream& ostrm);
-
     // the types of the class factories
     typedef video_plugin_base* create_t();
     typedef void destroy_t(video_plugin_base*);
+
+    class video_capture_plugin_factory {
+    public:
+        video_capture_plugin_factory() = default;
+        ~video_capture_plugin_factory() { }
+
+        video_plugin_base* create_factory(std::ostream& ostrm);
+        void destroy_factory(std::ostream& ostrm);
+    public:
+        static void* s_plugin_handle;
+        static video_plugin_base* s_vplugin_handle;
+        static destroy_t* s_destroy_function_handle;
+        static std::string s_plugin_so_filename;
+    };
 
     extern "C" video_plugin_base* create();
     extern "C" void destroy(video_plugin_base* p);

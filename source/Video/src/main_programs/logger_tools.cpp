@@ -64,7 +64,7 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
     // by the json file and then the command line.
     Util::LoggerOptions localopt = Util::setLocalLoggerOptions();
 
-    // set the values in localopt as the values in ulogger.
+    // set the values in localopt as the values in the logger
     Util::UtilLogger::setLoggerOptions(localopt);
 
     //////////////////////////////////////////////////////////////
@@ -75,13 +75,13 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
     //////////////////////////////////////////////////////////////
     // Reference to THE logger object
     //////////////////////////////////////////////////////////////
-    Log::Logger ulogger = *(Util::UtilLogger::getLoggerPtr());
+    std::shared_ptr<Log::Logger> uloggerp = Util::UtilLogger::getLoggerPtr();
 
     //////////////////////////////////////////////////////////////
     // Start Logging
     //////////////////////////////////////////////////////////////
 
-    ulogger.info() << "START OF NEW VIDEO CAPTURE RUN";
+    uloggerp->info() << "START OF NEW VIDEO CAPTURE RUN";
 
     {
         Util::LoggerOptions logopt;
@@ -89,30 +89,30 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
         logopt = Util::UtilLogger::getLoggerOptions();
 
         Util::UtilLogger::streamLoggerOptions(ostr, logopt, "after defining the instance of Log::Logger");
-        ulogger.debug() << ostr.str();
+        uloggerp->debug() << ostr.str();
     }
 
     // The logger is now set up.
-    ulogger.info() << "\n\nLogger setup is complete.\n";
-    ulogger.info() << "";
+    uloggerp->info() << "\n\nLogger setup is complete.\n";
+    uloggerp->info() << "";
 
     if (vcGlobals::log_initialization_info)     // -loginit flag
     {
-        ulogger.info() << "\n\n    ******  Deferred output from app initialization:  ******\n";
+        uloggerp->info() << "\n\n    ******  Deferred output from app initialization:  ******\n";
 
         // Empty out the delayed-lines' vector...
         for(auto line : delayedLinesForLogger)
         {
-            ulogger.info() << "DELAYED: " << line;
+            uloggerp->info() << "DELAYED: " << line;
         }
     }
     else
     {
         // -loginit flag was not specified: Capture the last few lines into the log file
-        ulogger.info() << "The last few lines of deferred output from app initialization are shown here.   ******";
-        ulogger.info() << "For the full set of deferred lines, use the -loginit flag on the command line.  ******";
+        uloggerp->info() << "The last few lines of deferred output from app initialization are shown here.   ******";
+        uloggerp->info() << "For the full set of deferred lines, use the -loginit flag on the command line.  ******";
 
-        ulogger.info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
-        ulogger.info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
+        uloggerp->info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
+        uloggerp->info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
     }
 }

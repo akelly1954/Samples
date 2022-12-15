@@ -65,29 +65,31 @@ using namespace VideoCapture;
 
 vidcap_v4l2_driver_interface::vidcap_v4l2_driver_interface()
 {
-    auto logger = Util::UtilLogger::getLoggerPtr();
     set_terminated(false);
 }
 
 void vidcap_v4l2_driver_interface::initialize()
 {
-    if (!logger)
+    // This is not done in the constructor since the logger is not set up
+    // yet while the plugin factory is being created.
+    loggerp = Util::UtilLogger::getLoggerPtr();
+    if (!loggerp)
     {
         throw std::runtime_error("vidcap_v4l2_driver_interface: ERROR: found NULL logger pointer.");
     }
-    logger->debug() << "vidcap_v4l2_driver_interface: Initialized.";
+    loggerp->debug() << "vidcap_v4l2_driver_interface: Initialized.";
 }
 
 void vidcap_v4l2_driver_interface::run()
 {
-    if (!logger)
+    if (!loggerp)
     {
         throw std::runtime_error("vidcap_v4l2_driver_interface::run() ERROR: found NULL logger pointer.");
     }
-    logger->debug() << "vidcap_v4l2_driver_interface: Running.";
+    loggerp->debug() << "vidcap_v4l2_driver_interface: Running.";
 
-    logger->debug() << "vidcap_v4l2_driver_interface: Terminating profile thread.";
-    VideoCapture::vidcap_profiler::set_terminated(true);
+    loggerp->debug() << "vidcap_v4l2_driver_interface: Terminating V4L2 capture thread.";
+    VideoCapture::vidcap_v4l2_driver_interface::set_terminated(true);
 
 }
 #if 0
@@ -97,7 +99,7 @@ void vidcap_v4l2_driver_interface::run()
         {
             if (!isterminated())
             {
-                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_open_device() FAILED. Terminating...";
+                loggerp->error() << "vidcap_v4l2_driver_interface::run() - v4l2if_open_device() FAILED. Terminating...";
                 set_error_terminated(true);
             }
         }
@@ -106,7 +108,7 @@ void vidcap_v4l2_driver_interface::run()
         {
             if (!isterminated())
             {
-                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_init_device() FAILED. Terminating...";
+                loggerp->error() << "vidcap_v4l2_driver_interface::run() - v4l2if_init_device() FAILED. Terminating...";
                 set_error_terminated(true);
             }
         }
@@ -115,14 +117,14 @@ void vidcap_v4l2_driver_interface::run()
         {
             if (!isterminated())
             {
-                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_start_capturing() FAILED. Terminating...";
+                loggerp->error() << "vidcap_v4l2_driver_interface::run() - v4l2if_start_capturing() FAILED. Terminating...";
                 set_error_terminated(true);
             }
         }
 
         if (Video::vcGlobals::profiling_enabled)
         {
-            logger.debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
+            loggerp->debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
             VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
         }
 
@@ -130,7 +132,7 @@ void vidcap_v4l2_driver_interface::run()
         {
             if (!isterminated())
             {
-                logger.error() << "vidcap_v4l2_driver_interface::run() - v4l2if_mainloop() FAILED. Terminating...";
+                loggerp->error() << "vidcap_v4l2_driver_interface::run() - v4l2if_mainloop() FAILED. Terminating...";
                 set_error_terminated(true);
             }
         }
@@ -141,7 +143,7 @@ void vidcap_v4l2_driver_interface::run()
 
         if (Video::vcGlobals::profiling_enabled)
         {
-            logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
+            loggerp->debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
             VideoCapture::vidcap_profiler::set_terminated(true);
         }
 
@@ -153,22 +155,22 @@ void vidcap_v4l2_driver_interface::run()
                     "        ***** ERROR TERMINATION REQUESTED. *****\n"
                     "        ****************************************\n";
 
-                    logger.info() << msg;
+                    loggerp->info() << msg;
         }
         else
         {
-            logger.info() << "vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED";
+            loggerp->info() << "vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED";
             std::cerr << "NORMAL TERMINATION..." << std::endl;
         }
     }
     catch (std::exception &exp)
     {
-        logger.error()
+        loggerp->error()
               << "vidcap_v4l2_driver_interface::run(): Got exception running the video capture: "
               << exp.what() << ". Aborting...";
     } catch (...)
     {
-        logger.error()
+        loggerp->error()
               << "vidcap_v4l2_driver_interface::run(): General exception occurred running the video capture. Aborting...";
     }
     // Let things calm down before disappearing...
@@ -179,8 +181,8 @@ void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocop
 {
     std::string msg = std::string(s) + " error, errno=" + std::to_string(errnocopy) + ": "
                       + const_cast<const char *>(strerror(errnocopy)) + " ...aborting.";
-    logger.error() << msg;
-    logger.error() << "vidcap_v4l2_driver_interface:\n\n"
+    loggerp->error() << msg;
+    loggerp->error() << "vidcap_v4l2_driver_interface:\n\n"
                       "        ****************************************\n"
                       "        ***** ERROR TERMINATION REQUESTED. *****\n"
                       "        ****************************************\n";
@@ -188,7 +190,7 @@ void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocop
 
     if (Video::vcGlobals::profiling_enabled)
     {
-        logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
+        loggerp->debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
         VideoCapture::vidcap_profiler::set_terminated(true);
     }
 
@@ -202,9 +204,9 @@ void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocop
 void vidcap_v4l2_driver_interface::v4l2if_error_exit(const char *s)
 {
     std::string msg = std::string("vidcap_v4l2_driver_interface: ERROR TERMINATION REQUESTED: ") + s;
-    logger.error() << msg;
+    loggerp->error() << msg;
 
-    logger.error() << "vidcap_v4l2_driver_interface:\n\n"
+    loggerp->error() << "vidcap_v4l2_driver_interface:\n\n"
                       "        ****************************************\n"
                       "        ***** ERROR TERMINATION REQUESTED. *****\n"
                       "        ****************************************\n";
@@ -212,7 +214,7 @@ void vidcap_v4l2_driver_interface::v4l2if_error_exit(const char *s)
 
     if (Video::vcGlobals::profiling_enabled)
     {
-        logger.debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
+        loggerp->debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
         VideoCapture::vidcap_profiler::set_terminated(true);
     }
 
@@ -225,7 +227,7 @@ void vidcap_v4l2_driver_interface::v4l2if_error_exit(const char *s)
 
 void vidcap_v4l2_driver_interface::v4l2if_exit(const char *s)
 {
-    logger.info() << "vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED";
+    loggerp->info() << "vidcap_v4l2_driver_interface: NORMAL TERMINATION REQUESTED";
     std::cerr << "NORMAL TERMINATION..." << std::endl;
     set_terminated(true);
 }
@@ -400,7 +402,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
         }
 
         if (Video::vcGlobals::profiling_enabled) profiler_frame::increment_one_frame();
-        // logger.debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
+        // loggerp->debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
 
         while(! isterminated())
         {
@@ -443,11 +445,11 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
     {
         if (iserror_terminated())
         {
-            logger.info() << "v4l2if_mainloop: ERROR:  CAPTURE TERMINATION REQUESTED.";
+            loggerp->info() << "v4l2if_mainloop: ERROR:  CAPTURE TERMINATION REQUESTED.";
         }
         else
         {
-            logger.info() << "v4l2if_mainloop: CAPTURE TERMINATION REQUESTED.";
+            loggerp->info() << "v4l2if_mainloop: CAPTURE TERMINATION REQUESTED.";
         }
         return false;
     }
@@ -868,7 +870,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
                 errnocopy = errno;
                 if (errnocopy == EIO)
                 {
-                    logger.debug() << "v4l2if_init_device: Got EIO setting pixel format to h264 (VIDIOC_S_FMT ioctl)";
+                    loggerp->debug() << "v4l2if_init_device: Got EIO setting pixel format to h264 (VIDIOC_S_FMT ioctl)";
                 }
                 else
                 {
@@ -879,7 +881,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
                     return false;
                 }
             }
-            logger.debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
+            loggerp->debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
                            << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
 
         } else if (Video::vcGlobals::pixel_format ==  Video::pxl_formats::yuyv) {
@@ -893,7 +895,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
             {
                 if (errnocopy == EIO)
                 {
-                    logger.debug() << "v4l2if_init_device: Got EIO setting pixel format to yuyv (VIDIOC_S_FMT ioctl)";
+                    loggerp->debug() << "v4l2if_init_device: Got EIO setting pixel format to yuyv (VIDIOC_S_FMT ioctl)";
                 }
                 else
                 {
@@ -901,7 +903,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
                     return false;
                 }
             }
-            logger.debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
+            loggerp->debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
                            << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
         } else {
             /* Preserve original settings as set by v4l2-ctl for example */
@@ -926,7 +928,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
                 ostr << "driver: frame: " << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height;
                 std::string s = ostr.str();
                 std::cerr << s << std::endl;
-                logger.debug() << s;
+                loggerp->debug() << s;
             }
 
             std::string bfp;
@@ -948,12 +950,12 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
                      << std::hex << fmt.fmt.pix.pixelformat << " - " << bfp;
                 std::string s = ostr.str();
                 std::cerr << s << std::endl;
-                logger.debug() << s;
+                loggerp->debug() << s;
             }
         }
 
-        logger.debug() << "driver: bytes required: " << fmt.fmt.pix.sizeimage;
-        logger.debug() << "driver: I/O METHOD: " << string_io_methods[io];
+        loggerp->debug() << "driver: bytes required: " << fmt.fmt.pix.sizeimage;
+        loggerp->debug() << "driver: I/O METHOD: " << string_io_methods[io];
 
         // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
         // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
@@ -1014,18 +1016,18 @@ bool vidcap_v4l2_driver_interface::v4l2if_open_device(void)
 
     if (Utility::trim(Video::vcGlobals::str_dev_name) == "")
     {
-        logger.error() << "v4l2if_open_device: empty video device name";
+        loggerp->error() << "v4l2if_open_device: empty video device name";
         return false;
     }
     if (stat(Video::vcGlobals::str_dev_name.c_str(), &st) == -1) {
         errnocopy = errno;
-        logger.error() << "v4l2if_open_device: Cannot identify device "
+        loggerp->error() << "v4l2if_open_device: Cannot identify device "
                        << Video::vcGlobals::str_dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
         return false;
     }
 
     if (!S_ISCHR(st.st_mode)) {
-        logger.error() << "v4l2if_open_device: " << Video::vcGlobals::str_dev_name << " is not a device";
+        loggerp->error() << "v4l2if_open_device: " << Video::vcGlobals::str_dev_name << " is not a device";
         return false;
     }
 
@@ -1033,11 +1035,11 @@ bool vidcap_v4l2_driver_interface::v4l2if_open_device(void)
     errnocopy = errno;
 
     if (-1 == fd) {
-        logger.error() << "v4l2if_open_device: Cannot open "
+        loggerp->error() << "v4l2if_open_device: Cannot open "
                        << Video::vcGlobals::str_dev_name << ": errno=" << errnocopy << ": " << strerror(errnocopy);
         return false;
     }
-    logger.info() << "Device " << Video::vcGlobals::str_dev_name;
+    loggerp->info() << "Device " << Video::vcGlobals::str_dev_name;
     return true;
 }
 

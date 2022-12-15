@@ -24,14 +24,11 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 
-// TODO: XXX #include <plugins/vidcap_raw_queue_thread.hpp>
 #include <vidcap_capture_thread.hpp>
-// TODO: XXX #include <pluginns/vidcap_v4l2_driver_interface.hpp>
-// TODO: XXX #include <plugins/vidcap_opencv_stream.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
-#include <LoggerCpp/LoggerCpp.h>
+#include <vidcap_plugin_factory.hpp>
 #include <ConfigSingleton.hpp>
 #include <MainLogger.hpp>
 #include <stdio.h>
@@ -46,53 +43,42 @@
 #include <sys/socket.h>
 #include <assert.h>
 
+// static members
+
+std::mutex VideoCapture::video_plugin_base::p_video_capture_mutex;
+
+Util::condition_data<int> VideoCapture::video_plugin_base::s_condvar(0);
+std::string VideoCapture::video_plugin_base::plugin_type = "undefined";
+std::string VideoCapture::video_plugin_base::plugin_filename;
+VideoCapture::video_plugin_base* VideoCapture::video_plugin_base::interface_ptr = nullptr;
+
+bool VideoCapture::video_plugin_base::s_terminated = false;
+bool VideoCapture::video_plugin_base::s_errorterminated = false;
+bool VideoCapture::video_plugin_base::s_paused = false;
+
 void VideoCapture::video_capture()
 {
     using namespace VideoCapture;
 
     auto loggerp = Util::UtilLogger::getLoggerPtr();
 
-    loggerp->debug() << "VideoCapture::video_capture: Running.";
-    ::sleep(1);
-    loggerp->debug() << "VideoCapture::video_capture: Terminating...";
-    VideoCapture::vidcap_capture_base::set_terminated(true);
     {
-        std::lock_guard<std::mutex> lock(vidcap_capture_base::video_capture_mutex);
+        std::lock_guard<std::mutex> lock(video_plugin_base::p_video_capture_mutex);
 
-        if (!vidcap_capture_base::s_terminated)
+        if (!video_plugin_base::s_terminated)
         {
+            // Main is going to kick-start us to free this.
             // Wait for main() to signal us to start
-            vidcap_capture_base::s_condvar.wait_for_ready();
+            video_plugin_base::s_condvar.wait_for_ready();
         }
     }
-}
 
-/////////////////////////////////////////////////////////////////
-// NOTE: This is a different thread to the main thread.
-/////////////////////////////////////////////////////////////////
-
-// static members
-
-std::mutex VideoCapture::vidcap_capture_base::video_capture_mutex;
-bool VideoCapture::vidcap_capture_base::s_terminated = false;
-bool VideoCapture::vidcap_capture_base::s_errorterminated = false;
-bool VideoCapture::vidcap_capture_base::s_paused = false;
-Util::condition_data<int> VideoCapture::vidcap_capture_base::s_condvar(0);
-VideoCapture::vidcap_capture_base *VideoCapture::vidcap_capture_base::sp_interface_pointer = nullptr;
-
-#if 0 // TODO: XXX
-
-void VideoCapture::video_capture()
-{
-    using namespace VideoCapture;
-
-    vidcap_capture_base::sp_interface_pointer = nullptr;
+    loggerp->debug() << "VideoCapture::video_capture: Running.";
 
     // Find out which interface is configured (v4l2 or opencv)
     Json::Value& ref_root_copy = Config::ConfigSingleton::GetJsonRootCopyRef();
 
     std::string videoInterface = Video::vcGlobals::video_grabber_name;
-    logger.info() << "Video Capture thread: Requesting the " << videoInterface << " frame-grabber.";
 
     std::string interfaceName;
     std::string interfaceList = "Video Capture thread: The list of available frame grabbers in the json config file is: ";
@@ -109,7 +95,7 @@ void VideoCapture::video_capture()
         }
         interfaceList += (itrkey + " ");
     }
-    logger.info() << interfaceList;
+    loggerp->info() << interfaceList;
 
     // The above loop is equivalent to this:
     //
@@ -123,56 +109,43 @@ void VideoCapture::video_capture()
     if (interfaceName == "")
     {
         std::string str = std::string("Video Capture thread: invalid interface (") + videoInterface + ") requested from the JSON configuration.";
-        logger.warning() << str;
+        loggerp->warning() << str;
         throw std::runtime_error(str);
     }
     else
     {
-        logger.info() << "Video Capture thread: Picking the " << interfaceName << " frame-grabber.";
+        loggerp->info() << "Video Capture thread: Picking the " << interfaceName << " frame-grabber.";
     }
 
+    loggerp->info() << "Video Capture thread: Running the " << videoInterface << " frame-grabber.";
 
-    if (interfaceName == "v4l2")
-    {
-        logger.info() << "Video Capture thread: Interface used is " << interfaceName;
-        vidcap_capture_base::sp_interface_pointer = new vidcap_v4l2_driver_interface(logger);
+    // A pointer to the "new"ly created plugin exists here: video_plugin_base::interface_ptr
+    // The new object was created in the plugin factory with new() of the default constructor.
 
-        // Start the video interface:
-        vidcap_capture_base::sp_interface_pointer->initialize();
-        vidcap_capture_base::sp_interface_pointer->run();
-    }
-    else if (interfaceName == "opencv")
-    {
-        logger.info() << "Video Capture thread: Interface used is " << interfaceName;
-        vidcap_capture_base::sp_interface_pointer = new vidcap_opencv_stream(logger);
+    // Start the video interface:
+    video_plugin_base::interface_ptr->initialize();
+    video_plugin_base::interface_ptr->run();
 
-        // Start the video interface:
-        vidcap_capture_base::sp_interface_pointer->initialize();
-        if (vidcap_capture_base::sp_interface_pointer->isterminated())
-        {
-            logger.error() <<  "Video Capture thread: Opencv VideoCapture object could not be initialized. Terminating...";
-            throw std::runtime_error("Video Capture thread: Opencv VideoCapture object could not be initialized.");
-        }
-        vidcap_capture_base::sp_interface_pointer->run();
-    }
-    else
+#if 0
+        else
     {
-        logger.error() << "Video Capture thread: Unknown video interface specified in the json configuration: " << videoInterface << ".  Aborting...";
+        loggerp->error() << "Video Capture thread: Unknown video interface specified in the json configuration: " << videoInterface << ".  Aborting...";
         throw std::runtime_error(std::string("Video Capture thread: Unknown video interface specified in the json configuration: " + videoInterface + ".  Aborting..."));
     }
+#endif // 0
 }
 
-#endif // 0
-
-void VideoCapture::vidcap_capture_base::set_terminated(bool t)
+void VideoCapture::video_plugin_base::set_terminated(bool t)
 {
-    // std::lock_guard<std::mutex> lock(VideoCapture::vidcap_capture_base::video_capture_mutex);
+    using namespace VideoCapture;
 
-    VideoCapture::vidcap_capture_base::s_terminated = t;
+    std::lock_guard<std::mutex> lock(VideoCapture::video_plugin_base::p_video_capture_mutex);
+
+    video_plugin_base::s_terminated = t;
 
     // Free up a potential wait on the condition variable
     // so that the thread can be terminated (otherwise it may hang).
-    VideoCapture::vidcap_capture_base::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+    video_plugin_base::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
 }
 
 

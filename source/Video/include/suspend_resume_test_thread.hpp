@@ -28,5 +28,5 @@
 
 namespace VideoCapture
 {
-    void test_raw_capture_ctl(Log::Logger logger, std::string argv0);
+    void test_raw_capture_ctl(std::string argv0);
 }

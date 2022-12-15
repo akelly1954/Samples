@@ -37,6 +37,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <vidcap_plugin_factory.hpp>
+#include <vidcap_capture_thread.hpp>
 #include <MainLogger.hpp>
 #include <Utility.hpp>
 #include <condition_data.hpp>
@@ -56,7 +57,7 @@ namespace VideoCapture
     public:
         virtual void initialize();
         virtual void run();
-        void set_terminated(bool t)                     { video_plugin_base::s_terminated = t; };
+        void set_terminated(bool t)                     { video_plugin_base::set_terminated(t); };
         virtual bool isterminated(void)                 { return video_plugin_base::s_terminated; };
         virtual void set_error_terminated (bool t)      { video_plugin_base::s_errorterminated = t; set_terminated(t); };
         virtual bool iserror_terminated(void)           { return video_plugin_base::s_errorterminated; };
@@ -64,7 +65,8 @@ namespace VideoCapture
         virtual bool ispaused(void)                     { return video_plugin_base::s_paused; };
 
     private:
-        Log::Logger *logger = nullptr;
+        std::shared_ptr<Log::Logger> loggerp;
+        // Log::Logger *loggerp = nullptr;
     };
 
     // the class factories
@@ -76,7 +78,7 @@ namespace VideoCapture
         if (p) delete p;
     }
 
-#if 0
+#if 0  // TODO: XXX
 #include <video_capture_commandline.hpp>
 #include <video_capture_globals.hpp>
 #include <JsonCppUtil.hpp>

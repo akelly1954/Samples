@@ -65,6 +65,7 @@ namespace Video
         static bool write_frames_to_process;
         static std::string str_frame_count;
         static std::string str_dev_name;
+        static std::string str_plugin_file_name;
         static bool proc_redir;
         static std::string redir_filename;
         static bool test_suspend_resume;

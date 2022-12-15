@@ -57,6 +57,7 @@ bool            Video::vcGlobals::write_frames_to_process = false;
 size_t          Video::vcGlobals::framecount =              200;
 std::string     Video::vcGlobals::str_frame_count(std::to_string(framecount));
 std::string     Video::vcGlobals::str_dev_name =            "/dev/video0";
+std::string     Video::vcGlobals::str_plugin_file_name =    "./undefined.so";
 bool            Video::vcGlobals::proc_redir =              true;
 std::string     Video::vcGlobals::redir_filename =          "/dev/null";
 bool            Video::vcGlobals::test_suspend_resume =     false;
@@ -156,6 +157,14 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
                                                 [Video::vcGlobals::video_grabber_name]
                                                  ["device-name"].asString();
     strm << "\nFrom JSON:  Set " << Video::vcGlobals::video_grabber_name << " device name to " << Video::vcGlobals::str_dev_name;
+
+    // plugin-file-name - Video::vcGlobals::str_plugin_file_name
+    Video::vcGlobals::str_plugin_file_name = cfg_root["Config"]
+                                                  ["Video"]
+                                                   ["frame-capture"]
+                                                    [Video::vcGlobals::video_grabber_name]
+                                                     ["plugin-file-name"].asString();
+    strm << "\nFrom JSON:  Set grabber plugin file name to " << Video::vcGlobals::str_plugin_file_name;
 
     // Video::vcGlobals::pixel_format is either "h264" or "yuyv"
     std::string pixelFormat = cfg_root["Config"]

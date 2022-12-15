@@ -62,8 +62,21 @@ void VideoCapture::raw_buffer_queue_handler()
 {
     auto loggerp = Util::UtilLogger::getLoggerPtr();
 
+    loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Waiting for kick-start...";
+
+    {
+        std::lock_guard<std::mutex> lock(video_capture_queue::capture_queue_mutex);
+
+        if (!video_capture_queue::s_terminated)
+        {
+            // Main is going to kick-start us to free this.
+            // Wait for main() to signal us to start
+            video_capture_queue::s_condvar.wait_for_ready();
+        }
+    }
+
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Running.";
-    ::sleep(1);
+
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Terminating...";
     video_capture_queue::set_terminated(true);
 }
