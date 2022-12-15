@@ -42,8 +42,37 @@
 #include <Utility.hpp>
 #include <condition_data.hpp>
 
+// #include <video_capture_commandline.hpp>
+#include <video_capture_globals.hpp>
+// #include <JsonCppUtil.hpp>
+#include <ConfigSingleton.hpp>
+#include <vidcap_profiler_thread.hpp>
+#include <vidcap_raw_queue_thread.hpp>
+
+// Much of the VideoCapture::vidcap_v4l2_driver_interface object includes code
+// used in the v4l2_capture.c source obtained from the linux.org documentation online.
+// Most of the actual variable names and some C macros are still used in the object
+// declared below, in order to help in future issues that are unknown at this time.
+//
+// Please see the "Reference" section (directory) in this project.  The README.md file
+// shows the connection to the above mentioned C main program, and the C++ object declared
+// below.
+
 namespace VideoCapture
 {
+    #define CLEAR(x) memset(&(x), 0, sizeof(x))
+
+    enum io_method {
+            IO_METHOD_READ = 0,
+            IO_METHOD_MMAP,
+            IO_METHOD_USERPTR,
+    };
+
+    struct buffer {
+            void   *start;
+            size_t  length;
+    };
+
     class vidcap_v4l2_driver_interface : virtual public video_plugin_base
     {
     public:
@@ -63,73 +92,6 @@ namespace VideoCapture
         virtual bool iserror_terminated(void)           { return video_plugin_base::s_errorterminated; };
         virtual void set_paused(bool t)                 { video_plugin_base::s_paused = t; };
         virtual bool ispaused(void)                     { return video_plugin_base::s_paused; };
-
-    private:
-        std::shared_ptr<Log::Logger> loggerp;
-        // Log::Logger *loggerp = nullptr;
-    };
-
-    // the class factories
-    extern "C" video_plugin_base* create() {
-        return new vidcap_v4l2_driver_interface();
-    }
-
-    extern "C" void destroy(video_plugin_base* p) {
-        if (p) delete p;
-    }
-
-#if 0  // TODO: XXX
-#include <video_capture_commandline.hpp>
-#include <video_capture_globals.hpp>
-#include <JsonCppUtil.hpp>
-#include <Utility.hpp>
-#include <MainLogger.hpp>
-#include <ConfigSingleton.hpp>
-#include <vidcap_profiler_thread.hpp>
-#include <vidcap_raw_queue_thread.hpp>
-#include <vidcap_capture_thread.hpp>
-
-// Much of the VideoCapture::vidcap_v4l2_driver_interface object includes code
-// used in the v4l2_capture.c source obtained from the linux.org documentation online.
-// Most of the actual variable names and some C macros are still used in the object
-// declared below, in order to help in future issues that are unknown at this time.
-//
-// Please see the "Reference" section (directory) in this project.  The README.md file
-// shows the connection to the above mentioned C main program, and the C++ object declared
-// below.
-
-namespace VideoCapture {
-
-#define CLEAR(x) memset(&(x), 0, sizeof(x))
-
-    enum io_method {
-            IO_METHOD_READ = 0,
-            IO_METHOD_MMAP,
-            IO_METHOD_USERPTR,
-    };
-
-    struct buffer {
-            void   *start;
-            size_t  length;
-    };
-
-    class vidcap_v4l2_driver_interface: virtual public vidcap_capture_base
-    {
-    private:
-        vidcap_v4l2_driver_interface() = delete;
-    public:
-        vidcap_v4l2_driver_interface(Log::Logger lg);
-        virtual ~vidcap_v4l2_driver_interface() = default;
-
-        void initialize();
-        void run();
-        void set_terminated(bool t)             { vidcap_capture_base::s_terminated = t; };
-        bool isterminated(void)                 { return vidcap_capture_base::s_terminated; };
-        void set_error_terminated (bool t)      { vidcap_capture_base::s_errorterminated = t; set_terminated(t); };
-        bool iserror_terminated(void)           { return vidcap_capture_base::s_errorterminated; };
-        void set_paused(bool t)                 { vidcap_capture_base::s_paused = t; };
-        bool ispaused(void)                     { return vidcap_capture_base::s_paused; };
-
 
         int  v4l2if_xioctl(int fh, int request, void *arg);
         void v4l2if_process_image(void *p, int size);
@@ -153,7 +115,10 @@ namespace VideoCapture {
         void v4l2if_exit(const char *s);
 
     private:
-        Log::Logger logger;
+        std::shared_ptr<Log::Logger> loggerp;
+        // Log::Logger *loggerp = nullptr;
+
+    private:
         enum io_method  io = IO_METHOD_MMAP;
         std::vector<const char *> string_io_methods ={ "IO_METHOD_READ", "IO_METHOD_MMAP", "IO_METHOD_USERPTR" };
         int             fd = -1;
@@ -162,7 +127,14 @@ namespace VideoCapture {
         bool            m_errorterminated = false;
     };
 
-#endif // 0
+    // the class factories
+    extern "C" video_plugin_base* create() {
+        return new vidcap_v4l2_driver_interface();
+    }
+
+    extern "C" void destroy(video_plugin_base* p) {
+        if (p) delete p;
+    }
 
 } // end of namespace VideoCapture
 

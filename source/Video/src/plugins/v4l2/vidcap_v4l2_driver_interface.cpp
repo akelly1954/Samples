@@ -88,12 +88,12 @@ void vidcap_v4l2_driver_interface::run()
     }
     loggerp->debug() << "vidcap_v4l2_driver_interface: Running.";
 
+#if 0
     loggerp->debug() << "vidcap_v4l2_driver_interface: Terminating V4L2 capture thread.";
     VideoCapture::vidcap_v4l2_driver_interface::set_terminated(true);
-
 }
-#if 0
-{
+#endif // 0
+
     try {
         if (isterminated() || !v4l2if_open_device())
         {
@@ -1043,4 +1043,4 @@ bool vidcap_v4l2_driver_interface::v4l2if_open_device(void)
     return true;
 }
 
-#endif // 0
+

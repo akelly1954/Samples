@@ -60,6 +60,11 @@ Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUti
 
 void VideoCapture::raw_buffer_queue_handler()
 {
+    using namespace Video;
+
+    FILE *filestream = NULL;        // if write_frames_to_file
+    FILE *processstream = NULL;     // if write_frames_to_process
+
     auto loggerp = Util::UtilLogger::getLoggerPtr();
 
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Waiting for kick-start...";
@@ -76,23 +81,24 @@ void VideoCapture::raw_buffer_queue_handler()
     }
 
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Running.";
-
+#if 0
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Terminating...";
     video_capture_queue::set_terminated(true);
 }
 
-#if 0
+
 void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
 {
     using namespace Video;
     FILE *filestream = NULL;        // if write_frames_to_file
     FILE *processstream = NULL;     // if write_frames_to_process
+#endif // 0
 
     // Captured frames also go to the output file only if the
     // option is set (which it is not, by default)
     if (Video::vcGlobals::write_frames_to_file)
     {
-        filestream = create_output_file(logger);
+        filestream = create_output_file();
         if (filestream == NULL)
         {
             // detailed error message already emitted by the create function
@@ -106,7 +112,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
     // option is set (which it is not, by default)
     if (Video::vcGlobals::write_frames_to_process)
     {
-        processstream = create_output_process(logger);
+        processstream = create_output_process();
         if (processstream == NULL)
         {
             // detailed error message already emitted by the create function
@@ -130,7 +136,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
 
             if (Video::vcGlobals::write_frames_to_file)
             {
-                size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, sp_frame);
+                size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
                 assert (nbytes == sp_frame->num_valid_elements());
 
                 //////////////////////////////////////////////////////////////////////
@@ -142,7 +148,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
 
             if (Video::vcGlobals::write_frames_to_process)
             {
-                size_t nbytes = VideoCapture::write_frame_to_process(logger, processstream, sp_frame);
+                size_t nbytes = VideoCapture::write_frame_to_process(processstream, sp_frame);
                 assert (nbytes == sp_frame->num_valid_elements());
 
                 //////////////////////////////////////////////////////////////////////
@@ -163,7 +169,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
         loggerp->debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
         if (Video::vcGlobals::write_frames_to_file)
         {
-            size_t nbytes = VideoCapture::write_frame_to_file(logger, filestream, sp_frame);
+            size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
             assert (nbytes == sp_frame->num_valid_elements());
 
             //////////////////////////////////////////////////////////////////////
@@ -175,7 +181,7 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
 
         if (Video::vcGlobals::write_frames_to_process)
         {
-            size_t nbytes = VideoCapture::write_frame_to_process(logger, processstream, sp_frame);
+            size_t nbytes = VideoCapture::write_frame_to_process(processstream, sp_frame);
             assert (nbytes == sp_frame->num_valid_elements());
 
             //////////////////////////////////////////////////////////////////////
@@ -205,7 +211,6 @@ void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
         }
     }
 }
-#endif // 0
 
 void video_capture_queue::set_terminated(bool t)
 {
@@ -245,13 +250,13 @@ void video_capture_queue::add_buffer_to_raw_queue(void *p, size_t bsize)
     }
 }
 
-#if 0
-
 // Open/truncate the output file that will hold captured frames
-FILE * VideoCapture::create_output_file(Log::Logger logger)
+FILE * VideoCapture::create_output_file()
 {
     int errnocopy = 0;
     FILE *output_stream = NULL;
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
 
     if ((output_stream = ::fopen (Video::vcGlobals::output_file.c_str(), "w+")) == NULL)
     {
@@ -267,10 +272,12 @@ FILE * VideoCapture::create_output_file(Log::Logger logger)
 }
 
 // Start up the process that will receive video frames in it's std input
-FILE * VideoCapture::create_output_process(Log::Logger logger)
+FILE * VideoCapture::create_output_process()
 {
     int errnocopy = 0;
     FILE *output_stream = NULL;
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
 
     // Need to refresh output process since command line options
     // may have changed the requested pixel-format.
@@ -320,12 +327,14 @@ FILE * VideoCapture::create_output_process(Log::Logger logger)
     return output_stream;
 }
 
-size_t VideoCapture::write_frame_to_file(Log::Logger logger, FILE *filestream,
+size_t VideoCapture::write_frame_to_file(FILE *filestream,
             std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
 {
     size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), filestream);
     int errnocopy = 0;
     size_t byteswritten = elementswritten * sizeof(uint8_t);
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
 
     if (byteswritten != sp_frame->num_valid_elements())
     {
@@ -338,9 +347,11 @@ size_t VideoCapture::write_frame_to_file(Log::Logger logger, FILE *filestream,
     return byteswritten;
 }
 
-size_t VideoCapture::write_frame_to_process(Log::Logger logger, FILE *processstream,
+size_t VideoCapture::write_frame_to_process(FILE *processstream,
             std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
 {
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
     size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), processstream);
     int errnocopy = 0;
     size_t byteswritten = elementswritten * sizeof(uint8_t);
@@ -356,5 +367,4 @@ size_t VideoCapture::write_frame_to_process(Log::Logger logger, FILE *processstr
     return byteswritten;
 }
 
-#endif // 0
 

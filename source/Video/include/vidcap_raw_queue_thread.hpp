@@ -41,14 +41,14 @@ namespace VideoCapture {
 // Queue handler thread
 void raw_buffer_queue_handler();
 
-FILE *create_output_file(Log::Logger logger);
+FILE *create_output_file();
 
-FILE *create_output_process(Log::Logger logger);
+FILE *create_output_process();
 
-size_t write_frame_to_file(Log::Logger logger, FILE *filestream,
+size_t write_frame_to_file(FILE *filestream,
                   std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame);
 
-size_t write_frame_to_process(Log::Logger logger, FILE *filestream,
+size_t write_frame_to_process(FILE *filestream,
                   std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame);
 
 class video_capture_queue

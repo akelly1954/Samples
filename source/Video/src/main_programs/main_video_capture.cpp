@@ -302,12 +302,14 @@ int main(int argc, const char *argv[])
             uloggerp->debug() << "main_video_capture: Video Capture thread is done. Cleanup and terminate.";
         }
 
+#if 0
         uloggerp->debug() << argv0 << ":  terminating queue thread.";
         // Inform the queue handler thread that the party is over...
         VideoCapture::video_capture_queue::set_terminated(true);
 
         // Make sure the ring buffer gets emptied
         VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+#endif // 0
     }
     catch (std::exception &exp)
     {
@@ -324,6 +326,7 @@ int main(int argc, const char *argv[])
 
     if (vcGlobals::test_suspend_resume && trcc.joinable()) trcc.join();
 
+#if 0
     // Wait for the threads to finish
     if (queuethread.joinable())
     {
@@ -334,6 +337,7 @@ int main(int argc, const char *argv[])
     {
         if (!VideoCapture::video_capture_queue::s_terminated) VideoCapture::video_capture_queue::set_terminated(true);
     }
+#endif // 0
 
     if (vcGlobals::profiling_enabled)
     {
@@ -360,6 +364,19 @@ int main(int argc, const char *argv[])
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // TODO: This is a hack to get around an issue with double-free/abort
+    // message after the regular return which is currently commented out (see
+    // below. This does not affect functionality at all. Restore the "return"
+    // once this is fixed.
+    //
+           ::_exit(0);
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+#if 0   // See comment above
     return return_for_exit;
+#endif // 0
 }
 
