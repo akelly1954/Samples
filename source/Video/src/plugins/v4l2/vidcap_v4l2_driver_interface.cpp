@@ -38,6 +38,12 @@
 // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
 // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.
 
+#include <plugins/vidcap_v4l2_driver_interface.hpp>
+#include <vidcap_capture_thread.hpp>
+#include <vidcap_raw_queue_thread.hpp>
+#include <MainLogger.hpp>
+#include <Utility.hpp>
+#include <thread>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,11 +57,6 @@
 #include <sys/mman.h>
 #include <sys/ioctl.h>
 #include <exception>
-#include <thread>
-#include <Utility.hpp>
-#include <plugins/vidcap_v4l2_driver_interface.hpp>
-#include <vidcap_raw_queue_thread.hpp>
-#include <MainLogger.hpp>
 #include <linux/videodev2.h>
 
 using namespace VideoCapture;
@@ -87,12 +88,6 @@ void vidcap_v4l2_driver_interface::run()
         throw std::runtime_error("vidcap_v4l2_driver_interface::run() ERROR: found NULL logger pointer.");
     }
     loggerp->debug() << "vidcap_v4l2_driver_interface: Running.";
-
-#if 0
-    loggerp->debug() << "vidcap_v4l2_driver_interface: Terminating V4L2 capture thread.";
-    VideoCapture::vidcap_v4l2_driver_interface::set_terminated(true);
-}
-#endif // 0
 
     try {
         if (isterminated() || !v4l2if_open_device())
@@ -141,12 +136,6 @@ void vidcap_v4l2_driver_interface::run()
         v4l2if_uninit_device();
         v4l2if_close_device();
 
-        if (Video::vcGlobals::profiling_enabled)
-        {
-            loggerp->debug() << "vidcap_v4l2_driver_interface::run() - terminating the video_profiler thread.";
-            VideoCapture::vidcap_profiler::set_terminated(true);
-        }
-
         if (iserror_terminated())
         {
             std::string msg =
@@ -154,7 +143,6 @@ void vidcap_v4l2_driver_interface::run()
                     "        ****************************************\n"
                     "        ***** ERROR TERMINATION REQUESTED. *****\n"
                     "        ****************************************\n";
-
                     loggerp->info() << msg;
         }
         else
@@ -173,8 +161,10 @@ void vidcap_v4l2_driver_interface::run()
         loggerp->error()
               << "vidcap_v4l2_driver_interface::run(): General exception occurred running the video capture. Aborting...";
     }
+#if 0 // TODO - remove this asap
     // Let things calm down before disappearing...
     std::this_thread::sleep_for(std::chrono::milliseconds(1800));
+#endif // 0
 }
 
 void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocopy)
@@ -388,7 +378,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
 
 bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
 {
-    int count = Video::vcGlobals::framecount;
+    static int count = Video::vcGlobals::framecount;
     int errnocopy = 0;
 
     // Loop while not finished, and original int_frame_count was 0, or counter is not done counting
@@ -397,11 +387,12 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
     {
         if (Video::vcGlobals::framecount != 0 && count-- <= 0)
         {
+            loggerp->debug() << "In v4l2if_mainloop: end of loop, count = " << count;
             set_terminated(true);
             break;
         }
 
-        if (Video::vcGlobals::profiling_enabled) profiler_frame::increment_one_frame();
+        if (!isterminated() && Video::vcGlobals::profiling_enabled) profiler_frame::increment_one_frame();
         // loggerp->debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
 
         while(! isterminated())

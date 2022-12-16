@@ -363,17 +363,23 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
     // Are we testing suspend/resume?
     if (Video::vcGlobals::test_suspend_resume)
     {
-        Video::vcGlobals::framecount = 0;
+        if (fcount_value < 100)
+        {
+            fcount_value = 100;
+            strm << "\nWARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing\n";
+            std::cerr << "\n        WARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing\n";
+        }
+        Video::vcGlobals::framecount = fcount_value;
         Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
-        strm << "WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread)." ;
-        std::cerr << "WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread)." << std::endl;
+        strm << "\nWARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread).\n" ;
+        std::cerr << "\n        WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread).\n" << std::endl;
     }
     else
     {
         Video::vcGlobals::framecount = fcount_value;
         Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
         strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
-        // TODO:  remove this???   std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
+        std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
     }
 
     return true;

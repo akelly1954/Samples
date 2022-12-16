@@ -30,7 +30,7 @@
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <video_capture_globals.hpp>
-#include <LoggerCpp/LoggerCpp.h>
+#include <MainLogger.hpp>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +63,8 @@ bool profiler_frame::initialized = false;
 bool vidcap_profiler::s_terminated = false;
 Util::condition_data<int> vidcap_profiler::s_condvar(0);
 
+// Profiler thread entry point
+// (member functions for vidcap_profiler and profiler_frame are defined below)
 void VideoCapture::video_profiler()
 {
     Log::Logger logger = *(Util::UtilLogger::getLoggerPtr());
@@ -95,6 +97,65 @@ void VideoCapture::video_profiler()
 
     logger.debug() << "Profiler thread terminating ...";
 }
+
+///////////////////////////////////////////////////////////////////
+// Class profiler_frame members
+///////////////////////////////////////////////////////////////////
+void profiler_frame::initialize(void)
+{
+    using namespace std::chrono;
+
+    stats_total_num_frames = 0;
+    stats_total_frame_duration_milliseconds =
+            duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
+}
+
+long long profiler_frame::increment_one_frame(void)
+{
+    using namespace std::chrono;
+
+    auto ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+    if (!ifptr || ifptr->ispaused())
+    {
+        // if we're paused, there are not changes to the stats.
+        return stats_total_num_frames;
+    }
+
+    std::lock_guard<std::mutex> lock(stats_frames_mutex);
+
+    // Use the first frame as the baseline for the total duration counter.
+    if (!profiler_frame::initialized)
+    {
+        profiler_frame::initialized = true;
+        vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
+    }
+    else
+    {
+        stats_total_num_frames++;
+        stats_total_frame_duration_milliseconds =
+                duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
+    }
+    return stats_total_num_frames;
+}
+
+double profiler_frame::frames_per_millisecond()
+{
+    double ret;
+    if (stats_total_frame_duration_milliseconds.count() != 0)
+    {
+        return static_cast<double>(stats_total_num_frames) / static_cast<double>(stats_total_frame_duration_milliseconds.count());
+    }
+    return 0.0;
+}
+
+double profiler_frame::frames_per_second()
+{
+    return frames_per_millisecond() * 1000.0;
+}
+
+///////////////////////////////////////////////////////////////////
+// Class vidcap_profiler members
+///////////////////////////////////////////////////////////////////
 
 void vidcap_profiler::set_terminated(bool t)
 {

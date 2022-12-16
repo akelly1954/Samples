@@ -1,10 +1,11 @@
 #pragma once
 
+#include <vidcap_capture_thread.hpp>
+#include <vidcap_plugin_factory.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
+#include <MainLogger.hpp>
 #include <condition_data.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <vidcap_plugin_factory.hpp>
 #include <stdio.h>
 #include <thread>
 #include <mutex>
@@ -36,83 +37,35 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-
 namespace VideoCapture {
 
-// Queue handler thread
-void video_profiler();
+    // Queue handler thread
+    void video_profiler();
 
-class vidcap_profiler
-{
-public:
-    static void set_terminated(bool t);         // main() sets this to true or false
-    static bool s_terminated;
-    static std::chrono::steady_clock::time_point s_profiler_start_timepoint;
-    static Util::condition_data<int> s_condvar;
-    static std::mutex profiler_mutex;
-};  // end of class vidcap_profiler
-
-class profiler_frame
-{
-public:
-    static void initialize(void)
+    class vidcap_profiler
     {
-        using namespace std::chrono;
+    public:
+        static void set_terminated(bool t);         // main() sets this to true or false
+        static bool s_terminated;
+        static std::chrono::steady_clock::time_point s_profiler_start_timepoint;
+        static Util::condition_data<int> s_condvar;
+        static std::mutex profiler_mutex;
+    };  // end of class vidcap_profiler
 
-        stats_total_num_frames = 0;
-        stats_total_frame_duration_milliseconds =
-                duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
-    }
-
-    static long long increment_one_frame(void)
+    class profiler_frame
     {
-        using namespace std::chrono;
+    public:
+        static void initialize(void);
+        static long long increment_one_frame(void);
+        static double frames_per_millisecond();
+        static double frames_per_second();
 
-        auto ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
-        if (!ifptr || ifptr->ispaused())
-        {
-            // if we're paused, there are not changes to the stats.
-            return stats_total_num_frames;
-        }
-
-        std::lock_guard<std::mutex> lock(stats_frames_mutex);
-
-        // Use the first frame as the baseline for the total duration counter.
-        if (!profiler_frame::initialized)
-        {
-            profiler_frame::initialized = true;
-            vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
-        }
-        else
-        {
-            stats_total_num_frames++;
-            stats_total_frame_duration_milliseconds =
-                    duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
-        }
-        return stats_total_num_frames;
-    }
-
-    static double frames_per_millisecond()
-    {
-        double ret;
-        if (stats_total_frame_duration_milliseconds.count() != 0)
-        {
-            return static_cast<double>(stats_total_num_frames) / static_cast<double>(stats_total_frame_duration_milliseconds.count());
-        }
-        return 0.0;
-    }
-
-    static double frames_per_second()
-    {
-        return frames_per_millisecond() * 1000.0;
-    }
-
-public:
-    static std::mutex stats_frames_mutex;
-    static long long stats_total_num_frames;
-    static std::chrono::milliseconds stats_total_frame_duration_milliseconds;
-    static bool initialized;
-};
+    public:
+        static std::mutex stats_frames_mutex;
+        static long long stats_total_num_frames;
+        static std::chrono::milliseconds stats_total_frame_duration_milliseconds;
+        static bool initialized;
+    };
 
 } // end of namespace VideoCapture
 

@@ -65,7 +65,12 @@ void VideoCapture::video_capture()
     {
         std::lock_guard<std::mutex> lock(video_plugin_base::p_video_capture_mutex);
 
-        if (!video_plugin_base::s_terminated)
+        if (video_plugin_base::s_terminated)
+        {
+            loggerp->info() << "Video Capture thread: Terminated before start of streaming...";
+            return;
+        }
+        else
         {
             // Main is going to kick-start us to free this.
             // Wait for main() to signal us to start
@@ -114,7 +119,7 @@ void VideoCapture::video_capture()
     }
     else
     {
-        loggerp->info() << "Video Capture thread: Picking the " << interfaceName << " frame-grabber.";
+        loggerp->info() << "Video Capture thread: Using the " << interfaceName << " frame-grabber.";
     }
 
     loggerp->info() << "Video Capture thread: Running the " << videoInterface << " frame-grabber.";
@@ -125,30 +130,30 @@ void VideoCapture::video_capture()
     // Start the video interface:
     video_plugin_base::interface_ptr->initialize();
     video_plugin_base::interface_ptr->run();
-
-#if 0
-        else
-    {
-        loggerp->error() << "Video Capture thread: Unknown video interface specified in the json configuration: " << videoInterface << ".  Aborting...";
-        throw std::runtime_error(std::string("Video Capture thread: Unknown video interface specified in the json configuration: " + videoInterface + ".  Aborting..."));
-    }
-#endif // 0
+    vidcap_profiler::set_terminated(true);
 }
 
 void VideoCapture::video_plugin_base::set_terminated(bool t)
 {
     using namespace VideoCapture;
 
-    std::lock_guard<std::mutex> lock(VideoCapture::video_plugin_base::p_video_capture_mutex);
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
 
-    video_plugin_base::s_terminated = t;
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        loggerp->debug() << "Setting profiler termination from video_plugin_base.";
+        vidcap_profiler::set_terminated(true);
+    }
 
-    // Free up a potential wait on the condition variable
-    // so that the thread can be terminated (otherwise it may hang).
-    video_plugin_base::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+    {
+        std::lock_guard<std::mutex> lock(VideoCapture::video_plugin_base::p_video_capture_mutex);
+
+        video_plugin_base::s_terminated = t;
+
+        // Free up a potential wait on the condition variable
+        // so that the thread can be terminated (otherwise it may hang).
+        video_plugin_base::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
+    }
 }
-
-
-
 
 

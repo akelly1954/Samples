@@ -32,6 +32,8 @@
 
 namespace VideoCapture {
 
+    class video_plugin_base;        // forward declaration
+
     // the types of the class factories
     typedef video_plugin_base* create_t();
     typedef void destroy_t(video_plugin_base*);

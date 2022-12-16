@@ -72,7 +72,12 @@ void VideoCapture::raw_buffer_queue_handler()
     {
         std::lock_guard<std::mutex> lock(video_capture_queue::capture_queue_mutex);
 
-        if (!video_capture_queue::s_terminated)
+        if (video_capture_queue::s_terminated)
+        {
+            loggerp->info() << "VideoCapture::raw_buffer_queue_handler: Terminated before start of streaming...";
+            return;
+        }
+        else
         {
             // Main is going to kick-start us to free this.
             // Wait for main() to signal us to start
@@ -81,18 +86,6 @@ void VideoCapture::raw_buffer_queue_handler()
     }
 
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Running.";
-#if 0
-    loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Terminating...";
-    video_capture_queue::set_terminated(true);
-}
-
-
-void VideoCapture::raw_buffer_queue_handler(Log::Logger logger)
-{
-    using namespace Video;
-    FILE *filestream = NULL;        // if write_frames_to_file
-    FILE *processstream = NULL;     // if write_frames_to_process
-#endif // 0
 
     // Captured frames also go to the output file only if the
     // option is set (which it is not, by default)

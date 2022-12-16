@@ -326,7 +326,7 @@ int main(int argc, const char *argv[])
 
     if (vcGlobals::test_suspend_resume && trcc.joinable()) trcc.join();
 
-#if 0
+
     // Wait for the threads to finish
     if (queuethread.joinable())
     {
@@ -337,7 +337,6 @@ int main(int argc, const char *argv[])
     {
         if (!VideoCapture::video_capture_queue::s_terminated) VideoCapture::video_capture_queue::set_terminated(true);
     }
-#endif // 0
 
     if (vcGlobals::profiling_enabled)
     {
@@ -354,16 +353,15 @@ int main(int argc, const char *argv[])
     }
 
     // unload the plugin
-    // std::stringstream dstrm;
-    // plugin_factory.destroy_factory(dstrm);
-    // TODO:  Might be ok with std::cerr...   plugin_factory.destroy_factory(std::cerr);
-    // uloggerp->info() << dstrm.str();
+    std::stringstream dstrm;
+    plugin_factory.destroy_factory(dstrm);
+    // TODO: get rid of this...    plugin_factory.destroy_factory(std::cerr);
+    uloggerp->info() << dstrm.str();
 
-    // uloggerp->info() << "Terminating the logger.";
+    uloggerp->info() << "Terminating the logger.";
 
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // TODO: This is a hack to get around an issue with double-free/abort
@@ -376,7 +374,9 @@ int main(int argc, const char *argv[])
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
 #if 0   // See comment above
+
     return return_for_exit;
+
 #endif // 0
 }
 

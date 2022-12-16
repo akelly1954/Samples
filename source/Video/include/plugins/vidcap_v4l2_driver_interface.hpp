@@ -36,15 +36,12 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <vidcap_plugin_factory.hpp>
 #include <vidcap_capture_thread.hpp>
+#include <vidcap_plugin_factory.hpp>
 #include <MainLogger.hpp>
 #include <Utility.hpp>
 #include <condition_data.hpp>
-
-// #include <video_capture_commandline.hpp>
 #include <video_capture_globals.hpp>
-// #include <JsonCppUtil.hpp>
 #include <ConfigSingleton.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <vidcap_raw_queue_thread.hpp>

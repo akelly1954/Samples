@@ -24,12 +24,13 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <video_capture_globals.hpp>
+#include <vidcap_profiler_thread.hpp>
+#include <MainLogger.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
-#include <video_capture_globals.hpp>
-#include <LoggerCpp/LoggerCpp.h>
 #include <stdio.h>
 #include <thread>
 #include <mutex>
@@ -39,7 +40,8 @@
 
 namespace VideoCapture {
 
-    // video capture base thread
+    // video capture base thread. This is
+    // the thread that the video plugin runs in.
     void video_capture();
 
     class video_plugin_base {
@@ -91,39 +93,6 @@ namespace VideoCapture {
         static bool s_errorterminated;
         static bool s_paused;
     };
-
-#if 0
-    // Never instantiated directly.  Base class for v4l2 and opencv.
-    class vidcap_capture_base
-    {
-    public:
-        vidcap_capture_base() = default;
-
-        virtual void initialize() = 0;
-        virtual void run() = 0;
-        static void set_terminated(bool t);
-        virtual bool isterminated() = 0;
-        virtual void set_error_terminated (bool t) = 0;
-        virtual bool iserror_terminated(void) = 0;
-
-        virtual void set_paused(bool t) = 0;
-        virtual bool ispaused(void) = 0;
-
-        static  vidcap_capture_base *get_interface_ptr() { return sp_interface_pointer; }
-
-    public:
-        static bool s_terminated;
-
-    protected:
-        static bool s_errorterminated;
-        static bool s_paused;
-
-    public:
-        static std::mutex video_capture_mutex;
-        static Util::condition_data<int> s_condvar;
-        static vidcap_capture_base *sp_interface_pointer;
-    };  // end of class vidcap_capture_base
-#endif // 0
 
 } // end of namespace VideoCapture
 
