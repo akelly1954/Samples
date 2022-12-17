@@ -25,6 +25,7 @@
 
 
 #include <vidcap_capture_thread.hpp>
+#include <suspend_resume_test_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -129,6 +130,13 @@ void VideoCapture::video_capture()
 
     // Start the video interface:
     video_plugin_base::interface_ptr->initialize();
+
+    if (Video::vcGlobals::test_suspend_resume)
+    {
+        loggerp->debug() << "video_capture() thread: kick-starting the suspend_resume_tests operations.";
+        suspend_resume_test::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+    }
+
     video_plugin_base::interface_ptr->run();
     vidcap_profiler::set_terminated(true);
 }

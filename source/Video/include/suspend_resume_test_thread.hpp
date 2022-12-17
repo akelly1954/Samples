@@ -24,9 +24,25 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <vidcap_capture_thread.hpp>
+#include <condition_data.hpp>
 #include <MainLogger.hpp>
 
 namespace VideoCapture
 {
     void test_raw_capture_ctl(std::string argv0);
+
+    class suspend_resume_test
+    {
+    public:
+        static void initialize(void) { };
+        static void set_terminated(bool t);
+
+    public:
+        static bool s_terminated;
+        static int sleep_seconds;
+        static Util::condition_data<int> s_condvar;
+        static std::mutex suspend_resume_mutex;
+    };
+
 }

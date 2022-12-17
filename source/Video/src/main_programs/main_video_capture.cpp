@@ -84,7 +84,6 @@ int main(int argc, const char *argv[])
     }
     std::cout << std::endl;         // flush out std::cout
 
-#if 1
     ///////////////////////////////////////////////////////////
     // Set up the application (JSON-based) configuration:
     //
@@ -100,7 +99,6 @@ int main(int argc, const char *argv[])
         std::cerr << "Config Singleton setup result: " << config_results << std::endl;
         return EXIT_FAILURE;
     }
-#endif // 0
 
     ///////////////////////////////////////////////////////////
     // Loading the video capture plugin happens as early as possible
@@ -134,24 +132,6 @@ int main(int argc, const char *argv[])
     }
 
     std::cout << "Plugin Factory: plugin was loaded and initialized successfully." << std::endl;
-
-#if 0
-    ///////////////////////////////////////////////////////////
-    // Set up the application (JSON-based) configuration:
-    //
-    // Before we do the actual parsing of the command line, the initial json/config
-    // has to be done so that the command line can overwrite its values that are set
-    // in the following step.
-    ///////////////////////////////////////////////////////////
-
-    std::string ConfigOutputString;
-    std::string config_results;
-    if (! Config::setup_config_singleton(config_results, ConfigOutputString, delayedLinesForLogger))
-    {
-        std::cerr << "Config Singleton setup result: " << config_results << std::endl;
-        return EXIT_FAILURE;
-    }
-#endif // 0
 
     ///////////////////////////////////////////////////////////
     // Parse the command line for video capture features
@@ -230,55 +210,9 @@ int main(int argc, const char *argv[])
             trcc = std::thread (VideoCapture::test_raw_capture_ctl, argv0);
         }
 
-    #if 0
-        // TODO: I think this is now going away.  Delete the lines when ready.
-
-        // This loop waits for video capture termination (normal or otherwise).  The first second or so of
-        // when video capture is initiated, the interface pointer may still be null (nullptr). Some of the
-        // logged messages are commented out since they're not needed unless a runtime issue occurs.
-        for (int waitforfinished = 1; ; waitforfinished++)
-        {
-            auto ptr = nullptr;              // TODO: ZZZ get rid of this
-
-            if (ptr == nullptr)
-            {
-                if (waitforfinished == 1)
-                {
-                    // uloggerp->debug() << "---------------------- Started waiting, interface pointer is null";
-                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
-                    continue;
-                }
-                else if ((waitforfinished % 7) == 0)
-                {
-                    ; // uloggerp->debug() << "While waiting, interface pointer is null... (counter = " << waitforfinished << ")";
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(300));
-                if (waitforfinished > 15)
-                {
-                    uloggerp->debug() << "---------------------- Interface pointer is still null. Terminating... (counter = " << waitforfinished << ")";
-                    error_termination = true;
-                    throw std::runtime_error ("MAIN: Video Capture thread has failed (interface pointer is null)");
-                    break;
-                }
-                continue;
-            }
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
-            if ((waitforfinished % 7) == 0)
-            {
-                ; // uloggerp->debug() << "------------------ Waiting for capture to finish... (counter = " << waitforfinished << ")";
-            }
-            if (ptr->isterminated())
-            {
-                // uloggerp->debug() << "------------------ Video capture is finished... TERMINATING...";
-                break;
-            }
-        }
-#endif // 0
-
         while (! ifptr->isterminated())
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
 
         // CLEANUP VIDEO CAPTURE AND ITS QUEUE:
@@ -301,15 +235,6 @@ int main(int argc, const char *argv[])
         {
             uloggerp->debug() << "main_video_capture: Video Capture thread is done. Cleanup and terminate.";
         }
-
-#if 0
-        uloggerp->debug() << argv0 << ":  terminating queue thread.";
-        // Inform the queue handler thread that the party is over...
-        VideoCapture::video_capture_queue::set_terminated(true);
-
-        // Make sure the ring buffer gets emptied
-        VideoCapture::video_capture_queue::s_condvar.flush(0, Util::condition_data<int>::NotifyEnum::All);
-#endif // 0
     }
     catch (std::exception &exp)
     {
@@ -324,8 +249,11 @@ int main(int argc, const char *argv[])
 
     // FINISHED:
 
-    if (vcGlobals::test_suspend_resume && trcc.joinable()) trcc.join();
-
+    if (vcGlobals::test_suspend_resume)
+    {
+        if (!VideoCapture::suspend_resume_test::s_terminated) VideoCapture::suspend_resume_test::set_terminated(true);
+        if (trcc.joinable())            trcc.join();
+    }
 
     // Wait for the threads to finish
     if (queuethread.joinable())
@@ -363,20 +291,21 @@ int main(int argc, const char *argv[])
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
 
+#ifndef DOUBLE_FREE_ISSUE_FIXED
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // TODO: This is a hack to get around an issue with double-free/abort
     // message after the regular return which is currently commented out (see
-    // below. This does not affect functionality at all. Restore the "return"
+    // below). This does not affect functionality at all. Restore the "return"
     // once this is fixed.
     //
-           ::_exit(0);
+           ::_exit(return_for_exit);
     //
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0   // See comment above
+#else // DOUBLE_FREE_ISSUE_FIXED
 
     return return_for_exit;
 
-#endif // 0
+#endif // DOUBLE_FREE_ISSUE_FIXED
 }
 
