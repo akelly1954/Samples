@@ -120,7 +120,7 @@ void vidcap_v4l2_driver_interface::run()
         if (Video::vcGlobals::profiling_enabled)
         {
             loggerp->debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
-            VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+            start_profiling();
         }
 
         if (isterminated() || !v4l2if_mainloop())
@@ -161,10 +161,6 @@ void vidcap_v4l2_driver_interface::run()
         loggerp->error()
               << "vidcap_v4l2_driver_interface::run(): General exception occurred running the video capture. Aborting...";
     }
-#if 0 // TODO - remove this asap
-    // Let things calm down before disappearing...
-    std::this_thread::sleep_for(std::chrono::milliseconds(1800));
-#endif // 0
 }
 
 void vidcap_v4l2_driver_interface::v4l2if_errno_exit(const char *s, int errnocopy)
@@ -392,8 +388,10 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
             break;
         }
 
-        if (!isterminated() && Video::vcGlobals::profiling_enabled) profiler_frame::increment_one_frame();
-        // loggerp->debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
+        long long lret = 0;
+        if (!isterminated() && Video::vcGlobals::profiling_enabled) lret = increment_one_frame();
+        // For debug: loggerp->debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
+        // For debug: loggerp->debug() << "From v4l2if_mainloop: profiler reports count = " << lret;
 
         while(! isterminated())
         {
@@ -916,7 +914,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         {
             {
                 std::ostringstream ostr;
-                ostr << "driver: frame: " << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height;
+                ostr << "v4l2 driver: frame: " << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height;
                 std::string s = ostr.str();
                 std::cerr << s << std::endl;
                 loggerp->debug() << s;
@@ -937,7 +935,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
             }
             {
                 std::ostringstream ostr;
-                ostr << "driver: pixel format set to 0x"
+                ostr << "v4l2 driver: pixel format set to 0x"
                      << std::hex << fmt.fmt.pix.pixelformat << " - " << bfp;
                 std::string s = ostr.str();
                 std::cerr << s << std::endl;
@@ -945,8 +943,8 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
             }
         }
 
-        loggerp->debug() << "driver: bytes required: " << fmt.fmt.pix.sizeimage;
-        loggerp->debug() << "driver: I/O METHOD: " << string_io_methods[io];
+        loggerp->debug() << "v4l2 driver: bytes required: " << fmt.fmt.pix.sizeimage;
+        loggerp->debug() << "v4l2 driver: I/O METHOD: " << string_io_methods[io];
 
         // PLEASE NOTE:  The streaming method IO_METHOD_MMAP is the only one actually
         // tested.  Please do not use IO_METHOD_USERPTR or IO_METHOD_READ until they are tested.

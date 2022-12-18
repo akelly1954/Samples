@@ -83,6 +83,15 @@ namespace VideoCapture {
         virtual bool ispaused(void) = 0;
         void set_terminated(bool t);        // Not virtual - meant to operate on the base object only
 
+        //////////////////////////////////////////////////////////////////////////////////
+        // Methods that use this base class to get things done in other threads
+        //////////////////////////////////////////////////////////////////////////////////
+        void start_profiling();
+        long long increment_one_frame();
+
+
+
+
     public:
         static Util::condition_data<int> s_condvar;
         static video_plugin_base* interface_ptr;

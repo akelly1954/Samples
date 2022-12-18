@@ -76,19 +76,38 @@ namespace VideoCapture
         vidcap_v4l2_driver_interface();
         virtual ~vidcap_v4l2_driver_interface() = default;
 
-        virtual std::string get_type() const                        { return video_plugin_base::plugin_type; }
-        virtual std::string get_filename() const                    { return video_plugin_base::plugin_filename; }
-        video_plugin_base* get_interface_pointer() const            { return video_plugin_base::interface_ptr; }
 
     public:
+        ///////////////////////////////////////////////////////////////////////////
+        // These functions are part of the plugin interface, declared in base class
+        // video_plugin_base (in vidcap_capture_thread.hpp/.cpp.  See also the two
+        // functions that are used by the plugin factory - create() and destroy()
+        // defined at the very bottom of this file.
+        ///////////////////////////////////////////////////////////////////////////
+
         virtual void initialize();
         virtual void run();
-        void set_terminated(bool t)                     { video_plugin_base::set_terminated(t); };
-        virtual bool isterminated(void)                 { return video_plugin_base::s_terminated; };
-        virtual void set_error_terminated (bool t)      { video_plugin_base::s_errorterminated = t; set_terminated(t); };
-        virtual bool iserror_terminated(void)           { return video_plugin_base::s_errorterminated; };
-        virtual void set_paused(bool t)                 { video_plugin_base::s_paused = t; };
-        virtual bool ispaused(void)                     { return video_plugin_base::s_paused; };
+
+        virtual std::string get_type() const                { return video_plugin_base::plugin_type; }
+        virtual std::string get_filename() const            { return video_plugin_base::plugin_filename; }
+
+        // set_terminated() and get_interface_pointer() are not abstract, but are
+        // part of the interface. The base class version is called explicitly from here.
+        video_plugin_base* get_interface_pointer() const    { return video_plugin_base::interface_ptr; }
+        void set_terminated(bool t)                         { video_plugin_base::set_terminated(t); };
+
+        virtual bool isterminated(void)                     { return video_plugin_base::s_terminated; };
+        virtual void set_error_terminated (bool t)          { video_plugin_base::s_errorterminated = t; set_terminated(t); };
+        virtual bool iserror_terminated(void)               { return video_plugin_base::s_errorterminated; };
+        virtual void set_paused(bool t)                     { video_plugin_base::s_paused = t; };
+        virtual bool ispaused(void)                         { return video_plugin_base::s_paused; };
+
+        virtual void start_profiling()                      { video_plugin_base::start_profiling(); }
+
+        // Not virtual: uses the base static function explicitly:
+        long long increment_one_frame(void)                 { return video_plugin_base::increment_one_frame(); }
+
+        //////////////    End of mandatory plugin interface methods    //////////////////
 
         int  v4l2if_xioctl(int fh, int request, void *arg);
         void v4l2if_process_image(void *p, int size);
@@ -112,8 +131,7 @@ namespace VideoCapture
         void v4l2if_exit(const char *s);
 
     private:
-        std::shared_ptr<Log::Logger> loggerp;
-        // Log::Logger *loggerp = nullptr;
+        std::shared_ptr<Log::Logger> loggerp;           // Pointer to THE logger object in the main_thread
 
     private:
         enum io_method  io = IO_METHOD_MMAP;
@@ -123,6 +141,14 @@ namespace VideoCapture
         unsigned int    numbufs = 0;
         bool            m_errorterminated = false;
     };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // These two functions are declared/defined here and used by the plugin factory. They are
+    // geared to be easily recognized by the plugin factory (vidcap_plugin_factory.hpp/.cpp)
+    // and are called from the factory after the plugin is loaded with dlopen().
+    //
+    // SEE ALSO declarations in vidcap_plugin_factory.hpp.
+    ///////////////////////////////////////////////////////////////////////////
 
     // the class factories
     extern "C" video_plugin_base* create() {

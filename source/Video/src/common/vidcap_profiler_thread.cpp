@@ -56,7 +56,7 @@ vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
 
 std::mutex vidcap_profiler::profiler_mutex;
 std::mutex profiler_frame::stats_frames_mutex;
-long long profiler_frame::stats_total_num_frames;
+long long profiler_frame::stats_total_num_frames = 0;
 std::chrono::milliseconds profiler_frame::stats_total_frame_duration_milliseconds;
 bool profiler_frame::initialized = false;
 
@@ -87,7 +87,7 @@ void VideoCapture::video_profiler()
 
     while (!vidcap_profiler::s_terminated)
     {
-        logger.info() << "Profiler info...";
+        logger.info() << "  ---  Profiler info...";
         logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
         logger.info() << "Number of frames received: " << profiler_frame::stats_total_num_frames;
         logger.info() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
@@ -104,6 +104,7 @@ void VideoCapture::video_profiler()
 void profiler_frame::initialize(void)
 {
     using namespace std::chrono;
+    std::lock_guard<std::mutex> lock(stats_frames_mutex);
 
     stats_total_num_frames = 0;
     stats_total_frame_duration_milliseconds =
@@ -141,8 +142,11 @@ long long profiler_frame::increment_one_frame(void)
 double profiler_frame::frames_per_millisecond()
 {
     double ret;
+    std::lock_guard<std::mutex> lock(stats_frames_mutex);
+
     if (stats_total_frame_duration_milliseconds.count() != 0)
     {
+
         return static_cast<double>(stats_total_num_frames) / static_cast<double>(stats_total_frame_duration_milliseconds.count());
     }
     return 0.0;

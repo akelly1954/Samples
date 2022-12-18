@@ -164,4 +164,28 @@ void VideoCapture::video_plugin_base::set_terminated(bool t)
     }
 }
 
+void VideoCapture::video_plugin_base::start_profiling()
+{
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        // Kick-start the profiling thread
+        vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+    }
+}
+
+long long VideoCapture::video_plugin_base::increment_one_frame()
+{
+    long long lret = 0;
+    if (Video::vcGlobals::profiling_enabled) lret = profiler_frame::increment_one_frame();
+    return lret;
+}
+
+
+
+
+
+
+
+
+
 

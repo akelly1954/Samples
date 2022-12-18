@@ -1,18 +1,5 @@
 #pragma once
 
-#include <vidcap_capture_thread.hpp>
-#include <vidcap_plugin_factory.hpp>
-#include <Utility.hpp>
-#include <NtwkUtil.hpp>
-#include <MainLogger.hpp>
-#include <condition_data.hpp>
-#include <stdio.h>
-#include <thread>
-#include <mutex>
-#include <chrono>
-#include <vector>
-#include <algorithm>
-
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -36,6 +23,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
+
+#include <vidcap_capture_thread.hpp>
+#include <vidcap_plugin_factory.hpp>
+#include <Utility.hpp>
+#include <NtwkUtil.hpp>
+#include <MainLogger.hpp>
+#include <condition_data.hpp>
+#include <stdio.h>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include <vector>
+#include <algorithm>
 
 namespace VideoCapture {
 
