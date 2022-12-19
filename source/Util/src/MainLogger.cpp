@@ -32,7 +32,6 @@ using namespace Util;
 std::string MainLogger::logChannelName = "application";
 std::string MainLogger::logFilelName = logChannelName + "_log.txt";
 Log::Log::Level MainLogger::loglevel = Log::Log::Level::eDebug;
-// TODO: not being used:      std::mutex MainLogger::s_UtilLogger_mutex;
 
 std::string MainLogger::default_log_level = Log::Log::toString(MainLogger::loglevel);
 std::string MainLogger::log_level = default_log_level;

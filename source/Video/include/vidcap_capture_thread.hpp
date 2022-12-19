@@ -40,8 +40,8 @@
 
 namespace VideoCapture {
 
-    // video capture base thread. This is
-    // the thread that the video plugin runs in.
+    // video capture base thread. This is the thread that
+    // the runtime-loaded video capture plugin runs in.
     void video_capture();
 
     class video_plugin_base {
@@ -88,9 +88,7 @@ namespace VideoCapture {
         //////////////////////////////////////////////////////////////////////////////////
         void start_profiling();
         long long increment_one_frame();
-
-
-
+        void add_buffer_to_raw_queue(void *p, size_t bsize);
 
     public:
         static Util::condition_data<int> s_condvar;

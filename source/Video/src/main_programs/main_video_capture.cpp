@@ -283,7 +283,6 @@ int main(int argc, const char *argv[])
     // unload the plugin
     std::stringstream dstrm;
     plugin_factory.destroy_factory(dstrm);
-    // TODO: get rid of this...    plugin_factory.destroy_factory(std::cerr);
     uloggerp->info() << dstrm.str();
 
     uloggerp->info() << "Terminating the logger.";

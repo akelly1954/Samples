@@ -129,9 +129,6 @@ namespace Util
         static void streamLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);
 
     private:
-        // TODO: Using MainLogger::mutex
-        // static std::mutex s_UtilLogger_mutex;
-
         static LoggerSPtr sp_Logger;
         static UtilLoggerSPtr sp_UtilLogger;
         static Util::LoggerOptions s_defaultLogOpt;

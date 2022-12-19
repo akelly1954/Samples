@@ -102,10 +102,10 @@ namespace VideoCapture
         virtual void set_paused(bool t)                     { video_plugin_base::s_paused = t; };
         virtual bool ispaused(void)                         { return video_plugin_base::s_paused; };
 
+        // These methods are not virtual: they use the base static function explicitly:
         virtual void start_profiling()                      { video_plugin_base::start_profiling(); }
-
-        // Not virtual: uses the base static function explicitly:
-        long long increment_one_frame(void)                 { return video_plugin_base::increment_one_frame(); }
+        long long increment_one_frame()                     { return video_plugin_base::increment_one_frame(); }
+        void add_buffer_to_raw_queue(void *p, size_t bsize) { return video_plugin_base::add_buffer_to_raw_queue(p, bsize); }
 
         //////////////    End of mandatory plugin interface methods    //////////////////
 

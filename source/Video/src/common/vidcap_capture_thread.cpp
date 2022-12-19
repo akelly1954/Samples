@@ -25,6 +25,7 @@
 
 
 #include <vidcap_capture_thread.hpp>
+#include <vidcap_raw_queue_thread.hpp>
 #include <suspend_resume_test_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
@@ -180,6 +181,10 @@ long long VideoCapture::video_plugin_base::increment_one_frame()
     return lret;
 }
 
+void VideoCapture::video_plugin_base::add_buffer_to_raw_queue(void *p, size_t bsize)
+{
+    return VideoCapture::video_capture_queue::video_capture_queue::add_buffer_to_raw_queue(p, bsize);
+}
 
 
 

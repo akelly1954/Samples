@@ -238,7 +238,7 @@ void vidcap_v4l2_driver_interface::v4l2if_process_image(void *p, int size)
         return;
     }
 
-    video_capture_queue::add_buffer_to_raw_queue(p, size);
+    add_buffer_to_raw_queue(p, size);
 }
 
 bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
