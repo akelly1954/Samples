@@ -159,6 +159,11 @@ int main(int argc, const char *argv[])
     uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory << "\n";
     std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
 
+    std::cerr << "DETAILED CURRENT RUNTIME CONFIGURATION DETAILS can be found in the log file.\n" << std::endl;
+    std::stringstream sstr;
+    Video::vcGlobals::print_globals(sstr);  // these are the current runtime configuration details
+    uloggerp->info() << sstr.str();
+
     /////////////////
     // Finally, get to work
     /////////////////

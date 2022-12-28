@@ -109,8 +109,8 @@ VideoCapture::video_capture_plugin_factory::create_factory(std::ostream& ostrm)
 void VideoCapture::video_capture_plugin_factory::destroy_factory(std::ostream& ostrm)
 {
     // TODO: BUG: change to false - Currently dlclose() sometimes seems to hang at the end
-    //            of the program. Does affect functionality at all.
-    // The "true" valuse is currently preventing dlclose from being called.
+    //            of the program after all threads unwind. This does affect functionality.
+    // The "true" value is currently preventing dlclose from being called.
     // When fixed, the done_already status should be changed to false.
     // static bool done_already = false;
     static bool done_already = true;

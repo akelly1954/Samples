@@ -75,6 +75,8 @@ namespace Video
         // See /usr/include/linux/videodev2.h
         static enum pxl_formats pixel_format;
         static std::vector<std::string> pixel_formats_strings;
+
+        static void print_globals(std::ostream&);
     };
 
 // This function overwrites values in Video::vcGlobals with content from

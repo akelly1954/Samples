@@ -297,7 +297,7 @@ FILE * VideoCapture::create_output_process()
                                                     [procIndicator]
                                                      ["output-process"].asString();
     std::string actual_process;
-    if (Video::vcGlobals::proc_redir)
+    if (Video::vcGlobals::proc_redir && Video::vcGlobals::redir_filename != "")
     {
         actual_process = Video::vcGlobals::output_process + " 2> " + Video::vcGlobals::redir_filename;
     }

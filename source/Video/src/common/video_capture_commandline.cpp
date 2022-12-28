@@ -31,43 +31,43 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
     strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
             << "\n"
-            << "              [ -fn [ file-name ]]      Turns on the \"write-to-file\" functionality (see JSON file).  The file-name \n"
+            << "              [ -fn [ file-name ]]      -Turns on the \"write-to-file\" functionality (see JSON file).  The file-name \n"
             << "                                        parameter is the file which will be created to hold image frames. If it exists, \n"
             << "                                        the file will be truncated. If the file name is omitted, the default name used \n"
             << "                                        is the runtime value of \"output-file\" in the Json config file. (By default, the \n"
             << "                                        \"write-to-file\" capability is turned off in favor of the \"write-to-process\" \n"
             << "                                        member in the JSON config file).\n"
-            << "              [ -pr [ timeslice_ms ]]   Enable profiler stats. If specified, the optional parameter is the number of \n"
+            << "              [ -pr [ timeslice_ms ]]   -Enable profiler stats. If specified, the optional parameter is the number of \n"
             << "                                        milliseconds between profiler snapshots. (The default is the runtime value of \n"
             << "                                        \"profile-timeslice-ms\" in the Json config file).\n"
-            << "              [ -lg log-level ]         Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}. \n"
+            << "              [ -lg log-level ]         -Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}. \n"
             << "                                        (The default is the runtime value of \"log-level\" in the Json config file).\n"
-            << "              [ -loginit ]              (no parameters) This flag enables the logging of initialization info.\n"
-            << "              [ -fg [ video-grabber ]]  The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The \n"
+            << "              [ -loginit ]              -(no parameters) This flag enables the logging of initialization info.\n"
+            << "              [ -fg video-grabber ]     -The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The \n"
             << "                                        default grabber is the runtime value of \"preferred-interface\" in the Json config file).\n"
-            << "              [ -fc frame-count ]       Number of frames to grab from the hardware. (The default is the runtime value of \n"
+            << "              [ -fc frame-count ]       -Number of frames to grab from the hardware. (The default is the runtime value of \n"
             << "                                        \"frame-count\" in the Json config file).\n"
-            << "              [ -dv video-device ]      The /dev entry for the video camera. (The default value is the runtime value of\n"
+            << "              [ -dv video-device ]      -The /dev entry for the video camera. (The default value is the runtime value of\n"
             << "                                        \"device-name\" in the Json config file in the section named for the video-grabber used.\n"
-            << "              [ -proc-redir [ file ]]   If the \"write-to-process\" member of the JSON config file is set to 1 (enabled), \n"
+            << "              [ -proc-redir [ file ]]   -If the \"write-to-process\" member of the JSON config file is set to 1 (enabled), \n"
             << "                                        the process which is started and streamed to (typically ffmpeg) has its \"standard \n"
             << "                                        error\" still open to the controlling display (terminal).  To get rid of the extra \n"
             << "                                        output on the screen, std::cerr, (stderr, fd 2, etc) can be redirected to a regular \n"
             << "                                        file or to \"/dev/null\" as needed by using this flag and a filename. If the \"file\" \n"
             << "                                        parameter is not specified, the standard error output will go to the screen. \n"
             << "                                        (By default, the flag is enabled, and the filename used is \"/dev/null\").\n"
-            << "              [ -use-other-proc ]       (no parameters) This flag directs the program to use the \"other\" entry (within the \n"
+            << "              [ -use-other-proc ]       -(no parameters) This flag directs the program to use the \"other\" entry (within the \n"
             << "                                        \"pixel-format\" section of \"preferred-interface\" of the \"frame-capture\" section of \n"
             << "                                        the JSON configuration file) as the command string to use for popen() instead of the \n"
             << "                                        default command string indicated by the name of the pixel format chosen.\n"
-            << "              [ -pf pixel-format ]      The pixel format requested from the video driver, which can be \"h264\" or \"yuyv\".\n"
+            << "              [ -pf pixel-format ]      -The pixel format requested from the video driver, which can be \"h264\" or \"yuyv\".\n"
             << "                                        These are:\n"
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::h264] << "\n"
             << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::yuyv] << "\n"
             << "                                        Please see /usr/include/linux/videodev2.h for more information\n"
             << "                                        (The default pixel-format value is the runtime value of \"preferred-pixel-format\"\n"
             << "                                        in the Json config file in the section named for the video-grabber used).\n"
-            << "              [ -test-suspend-resume ]  (no parameters) The program will run a special thread that first sets the frame-count\n"
+            << "              [ -test-suspend-resume ]  -(no parameters) The program will run a special thread that first sets the frame-count\n"
             << "                                        to 0 (regardless of command-line or JSON settings), and then it allows main() to run. It \n"
             << "                                        then interrupts the flow of video frames every few seconds with a \"pause\" request, waits\n"
             << "                                        a few seconds and then \"resume\"s. This goes on for 30 or 40 seconds, and then it terminates\n"
@@ -363,9 +363,9 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
     // Are we testing suspend/resume?
     if (Video::vcGlobals::test_suspend_resume)
     {
-        if (fcount_value < 100)
+        if (fcount_value > 0 && fcount_value < 300)
         {
-            fcount_value = 100;
+            fcount_value = 300;
             strm << "\nWARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing\n";
             std::cerr << "\n        WARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing\n";
         }
@@ -381,6 +381,13 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
         std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
     }
+
+    if (fcount_value == 0)
+    {
+        strm << "\nWARNING: Frame count is set to " << fcount_value << " - continuous streaming.\n";
+        std::cerr << "\n        WARNING: Frame count is set to " << fcount_value << " - continuous streaming.\n";
+    }
+
 
     return true;
 }
