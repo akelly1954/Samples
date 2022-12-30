@@ -367,27 +367,25 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         {
             fcount_value = 300;
             strm << "\nWARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing\n";
-            std::cerr << "\n        WARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing\n";
+            std::cerr << "        WARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing" << std::endl;
         }
         Video::vcGlobals::framecount = fcount_value;
         Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
         strm << "\nWARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread).\n" ;
-        std::cerr << "\n        WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread).\n" << std::endl;
+        std::cerr << "        WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread)." << std::endl;
     }
     else
     {
         Video::vcGlobals::framecount = fcount_value;
         Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
         strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
-        std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
+        std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)" << std::endl;
     }
 
     if (fcount_value == 0)
     {
         strm << "\nWARNING: Frame count is set to " << fcount_value << " - continuous streaming.\n";
-        std::cerr << "\n        WARNING: Frame count is set to " << fcount_value << " - continuous streaming.\n";
+        std::cerr << "        WARNING: Frame count is set to " << fcount_value << " - continuous streaming." << std::endl;
     }
-
-
     return true;
 }

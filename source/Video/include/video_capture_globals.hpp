@@ -42,6 +42,8 @@ namespace Video
         h264
     };
 
+    // TODO: add a member to vcGlobals to handle the "label" - Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString()
+
     struct vcGlobals
     {
         static bool log_initialization_info;
@@ -77,6 +79,12 @@ namespace Video
         static std::vector<std::string> pixel_formats_strings;
 
         static void print_globals(std::ostream&);
+
+        // adds double quotes to string - hello to "hello"
+        static std::string adq(const std::string& str);
+
+        // returns the string "true" or "false" based on the parameter
+        static std::string rsb(bool x);
     };
 
 // This function overwrites values in Video::vcGlobals with content from

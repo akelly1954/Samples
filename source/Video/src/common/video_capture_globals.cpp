@@ -25,6 +25,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <video_capture_commandline.hpp>
+#include <ConfigSingleton.hpp>
 #include <video_capture_globals.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
@@ -204,7 +205,7 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
 }
 
 // adds double quotes to string - hello to "hello"
-std::string adq(const std::string& str)
+std::string Video::vcGlobals::adq(const std::string& str)
 {
     std::string rstr = "\"";
     rstr += str;
@@ -212,7 +213,7 @@ std::string adq(const std::string& str)
     return rstr;
 }
 
-std::string rsb(bool x)
+std::string Video::vcGlobals::rsb(bool x)
 {
     return ((x)? "true": "false");
 }
@@ -220,125 +221,202 @@ std::string rsb(bool x)
 void Video::vcGlobals::print_globals(std::ostream& strm)
 {
     using namespace Video;
+    Json::Value& Root = Config::ConfigSingleton::instance()->JsonRoot();
 
-    strm << "\n\nCURRENT RUNTIME CONFIGURATION DETAILS:" << "\n\n"
-            "   For each item detailed below, the actual runtime value of the item is displayed,\n"
-            "   Followed by the command line options for it, followed by information about where\n"
-            "   the detail is modified and set: the \"struct vcGlobals\" member name, followed\n"
-            "   by the json location in the config file.\n"
-            "\n"
-            "   PLEASE NOTE: The json config file name is always the logger channel name, \n"
-            "   with \".json\" appended to it.\n"
+    strm << "\n\n"
+         << "CURRENT RUNTIME CONFIGURATION DETAILS:\n"
+         << "\n"
+         << "   For each item detailed below, the actual runtime value of the item is displayed,\n"
+         << "   Followed by the command line options for it, followed by information about where\n"
+         << "   the detail is modified and set: the \"struct vcGlobals\" member name, followed\n"
+         << "   by the json location in the config file. \n"
+         << "\n"
+         << "   PLEASE NOTE that for any configuration detail, the value stored in the " << adq("vcGlobals") << "\n"
+         << "   object is the definitive runtime value. Details that are not represented in " << adq("vcGlobals") << "\n"
+         << "   should be found in the json file.\n"
+         << "\n"
+         << "   PLEASE NOTE: The json config file name is always the logger channel name, \n"
+         << "   with \".json\" appended to it.\n"
          << "\n";
 
     strm << "Logger channel-name:      " << adq(Video::vcGlobals::logChannelName) << "\n"
          << "    command line flag(s): NONE: can only be set in " << adq(Video::vcGlobals::logChannelName + ".json") << "\n"
-         << "    in vcGlobals object:  Video::vcGlobals::logChannelName\n"
+         << "    in vcGlobals object:  vcGlobals::logChannelName\n"
          << "    in json config:       Root[\"Config\"][\"Logger\"][\"channel-name\"]\n"
          << "\n";
 
-    strm << "Log file name:            " << adq(Video::vcGlobals::logFilelName) << "\n"
-         << "    command line flag(s): NONE: can only be set in " << adq(Video::vcGlobals::logChannelName + ".json") << "\n"
-         << "    in object:            Video::vcGlobals::logFilelName\n"
+    strm << "Log file name:            " << adq(vcGlobals::logFilelName) << "\n"
+         << "    command line flag(s): NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << "\n"
+         << "    in object:            vcGlobals::logFilelName\n"
          << "    in json config:       Root[\"Config\"][\"Logger\"][\"channel-name\"]\n"
          << "\n";
 
-    strm << "Log level:                " << adq(Video::vcGlobals::log_level) << "\n"
+    strm << "Log level:                " << adq(vcGlobals::log_level) << "\n"
          << "    command line flag:    [ -lg log-level ]\n"
-         << "    in object:            Video::vcGlobals::log_level (as string)\n"
-         << "                          Video::vcGlobals::loglevel (as enum)\n"
+         << "    in object:            vcGlobals::log_level (as string)\n"
+         << "                          vcGlobals::loglevel (as enum)\n"
          << "    in json config:       Root[\"Config\"][\"Logger\"][\"log-level\"]\n"
          << "\n";
 
-    strm << "Enable profiling:         " << rsb(Video::vcGlobals::profiling_enabled) << ", " << Video::vcGlobals::profile_timeslice_ms << " milliseconds per slice\n"
+    strm << "Enable profiling:         " << rsb(vcGlobals::profiling_enabled) << ", " << vcGlobals::profile_timeslice_ms << " milliseconds per slice\n"
          << "    command line flag:    [ -pr [ timeslice_ms ] ]\n"
-         << "    in object:            Video::vcGlobals::profiling_enabled\n"
-         << "                          Video::vcGlobals::profile_timeslice_ms\n"
+         << "    in object:            vcGlobals::profiling_enabled\n"
+         << "                          vcGlobals::profile_timeslice_ms\n"
          << "    in json config:       Root[\"Config\"][\"App-options\"][\"profiling\"]\n"
          << "                          Root[\"Config\"][\"App-options\"][\"profile-timeslice-ms\"]\n"
          << "\n";
 
-    strm << "Enable write to file:     " << rsb(Video::vcGlobals::write_frames_to_file) << ", output file: " << adq(Video::vcGlobals::output_file) << "\n"
+    strm << "Enable write to file:     " << rsb(vcGlobals::write_frames_to_file) << ", output file: " << adq(vcGlobals::output_file) << "\n"
          << "    command line flag:    [ -fn [ file-name ] ]\n"
-         << "    in object:            Video::vcGlobals::write_frames_to_file\n"
-         << "                          Video::vcGlobals::output_file\n"
+         << "    in object:            vcGlobals::write_frames_to_file\n"
+         << "                          vcGlobals::output_file\n"
          << "    in json config:       Root[\"Config\"][\"App-options\"][\"write-to-file\"]\n"
          << "                          Root[\"Config\"][\"App-options\"][\"output-file\"]\n"
          << "\n";
 
-    strm << "Enable write to process:  " << rsb(Video::vcGlobals::write_frames_to_process) << ", stderr redirected to: " << adq(Video::vcGlobals::redir_filename) << "\n"
+    strm << "Enable write to process:  " << rsb(vcGlobals::write_frames_to_process) << ", stderr redirected to: " << adq(vcGlobals::redir_filename) << "\n"
          << "    command line flag:    [ -proc-redir [ file ]]\n"
-         << "    in object:            Video::vcGlobals::write_frames_to_process\n"
-         << "                          Video::vcGlobals::redir_filename\n"
+         << "    in object:            vcGlobals::write_frames_to_process\n"
+         << "                          vcGlobals::redir_filename\n"
          << "    in json config:       Root[\"Config\"][\"App-options\"][\"write-to-process\"]\n"
          << "                          (the stderr redirection file-name does not currently exist in the json file).\n"
          << "\n";
 
-    strm << "Frame grabber name:       " << adq(Video::vcGlobals::video_grabber_name) << "\n"
+    strm << "Frame grabber name:       " << adq(vcGlobals::video_grabber_name) << "\n"
          << "    command line flag:    [ -fg video-grabber ] \n"
-         << "    in object:            Video::vcGlobals::video_grabber_name\n"
+         << "    in object:            vcGlobals::video_grabber_name\n"
          << "    in json config:       Root[\"Config\"][\"Video\"][\"preferred-interface\"]\n"
          << "\n";
 
-    strm << "Frame count:              " << std::to_string(Video::vcGlobals::framecount)
-         <<                            (Video::vcGlobals::framecount == 0? " (continuous)" : " ") << "\n"
+    strm << "Frame count:              " << std::to_string(vcGlobals::framecount)
+         <<                            (vcGlobals::framecount == 0? " (continuous)" : " ") << "\n"
          << "    command line flag:    [ -fc frame-count ] \n"
-         << "    in object:            Video::vcGlobals::framecount\n"
+         << "    in object:            vcGlobals::framecount\n"
          << "    in json config:       Root[\"Config\"][\"Video\"][\"frame-count\"]\n"
          << "\n";
+
+    // TODO: add a member to vcGlobals to handle the "label" - "Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString()
+
+    strm << "\nThe following section displays the runtime CONFIGURATION DETAILS OF \n"
+         << "THE SPECIFIC PLUGIN which is already loaded and running at this time.\n\n"
+         << "   For each item detailed below, the runtime value of the item is displayed,\n"
+         << "   followed by the command line options for it, followed by information about where\n"
+         << "   the detail is modified and set: the \"struct vcGlobals\" member name, followed\n"
+         << "   by the json location in the config file.\n"
+         << "\n";
+
+    std::string pluginlabel = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
+
+    strm << "The loaded plugin is: " << adq(vcGlobals::str_plugin_file_name) << ".\n"
+         << "\n"
+         << "   In order to get to specific json \"node\" associated with the plugin, as well as values \n"
+         << "   within the \"node\" itself, we use several variables available from within the program in \n"
+         << "   the vcGlobals object, and/or the internal representation of the json file itself:\n"
+         << "\n"
+         << "c++:        Video::vcGlobals::video_grabber_name - the preferred (requested) video grabber interface\n"
+         << "\n"
+         << "c++/json:   Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name] - this is the\n"
+         << "            json NODE (section) that has all the different details for the loaded plugin.\n"
+         << "\n";
+
+         //Video::vcGlobals::video_grabber_name = Utility::trim(cfg_root["Config"]["Video"]["preferred-interface"].asString());
+
+
+           // << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
+           // << "\n";
+
+    // strm << "Loaded vidcap plugin:     " << adq(vcGlobals::str_plugin_file_name) << ", " << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
+
+
+
+
+
+
+    // std::string pluginlabel = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
+    strm << "Loaded vidcap plugin:     " << adq(vcGlobals::str_plugin_file_name) << ", " << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
+         << "    command line flag:    NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << "\n"
+         << "    in object:            vcGlobals::str_plugin_file_name\n"
+         << "    in json config NODE:  Root[\"Config\"][\"Video\"][\"frame-capture\"][" << adq(vcGlobals::video_grabber_name) << "]\n"
+         // << "\n"
+         << "     - which from C++ is: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name];\n"
+         // << "\n"
+         << "     - grabber label c++: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name][\"name\"].asString();\n"
+         << "\n";
+
+    strm << "    Camera device name:   " << adq(vcGlobals::str_dev_name) << "\n"
+         << "    command line flag:    [ -dv video-device ]\n"
+         << "    in object:            vcGlobals::str_dev_name\n"
+         << "    in json config (c++): Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name][\"device-name\"].asString(); \n"
+         // << "     - which from C++ is: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name];\n"
+         // << "     - grabber label c++: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name][\"name\"].asString();\n"
+         << "\n";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     strm << "SEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n";
 
 #if 0
 
-    strm << " " << Video::vcGlobals::video_grabber_name << " is labeled as: "
-            << Root["Config"]["Video"]["frame-capture"][Video::vcGlobals::video_grabber_name]["name"].asString();
+    strm << " " << vcGlobals::video_grabber_name << " is labeled as: "
+            << Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
 
-    Video::vcGlobals::str_dev_name = Root["Config"]
+    vcGlobals::str_dev_name = Root["Config"]
                                               ["Video"]
                                                ["frame-capture"]
-                                                [Video::vcGlobals::video_grabber_name]
+                                                [vcGlobals::video_grabber_name]
                                                  ["device-name"].asString();
-    strm << "" << Video::vcGlobals::video_grabber_name << " device name to " << Video::vcGlobals::str_dev_name;
+    strm << "" << vcGlobals::video_grabber_name << " device name to " << vcGlobals::str_dev_name;
 
-    // plugin-file-name - Video::vcGlobals::str_plugin_file_name
-    Video::vcGlobals::str_plugin_file_name = Root["Config"]
+    // plugin-file-name - vcGlobals::str_plugin_file_name
+    vcGlobals::str_plugin_file_name = Root["Config"]
                                                   ["Video"]
                                                    ["frame-capture"]
-                                                    [Video::vcGlobals::video_grabber_name]
+                                                    [vcGlobals::video_grabber_name]
                                                      ["plugin-file-name"].asString();
-    strm << "grabber plugin file name to " << Video::vcGlobals::str_plugin_file_name;
+    strm << "grabber plugin file name to " << vcGlobals::str_plugin_file_name;
 
-    // Video::vcGlobals::pixel_format is either "h264" or "yuyv"
+    // vcGlobals::pixel_format is either "h264" or "yuyv"
     std::string pixelFormat = Root["Config"]
                                        ["Video"]
                                         ["frame-capture"]
-                                         [Video::vcGlobals::video_grabber_name]
+                                         [vcGlobals::video_grabber_name]
                                           ["preferred-pixel-format"].asString();
     if (pixelFormat == "h264")
     {
-        Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
+        vcGlobals::pixel_format = Video::pxl_formats::h264;
     }
     else if (pixelFormat == "yuyv")
     {
-        Video::vcGlobals::pixel_format = Video::pxl_formats::yuyv;
+        vcGlobals::pixel_format = Video::pxl_formats::yuyv;
     }
     else
     {
         throw std::runtime_error(std::string("ERROR in Video::updateInternalConfigsWithJsonValues(): Invalid pixel format: ") + pixelFormat + " specified");
     }
-    strm << "" << Video::vcGlobals::video_grabber_name << " pixel format to "
-            << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
+    strm << "" << vcGlobals::video_grabber_name << " pixel format to "
+            << vcGlobals::pixel_formats_strings[vcGlobals::pixel_format];
 
     // Raw video output file
-    Video::vcGlobals::output_process = Root["Config"]
+    vcGlobals::output_process = Root["Config"]
                                                 ["Video"]
                                                  ["frame-capture"]
-                                                  [Video::vcGlobals::video_grabber_name]
+                                                  [vcGlobals::video_grabber_name]
                                                    ["pixel-format"]
                                                     [pixelFormat]
                                                      ["output-process"].asString();
-    strm << "raw video output process command to: " << Video::vcGlobals::output_process;
+    strm << "raw video output process command to: " << vcGlobals::output_process;
 
 
 #endif // 0

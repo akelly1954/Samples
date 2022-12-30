@@ -146,7 +146,7 @@ int main(int argc, const char *argv[])
     }
 
     ParseOutputString = std::string("Command line parsing:\n") + lstrm.str();
-    std::cerr << ParseOutputString << std::endl;
+    // std::cerr << ParseOutputString << std::endl;
     delayedLinesForLogger.push_back(ParseOutputString);
 
     ///////////////////////////////////////////////////////////
@@ -155,11 +155,14 @@ int main(int argc, const char *argv[])
     setup_video_capture_logger(ParseOutputString, ConfigOutputString, delayedLinesForLogger);
     std::shared_ptr<Log::Logger> uloggerp = Util::UtilLogger::getLoggerPtr();
 
-    // Logger lines from the plugin factory up above
-    uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory << "\n";
-    std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
+    if (vcGlobals::log_initialization_info)
+    {
+        // Logger lines from the plugin factory up above
+        uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory << "\n";
+    }
+    // std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
 
-    std::cerr << "DETAILED CURRENT RUNTIME CONFIGURATION DETAILS can be found in the log file.\n" << std::endl;
+    std::cerr << "DETAILED CURRENT RUNTIME CONFIGURATION DETAILS can be found in the log file (" << vcGlobals::adq(vcGlobals::logFilelName) << ")\n" << std::endl;
     std::stringstream sstr;
     Video::vcGlobals::print_globals(sstr);  // these are the current runtime configuration details
     uloggerp->info() << sstr.str();

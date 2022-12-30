@@ -83,6 +83,7 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
 
     uloggerp->info() << "START OF NEW VIDEO CAPTURE RUN";
 
+    if (vcGlobals::log_initialization_info)     // -loginit flag
     {
         Util::LoggerOptions logopt;
         std::stringstream ostr;
@@ -105,14 +106,16 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
         {
             uloggerp->info() << "DELAYED: " << line;
         }
+        uloggerp->info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
+        uloggerp->info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
     }
     else
     {
         // -loginit flag was not specified: Capture the last few lines into the log file
-        uloggerp->info() << "The last few lines of deferred output from app initialization are shown here.   ******";
-        uloggerp->info() << "For the full set of deferred lines, use the -loginit flag on the command line.  ******";
+        uloggerp->info() << "Output to the logger during initialization is not shown here. For the full   ******";
+        uloggerp->info() << "set of deferred log lines, use the -loginit flag on the command line.        ******";
 
-        uloggerp->info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
-        uloggerp->info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
+        // See above: uloggerp->info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
+        // See above: uloggerp->info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
     }
 }
