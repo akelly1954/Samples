@@ -28,6 +28,8 @@
 
 void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
 {
+    using namespace Video;
+
     strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
             << "\n"
@@ -43,6 +45,10 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
             << "              [ -lg log-level ]         -Can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}. \n"
             << "                                        (The default is the runtime value of \"log-level\" in the Json config file).\n"
             << "              [ -loginit ]              -(no parameters) This flag enables the logging of initialization info.\n"
+            << "              [ -dr [ file-name ] ]     -Write out detailed runtime configuration to the parameter \"file-name\" instead of \n"
+            << "                                        the log file. The default file-name is " << vcGlobals::adq(vcGlobals::runtime_config_output_file) << ". \n"
+            << "                                        The information provided is a snapshot of the runtime configuration after all json options \n"
+            << "                                        as well as command-line options have been set, and the plugin has been loaded. \n"
             << "              [ -fg video-grabber ]     -The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The \n"
             << "                                        default grabber is the runtime value of \"preferred-interface\" in the Json config file).\n"
             << "              [ -fc frame-count ]       -Number of frames to grab from the hardware. (The default is the runtime value of \n"
@@ -62,8 +68,8 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        default command string indicated by the name of the pixel format chosen.\n"
             << "              [ -pf pixel-format ]      -The pixel format requested from the video driver, which can be \"h264\" or \"yuyv\".\n"
             << "                                        These are:\n"
-            << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::h264] << "\n"
-            << "                                                  " << Video::vcGlobals::pixel_formats_strings[Video::pxl_formats::yuyv] << "\n"
+            << "                                                  " << vcGlobals::pixel_formats_strings[pxl_formats::h264] << "\n"
+            << "                                                  " << vcGlobals::pixel_formats_strings[pxl_formats::yuyv] << "\n"
             << "                                        Please see /usr/include/linux/videodev2.h for more information\n"
             << "                                        (The default pixel-format value is the runtime value of \"preferred-pixel-format\"\n"
             << "                                        in the Json config file in the section named for the video-grabber used).\n"
@@ -145,10 +151,28 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         default:
             assert (fail_int == -669);   // Bug encountered. Will cause abnormal termination
     }
-    strm << "    write-frames-to-file is set to "
-         << (Video::vcGlobals::write_frames_to_file == false? "false": "true")
-         << ", file name is " << Video::vcGlobals::output_file << "\n";
+    strm << "    write-frames-to-file is set to " << Video::vcGlobals::rsb(Video::vcGlobals::write_frames_to_file)
+         << ", file name is " << Video::vcGlobals::adq(Video::vcGlobals::output_file) << "\n";
 
+    switch(cmdline.get_template_arg("-dr", Video::vcGlobals::runtime_config_output_file))
+    {
+        case Util::ParameterStatus::FlagNotProvided:
+            // This means display_runtime_config may or may not be enabled:  Use the default
+            break;
+        case Util::ParameterStatus::FlagPresentParameterPresent:
+            Video::vcGlobals::display_runtime_config = true;
+            // strm << "Turning on display_runtime_config, using: " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << ". \n";
+            break;
+        case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
+            Video::vcGlobals::display_runtime_config = true;
+            // strm << "Turning on display_runtime_config, using the default: " <<
+            //         Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << ". \n";
+            break;
+        default:
+            assert (fail_int == -1669);   // Bug encountered. Will cause abnormal termination
+    }
+    strm << "    display_runtime_config is set to " << Video::vcGlobals::rsb(Video::vcGlobals::display_runtime_config)
+         << ", output file name is " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << "\n";
 
     // assignment to vcGlobals happens after everything else has been assigned below.
     int fcount_value = Video::vcGlobals::framecount;
@@ -379,7 +403,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         Video::vcGlobals::framecount = fcount_value;
         Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
         strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
-        std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)" << std::endl;
+        // std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)" << std::endl;
     }
 
     if (fcount_value == 0)

@@ -39,29 +39,31 @@
 #include <string>
 
 // Video::vcGlobals statics' definition
-bool            Video::vcGlobals::log_initialization_info = false;
-std::string     Video::vcGlobals::logChannelName =          "video_capture";
-std::string     Video::vcGlobals::logFilelName =            Video::vcGlobals::logChannelName + "_log.txt";
-std::string     Video::vcGlobals::output_file =             Video::vcGlobals::logChannelName + ".data"; // Name of file intended for the video frames
-std::string     Video::vcGlobals::output_process =          "date > /dev/null 2>& 1";                   // command to pipe frames to (for popen() - use the json file to set correctly).
-bool            Video::vcGlobals::use_other_proc =          false;
-Log::Log::Level Video::vcGlobals::loglevel =                Log::Log::Level::eNotice;
-std::string     Video::vcGlobals::log_level =               Log::Log::toString(Video::vcGlobals::loglevel);
-std::string     Video::vcGlobals::config_file_name =        Video::vcGlobals::logChannelName + ".json";
-bool            Video::vcGlobals::profiling_enabled =       false;
-int             Video::vcGlobals::profile_timeslice_ms =    800;
+bool            Video::vcGlobals::log_initialization_info =     false;
+std::string     Video::vcGlobals::logChannelName =              "video_capture";
+std::string     Video::vcGlobals::logFilelName =                Video::vcGlobals::logChannelName + "_log.txt";
+std::string     Video::vcGlobals::output_file =                 Video::vcGlobals::logChannelName + ".data"; // Name of file intended for the video frames
+std::string     Video::vcGlobals::output_process =              "date > /dev/null 2>& 1";                   // command to pipe frames to (for popen() - use the json file to set correctly).
+bool            Video::vcGlobals::use_other_proc =              false;
+bool            Video::vcGlobals::display_runtime_config =      false;
+std::string     Video::vcGlobals::runtime_config_output_file =  Video::vcGlobals::logChannelName + "_runtime_config.txt";
+Log::Log::Level Video::vcGlobals::loglevel =                    Log::Log::Level::eNotice;
+std::string     Video::vcGlobals::log_level =                   Log::Log::toString(Video::vcGlobals::loglevel);
+std::string     Video::vcGlobals::config_file_name =            Video::vcGlobals::logChannelName + ".json";
+bool            Video::vcGlobals::profiling_enabled =           false;
+int             Video::vcGlobals::profile_timeslice_ms =        800;
 
 // Video configuration
-std::string     Video::vcGlobals::video_grabber_name =      "v4l2";
-bool            Video::vcGlobals::write_frames_to_file =    true;
-bool            Video::vcGlobals::write_frames_to_process = false;
-size_t          Video::vcGlobals::framecount =              200;
+std::string     Video::vcGlobals::video_grabber_name =          "v4l2";
+bool            Video::vcGlobals::write_frames_to_file =        true;
+bool            Video::vcGlobals::write_frames_to_process =     false;
+size_t          Video::vcGlobals::framecount =                  200;
 std::string     Video::vcGlobals::str_frame_count(std::to_string(framecount));
-std::string     Video::vcGlobals::str_dev_name =            "/dev/video0";
-std::string     Video::vcGlobals::str_plugin_file_name =    "./undefined.so";
-bool            Video::vcGlobals::proc_redir =              true;
-std::string     Video::vcGlobals::redir_filename =          "/dev/null";
-bool            Video::vcGlobals::test_suspend_resume =     false;
+std::string     Video::vcGlobals::str_dev_name =                "/dev/video0";
+std::string     Video::vcGlobals::str_plugin_file_name =        "./undefined.so";
+bool            Video::vcGlobals::proc_redir =                  true;
+std::string     Video::vcGlobals::redir_filename =              "/dev/null";
+bool            Video::vcGlobals::test_suspend_resume =         false;
 
 
 // See /usr/include/linux/videodev2.h for the descriptive strings in the vector<>
@@ -305,7 +307,19 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "   by the json location in the config file.\n"
          << "\n";
 
-    std::string pluginlabel = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
+    // get a shortcut to the plugin section, and then use that to access individual members
+    const Json::Value& frameRoot = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name];
+    std::string pluginlabel = frameRoot["name"].asString();
+    std::string pixformat = frameRoot["preferred-pixel-format"].asString();
+
+    // For debugging:
+    // std::cerr << "plugin label: " << pluginlabel << std::endl;
+    // std::cerr << "pixel format : " << pixformat << std::endl;
+    // std::string outproc = frameRoot["pixel-format"][ frameRoot["preferred-pixel-format"].asString() ]["output-process"].asString();
+    // std::string outproc = frameRoot["pixel-format"][pixformat]["output-process"].asString();
+    // std::string outproc = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["pixel-format"][pixformat]["output-process"].asString();
+    // std::cerr << "output process : " << outproc << std::endl;
+    // std::string pluginlabel = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
 
     strm << "The loaded plugin is: " << adq(vcGlobals::str_plugin_file_name) << ".\n"
          << "\n"
@@ -317,15 +331,54 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "\n"
          << "c++/json:   Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name] - this is the\n"
          << "            json NODE (section) that has all the different details for the loaded plugin.\n"
+         << "\n"
+         << "As a convenience, the above c++/json line which obtains the json section can be used to access \n"
+         << "individual members of the node like this:\n"
+         << "\n"
+         << "       const Json::Value& frameRoot = Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name]; \n"
+         << "\n"
+         << "       std::string pluginlabel = frameRoot[\"name\"].asString(); \n"
+         << "       std::string pluginfilename = frameRoot[\"plugin-file-name\"].asString(); \n"
+         << "       std::string pixformat = frameRoot[\"preferred-pixel-format\"].asString(); \n"
+         << "       std::string outproc = frameRoot[\"pixel-format\"][pixformat][\"output-process\"].asString(); \n"
+         << "\n"
+         << "As a cute convenience (not recommended as it is confusing to some), the \"outproc\" assignment \n"
+         << "could be made like this: \n"
+         << "\n"
+         << "std::string outproc = frameRoot[\"pixel-format\"][ frameRoot[\"preferred-pixel-format\"].asString() ][\"output-process\"].asString(); \n"
+         << "\n"
+         << "    Please remember that in any case, if there is a valid \"vcGlobals\" entry for the detail being addressed it\n"
+         << "    SHOULD be used, rather than the json value (true for all of the above except for \"pluginlabel\" at this time). \n"
          << "\n";
 
-         //Video::vcGlobals::video_grabber_name = Utility::trim(cfg_root["Config"]["Video"]["preferred-interface"].asString());
+    strm << "    //////////////////////////////////////////////////////////////////////////////////////////////\n"
+         << "    // \n"
+         << "    // So, for the currently running instance of the program, \n"
+         << "    // using:   const Json::Value& frameRoot = Root[\"Config\"][\"Video\"][\"frame-capture\"][" << adq(vcGlobals::video_grabber_name) << "]; \n"
+         << "    // and:     std::string pixformat = frameRoot[" << adq(pixformat) << "].asString(); \n"
+         << "    // \n"
+         << "    //////////////////////////////////////////////////////////////////////////////////////////////\n"
+         << "\n";
 
+    strm << "    Loaded vidcap plugin: " << adq(vcGlobals::str_plugin_file_name) << " \n"
+         << "    command line flag:    NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << " before runtime.\n"
+         << "    in object:            vcGlobals::str_plugin_file_name\n"
+         << "    in json config:       frameRoot[\"plugin-file-name\"] \n"
+         << "\n";
 
-           // << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
-           // << "\n";
+    // std::string pluginlabel = frameRoot["name"].asString();
 
-    // strm << "Loaded vidcap plugin:     " << adq(vcGlobals::str_plugin_file_name) << ", " << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
+    strm << "    Plugin label:         " << adq(frameRoot["name"].asString()) << " \n"
+         << "    command line flag:    NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << " before runtime.\n"
+         << "    in object:            none\n"
+         << "    in json config:       frameRoot[\"name\"] \n"
+         << "\n";
+
+    strm << "    Camera device name:   " << adq(vcGlobals::str_dev_name) << "\n"
+         << "    command line flag:    [ -dv video-device ]\n"
+         << "    in object:            vcGlobals::str_dev_name\n"
+         << "    in json config:       frameRoot[\"device-name\"].asString(); \n"
+         << "\n";
 
 
 
@@ -333,30 +386,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
 
 
     // std::string pluginlabel = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
-    strm << "Loaded vidcap plugin:     " << adq(vcGlobals::str_plugin_file_name) << ", " << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
-         << "    command line flag:    NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << "\n"
-         << "    in object:            vcGlobals::str_plugin_file_name\n"
-         << "    in json config NODE:  Root[\"Config\"][\"Video\"][\"frame-capture\"][" << adq(vcGlobals::video_grabber_name) << "]\n"
-         // << "\n"
-         << "     - which from C++ is: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name];\n"
-         // << "\n"
-         << "     - grabber label c++: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name][\"name\"].asString();\n"
-         << "\n";
-
-    strm << "    Camera device name:   " << adq(vcGlobals::str_dev_name) << "\n"
-         << "    command line flag:    [ -dv video-device ]\n"
-         << "    in object:            vcGlobals::str_dev_name\n"
-         << "    in json config (c++): Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name][\"device-name\"].asString(); \n"
-         // << "     - which from C++ is: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name];\n"
-         // << "     - grabber label c++: " << "Root[\"Config\"][\"Video\"][\"frame-capture\"][vcGlobals::video_grabber_name][\"name\"].asString();\n"
-         << "\n";
-
-
-
-
-
-
-
+// ", " << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
 
 
 
@@ -422,5 +452,133 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
 #endif // 0
 
 }
+
+// Open/truncate the output file that will hold runtime-config info
+FILE * Video::vcGlobals::create_runtime_conf_output_file()
+{
+    using namespace Video;
+
+    int errnocopy = 0;
+    FILE *output_stream = NULL;
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+    if ((output_stream = ::fopen (Video::vcGlobals::runtime_config_output_file.c_str(), "w+")) == NULL)
+    {
+        errnocopy = errno;
+        loggerp->error() << "Cannot create/truncate runtime config output file " << vcGlobals::adq(vcGlobals::runtime_config_output_file) << ": " << Util::Utility::get_errno_message(errnocopy);
+        return NULL;
+    }
+
+    loggerp->debug() << "Created/truncated runtime config output file " << vcGlobals::adq(vcGlobals::output_file);
+
+    char outstr[200];
+    time_t t;
+    struct tm *tmp;
+
+    t = time(NULL);
+    tmp = localtime(&t);
+    if (tmp) strftime(outstr, sizeof(outstr), "%Y-%m-%d %X", tmp);
+
+    const std::string ostrng = std::string("\nRuntime date/time: ") + outstr + "\n";
+    write_to_runtime_conf_file(output_stream, ostrng);
+    return output_stream;   // Check for NULL
+}
+
+size_t Video::vcGlobals::write_to_runtime_conf_file(FILE *filestream, const std::string& infostring)
+{
+    size_t elementswritten = std::fwrite(infostring.c_str(), sizeof(const char), infostring.length(), filestream);
+    int errnocopy = 0;
+    size_t byteswritten = elementswritten * sizeof(const char);
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+    if (byteswritten != infostring.length())
+    {
+        loggerp->error() << "vcGlobals::write_to_runtime_conf_file: fwrite returned a short count or 0 bytes written. Requested: " <<
+                infostring.length() << ", got " << byteswritten << " bytes: " <<
+                        Util::Utility::get_errno_message(errnocopy);
+    }
+    fflush(filestream);
+
+    return byteswritten;
+}
+
+
+
+#if 0
+
+if (Video::vcGlobals::write_frames_to_file)
+{
+    filestream = create_output_file();
+    if (filestream == NULL)
+    {
+        // detailed error message already emitted by the create function
+        loggerp->error() << "Exiting...";
+        video_capture_queue::set_terminated(true);
+        return;
+    }
+    loggerp->debug() << "In VideoCapture::raw_buffer_queue_handler(): created " << Video::vcGlobals::output_file << ".";
+
+
+
+// Open/truncate the output file that will hold captured frames
+FILE * VideoCapture::create_runtime_conf_output_file()
+{
+    int errnocopy = 0;
+    FILE *output_stream = NULL;
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+    if ((output_stream = ::fopen (Video::vcGlobals::output_file.c_str(), "w+")) == NULL)
+    {
+        errnocopy = errno;
+        loggerp->error() << "Cannot create/truncate output file \"" <<
+        Video::vcGlobals::output_file << "\": " << Util::Utility::get_errno_message(errnocopy);
+    }
+    else
+    {
+        loggerp->debug() << "Created/truncated output file \"" << Video::vcGlobals::output_file << "\"";
+    }
+    return output_stream;
+}
+
+if (Video::vcGlobals::write_frames_to_file)
+{
+    size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
+    assert (nbytes == sp_frame->num_valid_elements());
+
+
+
+size_t VideoCapture::write_to_runtime_conf_file(FILE *filestream,
+            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
+{
+    size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), filestream);
+    int errnocopy = 0;
+    size_t byteswritten = elementswritten * sizeof(uint8_t);
+
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+    if (byteswritten != sp_frame->num_valid_elements())
+    {
+        loggerp->error() << "VideoCapture::write_frame_to_file: fwrite returned a short count or 0 bytes written. Requested: " <<
+                        sp_frame->num_valid_elements() << ", got " << byteswritten << " bytes: " <<
+                        Util::Utility::get_errno_message(errnocopy);
+    }
+    fflush(filestream);
+
+    return byteswritten;
+}
+
+if (Video::vcGlobals::write_frames_to_file && filestream != NULL)
+{
+    fflush(filestream);
+    fclose(filestream);
+}
+
+
+#endif // 0
+
+
 
 

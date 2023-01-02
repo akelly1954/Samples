@@ -28,8 +28,7 @@
 #include <ConfigSingleton.hpp>
 #include <iostream>
 
-bool Config::setup_config_singleton(std::string& result_string,
-                                    std::string& ConfigOutputString,
+bool Config::setup_config_singleton(std::string& error_string,
                                     std::vector<std::string>& delayedLinesForLogger)
 {
     std::stringstream ostrm;
@@ -53,16 +52,13 @@ bool Config::setup_config_singleton(std::string& result_string,
 
     } catch (const std::exception& e) {
         ostrm << "\nConfig singleton setup result: ERROR: Exception while trying to create config singleton: \n    " << e.what() << "\n";
-        result_string += ostrm.str(); // The caller can display result_string with cerr
+        error_string += ostrm.str(); // The caller can display error_string with cerr
         return false;
     }
 
-    // We will log this as soon as the logger is configured and operational.
-    std::string parse_output = std::string("\n\nParsed JSON nodes:") + result_string;
-
     // Everything in the vector will be written to the log file
     // as soon as the logger is initialized.
-    delayedLinesForLogger.push_back(parse_output);
+    delayedLinesForLogger.push_back(std::string("\n\nParsed JSON nodes:") + ostrm.str());
 
     std::stringstream configstrm;
     configstrm << "\n\nParsed JSON file " << Video::vcGlobals::config_file_name << " successfully.  Contents: \n\n"
@@ -78,43 +74,28 @@ bool Config::setup_config_singleton(std::string& result_string,
         std::stringstream strm;
         if (! Video::updateInternalConfigsWithJsonValues(strm, Config::ConfigSingleton::instance()->JsonRoot()))
         {
-            result_string = "Config singleton setup result: ERROR while accessing json values read from ";
-            result_string += Video::vcGlobals::config_file_name;
-            result_string += ":\n";
-            result_string += strm.str();
-            result_string += "\n";
+            error_string = "Config singleton setup result: ERROR while accessing json values read from ";
+            error_string += Video::vcGlobals::config_file_name;
+            error_string += ":\n";
+            error_string += strm.str();
+            error_string += "\n";
             return false;
         }
 
-        ConfigOutputString = strm.str();
-
         // Everything in the vector will be written to the log file
         // as soon as the logger is initialized.
-        delayedLinesForLogger.push_back(ConfigOutputString);
+        delayedLinesForLogger.push_back(strm.str());
     }
     catch (const std::exception& e)
     {
-        result_string = "Config singleton setup result: ERROR: Exception caught while accessing json values read from ";
-        result_string += Video::vcGlobals::config_file_name;
-        result_string += ":\n";
-        result_string += e.what();
-        result_string += "\n";
+        error_string = "Config singleton setup result: ERROR: Exception caught while accessing json values read from ";
+        error_string += Video::vcGlobals::config_file_name;
+        error_string += ":\n";
+        error_string += e.what();
+        error_string += "\n";
         return false;
     }
 
     return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 

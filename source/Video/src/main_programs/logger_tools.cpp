@@ -50,9 +50,7 @@ Util::LoggerOptions Util::setLocalLoggerOptions()
     return localopt;
 }
 
-void Video::setup_video_capture_logger( std::string& ParseOutputString,
-                                        std::string& ConfigOutputString,
-                                        std::vector<std::string>& delayedLinesForLogger)
+void Video::setup_video_capture_logger(std::vector<std::string>& delayedLinesForLogger)
 {
     using namespace Video;
 
@@ -104,18 +102,14 @@ void Video::setup_video_capture_logger( std::string& ParseOutputString,
         // Empty out the delayed-lines' vector...
         for(auto line : delayedLinesForLogger)
         {
-            uloggerp->info() << "DELAYED: " << line;
+            uloggerp->info() << "\n\nDELAYED: " << line;
         }
-        uloggerp->info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
-        uloggerp->info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
     }
     else
     {
         // -loginit flag was not specified: Capture the last few lines into the log file
         uloggerp->info() << "Output to the logger during initialization is not shown here. For the full   ******";
         uloggerp->info() << "set of deferred log lines, use the -loginit flag on the command line.        ******";
-
-        // See above: uloggerp->info() << "DELAYED: .  .  .  . . . .\n" << ConfigOutputString << "\n";
-        // See above: uloggerp->info() << "DELAYED: .  .  .  . . . .\n\n" << ParseOutputString;
+        uloggerp->info() << "";
     }
 }

@@ -95,7 +95,7 @@ VideoCapture::video_capture_plugin_factory::create_factory(std::ostream& ostrm)
     s_vplugin_handle->set_plugin_filename(s_plugin_so_filename);
     s_vplugin_handle->set_plugin_interface_pointer(s_vplugin_handle);
 
-    std::cout << "Plugin Factory: The plugin type is: " << s_vplugin_handle->get_type() << std::endl;
+    std::cerr << "Plugin Factory: The plugin type is: " << s_vplugin_handle->get_type() << std::endl;
     ostrm << "Plugin Factory: The plugin type is: " << s_vplugin_handle->get_type() << "\n";
     ostrm << "Plugin Factory: The plugin filename is: " << s_vplugin_handle->get_filename() << "\n";
     ostrm << "Plugin Factory: The plugin interface ptr is: " << s_vplugin_handle->get_interface_pointer() << "\n";

@@ -73,16 +73,16 @@ int main(int argc, const char *argv[])
     ///////////////////////////////////////////////////////////
 
     const Util::StringVector allowedFlags ={
-            "-fn", "-pr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc", "-test-suspend-resume"
+            "-fn", "-pr", "-dr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc", "-test-suspend-resume"
     };
 
     Util::CommandLine cmdline(argc, argv, allowedFlags);
-    if (! Video::initial_commandline_parse(cmdline, argc, argv0, std::cout))
+    if (! Video::initial_commandline_parse(cmdline, argc, argv0, std::cerr))
     {
-        std::cout << std::endl;     // flush out std::cout
+        std::cerr << std::endl;     // flush out std::cerr
         return EXIT_SUCCESS;
     }
-    std::cout << std::endl;         // flush out std::cout
+    std::cerr << std::endl;         // flush out std::cerr
 
     ///////////////////////////////////////////////////////////
     // Set up the application (JSON-based) configuration:
@@ -92,11 +92,10 @@ int main(int argc, const char *argv[])
     // in the following step.
     ///////////////////////////////////////////////////////////
 
-    std::string ConfigOutputString;
-    std::string config_results;
-    if (! Config::setup_config_singleton(config_results, ConfigOutputString, delayedLinesForLogger))
+    std::string error_string;
+    if (! Config::setup_config_singleton(error_string, delayedLinesForLogger))
     {
-        std::cerr << "Config Singleton setup result: " << config_results << std::endl;
+        std::cerr << "Config Singleton setup result: " << error_string << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -131,7 +130,7 @@ int main(int argc, const char *argv[])
        return EXIT_FAILURE;
     }
 
-    std::cout << "Plugin Factory: plugin was loaded and initialized successfully." << std::endl;
+    std::cerr << "Plugin Factory: plugin " << vcGlobals::adq(vcGlobals::str_plugin_file_name) << " was loaded and initialized successfully." << std::endl;
 
     ///////////////////////////////////////////////////////////
     // Parse the command line for video capture features
@@ -145,14 +144,14 @@ int main(int argc, const char *argv[])
         return EXIT_FAILURE;
     }
 
-    ParseOutputString = std::string("Command line parsing:\n") + lstrm.str();
+    ParseOutputString = std::string("\nCommand line parsing:\n") + lstrm.str();
     // std::cerr << ParseOutputString << std::endl;
     delayedLinesForLogger.push_back(ParseOutputString);
 
     ///////////////////////////////////////////////////////////
     // Set up the logger
     ///////////////////////////////////////////////////////////
-    setup_video_capture_logger(ParseOutputString, ConfigOutputString, delayedLinesForLogger);
+    setup_video_capture_logger(delayedLinesForLogger);
     std::shared_ptr<Log::Logger> uloggerp = Util::UtilLogger::getLoggerPtr();
 
     if (vcGlobals::log_initialization_info)
@@ -162,10 +161,44 @@ int main(int argc, const char *argv[])
     }
     // std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
 
-    std::cerr << "DETAILED CURRENT RUNTIME CONFIGURATION DETAILS can be found in the log file (" << vcGlobals::adq(vcGlobals::logFilelName) << ")\n" << std::endl;
     std::stringstream sstr;
     Video::vcGlobals::print_globals(sstr);  // these are the current runtime configuration details
-    uloggerp->info() << sstr.str();
+    FILE *filestream = NULL;
+    if (vcGlobals::display_runtime_config)
+    {
+        filestream = vcGlobals::create_runtime_conf_output_file();
+        if (filestream == NULL)
+        {
+            // detailed error message already emitted by the create function
+            uloggerp->error() << "Exiting...";
+            std::cerr << "Failed to create " << vcGlobals::adq(vcGlobals::runtime_config_output_file)
+                    << ". See details in the log file.  Exiting..." << std::endl;
+            Log::Manager::terminate();
+
+#ifndef DOUBLE_FREE_ISSUE_FIXED
+            ::_exit(return_for_exit);  // see TODO: comment at the very end of this file.
+#else
+            return EXIT_FAILURE;
+#endif // DOUBLE_FREE_ISSUE_FIXED
+
+        }
+
+        std::cerr << "DETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << vcGlobals::adq(vcGlobals::runtime_config_output_file) << std::endl;
+        vcGlobals::write_to_runtime_conf_file(filestream, sstr.str());
+    }
+    else
+    {
+        if (vcGlobals::loglevel != Log::Log::eDebug)
+        {
+            std::cerr << "\nTo get DETAILED CURRENT RUNTIME CONFIGURATION DETAILS written to the log file, use log level \"DBUG\" \n"
+                      << "or use the \"[ -dr  [ file-name ] ]\" command line option to write them to a different file.\n" << std::endl;
+
+        }
+        else
+        {
+            uloggerp->debug() << sstr.str();
+        }
+    }
 
     /////////////////
     // Finally, get to work

@@ -42,9 +42,7 @@ namespace Util
 namespace Video
 {
 
-    void setup_video_capture_logger(std::string& ParseOutputString,
-                                    std::string& ConfigOutputString,
-                                    std::vector<std::string>& delayedLinesForLogger);
+    void setup_video_capture_logger(std::vector<std::string>& delayedLinesForLogger);
 
 } // end of namespace Video
 

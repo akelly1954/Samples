@@ -51,6 +51,8 @@ namespace Video
         static std::string logFilelName;
         static std::string output_file;
         static std::string output_process;
+        static bool display_runtime_config;
+        static std::string runtime_config_output_file;
         static bool use_other_proc;
         static Log::Log::Level loglevel;
         static std::string log_level;
@@ -78,7 +80,12 @@ namespace Video
         static enum pxl_formats pixel_format;
         static std::vector<std::string> pixel_formats_strings;
 
+        // Displays runtime configuration after all options have been
+        // set, and after the plugin has been loaded.
         static void print_globals(std::ostream&);
+
+        static FILE * create_runtime_conf_output_file();
+        static size_t write_to_runtime_conf_file(FILE *filestream, const std::string& infostring);
 
         // adds double quotes to string - hello to "hello"
         static std::string adq(const std::string& str);
