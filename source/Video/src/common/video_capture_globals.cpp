@@ -368,7 +368,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
 
     // std::string pluginlabel = frameRoot["name"].asString();
 
-    strm << "    Plugin label:         " << adq(frameRoot["name"].asString()) << " \n"
+    strm << "    Plugin label:         " << adq(frameRoot["name"].asString()) << " (mostly unused plugin type identifier) \n"
          << "    command line flag:    NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << " before runtime.\n"
          << "    in object:            none\n"
          << "    in json config:       frameRoot[\"name\"] \n"
@@ -380,14 +380,50 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "    in json config:       frameRoot[\"device-name\"].asString(); \n"
          << "\n";
 
+#if 0
+    // [ -use-other-proc ]
+    // vcGlobals::use_other_proc
+
+    std::string procIndicator;
+
+    if (Video::vcGlobals::use_other_proc)
+    {
+        // Use the "other" entry in the "pixel-format" section
+        procIndicator = "other";
+    }
+    else
+    {
+        // use the process string indicated by the "preferred-pixel-format" indicator
+        procIndicator = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
+    }
+
+    Video::vcGlobals::output_process = cfg_root["Config"]
+                                                ["Video"]
+                                                 ["frame-capture"]
+                                                  [Video::vcGlobals::video_grabber_name]
+                                                   ["pixel-format"]
+                                                    [procIndicator]
+                                                     ["output-process"].asString();
+    std::string actual_process;
+    if (Video::vcGlobals::proc_redir && Video::vcGlobals::redir_filename != "")
+    {
+        actual_process = Video::vcGlobals::output_process + " 2> " + Video::vcGlobals::redir_filename;
+    }
+    else
+    {
+        actual_process = Video::vcGlobals::output_process;
+    }
+    loggerp->debug() << "\nraw_buffer_queue_handler: Updated output process to:  " << actual_process;
 
 
+#endif
 
-
-
-    // std::string pluginlabel = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
-// ", " << vcGlobals::video_grabber_name << " plugin label = " << adq(pluginlabel) << "\n"
-
+    strm << "    Current pixel format: " << adq(frameRoot["preferred-pixel-format"].asString()) << " - description: " << vcGlobals::pixel_formats_strings[vcGlobals::pixel_format] << "\n"
+         << "    command line flag:    [ -pf pixel-format ]\n"
+         << "    in object:            vcGlobals::pixel_format (enum)\n"
+         << "                          (vcGlobals::pixel_formats_strings (string vector - converts enum to string)\n"
+         << "    in json config:       frameRoot[\"preferred-pixel-format\"].asString(); \n"
+         << "\n";
 
 
 
@@ -397,59 +433,6 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
 
     strm << "SEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n";
 
-#if 0
-
-    strm << " " << vcGlobals::video_grabber_name << " is labeled as: "
-            << Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
-
-    vcGlobals::str_dev_name = Root["Config"]
-                                              ["Video"]
-                                               ["frame-capture"]
-                                                [vcGlobals::video_grabber_name]
-                                                 ["device-name"].asString();
-    strm << "" << vcGlobals::video_grabber_name << " device name to " << vcGlobals::str_dev_name;
-
-    // plugin-file-name - vcGlobals::str_plugin_file_name
-    vcGlobals::str_plugin_file_name = Root["Config"]
-                                                  ["Video"]
-                                                   ["frame-capture"]
-                                                    [vcGlobals::video_grabber_name]
-                                                     ["plugin-file-name"].asString();
-    strm << "grabber plugin file name to " << vcGlobals::str_plugin_file_name;
-
-    // vcGlobals::pixel_format is either "h264" or "yuyv"
-    std::string pixelFormat = Root["Config"]
-                                       ["Video"]
-                                        ["frame-capture"]
-                                         [vcGlobals::video_grabber_name]
-                                          ["preferred-pixel-format"].asString();
-    if (pixelFormat == "h264")
-    {
-        vcGlobals::pixel_format = Video::pxl_formats::h264;
-    }
-    else if (pixelFormat == "yuyv")
-    {
-        vcGlobals::pixel_format = Video::pxl_formats::yuyv;
-    }
-    else
-    {
-        throw std::runtime_error(std::string("ERROR in Video::updateInternalConfigsWithJsonValues(): Invalid pixel format: ") + pixelFormat + " specified");
-    }
-    strm << "" << vcGlobals::video_grabber_name << " pixel format to "
-            << vcGlobals::pixel_formats_strings[vcGlobals::pixel_format];
-
-    // Raw video output file
-    vcGlobals::output_process = Root["Config"]
-                                                ["Video"]
-                                                 ["frame-capture"]
-                                                  [vcGlobals::video_grabber_name]
-                                                   ["pixel-format"]
-                                                    [pixelFormat]
-                                                     ["output-process"].asString();
-    strm << "raw video output process command to: " << vcGlobals::output_process;
-
-
-#endif // 0
 
 }
 
@@ -503,82 +486,5 @@ size_t Video::vcGlobals::write_to_runtime_conf_file(FILE *filestream, const std:
 
     return byteswritten;
 }
-
-
-
-#if 0
-
-if (Video::vcGlobals::write_frames_to_file)
-{
-    filestream = create_output_file();
-    if (filestream == NULL)
-    {
-        // detailed error message already emitted by the create function
-        loggerp->error() << "Exiting...";
-        video_capture_queue::set_terminated(true);
-        return;
-    }
-    loggerp->debug() << "In VideoCapture::raw_buffer_queue_handler(): created " << Video::vcGlobals::output_file << ".";
-
-
-
-// Open/truncate the output file that will hold captured frames
-FILE * VideoCapture::create_runtime_conf_output_file()
-{
-    int errnocopy = 0;
-    FILE *output_stream = NULL;
-
-    auto loggerp = Util::UtilLogger::getLoggerPtr();
-
-    if ((output_stream = ::fopen (Video::vcGlobals::output_file.c_str(), "w+")) == NULL)
-    {
-        errnocopy = errno;
-        loggerp->error() << "Cannot create/truncate output file \"" <<
-        Video::vcGlobals::output_file << "\": " << Util::Utility::get_errno_message(errnocopy);
-    }
-    else
-    {
-        loggerp->debug() << "Created/truncated output file \"" << Video::vcGlobals::output_file << "\"";
-    }
-    return output_stream;
-}
-
-if (Video::vcGlobals::write_frames_to_file)
-{
-    size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
-    assert (nbytes == sp_frame->num_valid_elements());
-
-
-
-size_t VideoCapture::write_to_runtime_conf_file(FILE *filestream,
-            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
-{
-    size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), filestream);
-    int errnocopy = 0;
-    size_t byteswritten = elementswritten * sizeof(uint8_t);
-
-    auto loggerp = Util::UtilLogger::getLoggerPtr();
-
-    if (byteswritten != sp_frame->num_valid_elements())
-    {
-        loggerp->error() << "VideoCapture::write_frame_to_file: fwrite returned a short count or 0 bytes written. Requested: " <<
-                        sp_frame->num_valid_elements() << ", got " << byteswritten << " bytes: " <<
-                        Util::Utility::get_errno_message(errnocopy);
-    }
-    fflush(filestream);
-
-    return byteswritten;
-}
-
-if (Video::vcGlobals::write_frames_to_file && filestream != NULL)
-{
-    fflush(filestream);
-    fclose(filestream);
-}
-
-
-#endif // 0
-
-
 
 

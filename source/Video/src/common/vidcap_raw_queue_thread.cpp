@@ -1,5 +1,6 @@
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_profiler_thread.hpp>
+#include <vidcap_capture_thread.hpp>
 #include <video_capture_globals.hpp>
 #include <ConfigSingleton.hpp>
 #include <Utility.hpp>
@@ -271,51 +272,25 @@ FILE * VideoCapture::create_output_process()
     FILE *output_stream = NULL;
 
     auto loggerp = Util::UtilLogger::getLoggerPtr();
+    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
 
     // Need to refresh output process since command line options
     // may have changed the requested pixel-format.
     Json::Value& cfg_root = Config::ConfigSingleton::GetJsonRootCopyRef();
 
-    std::string procIndicator;
+    std::string actual_process = ifptr->get_popen_process_string();
 
-    if (Video::vcGlobals::use_other_proc)
-    {
-        // Use the "other" entry in the "pixel-format" section
-        procIndicator = "other";
-    }
-    else
-    {
-        // use the process string indicated by the "preferred-pixel-format" indicator
-        procIndicator = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
-    }
-
-    Video::vcGlobals::output_process = cfg_root["Config"]
-                                                ["Video"]
-                                                 ["frame-capture"]
-                                                  [Video::vcGlobals::video_grabber_name]
-                                                   ["pixel-format"]
-                                                    [procIndicator]
-                                                     ["output-process"].asString();
-    std::string actual_process;
-    if (Video::vcGlobals::proc_redir && Video::vcGlobals::redir_filename != "")
-    {
-        actual_process = Video::vcGlobals::output_process + " 2> " + Video::vcGlobals::redir_filename;
-    }
-    else
-    {
-        actual_process = Video::vcGlobals::output_process;
-    }
-    loggerp->debug() << "\nraw_buffer_queue_handler: Updated output process to:  " << actual_process;
+    loggerp->debug() << "create_output_process: Starting output process:  " << actual_process;
 
     if ((output_stream = ::popen (actual_process.c_str(), "w")) == NULL)
     {
         errnocopy = errno;
-        loggerp->error() << "Could not start the process \"" << actual_process
+        loggerp->error() << "create_output_process: Could not start the process \"" << actual_process
                        << "\": " << Util::Utility::get_errno_message(errnocopy);
     }
     else
     {
-        loggerp->debug() << "Started the process \"" << actual_process << "\".";
+        loggerp->debug() << "create_output_process: Started the process \"" << actual_process << "\".";
     }
     return output_stream;
 }

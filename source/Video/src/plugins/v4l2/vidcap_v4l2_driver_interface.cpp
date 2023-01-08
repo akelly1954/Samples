@@ -79,6 +79,13 @@ void vidcap_v4l2_driver_interface::initialize()
         throw std::runtime_error("vidcap_v4l2_driver_interface: ERROR: found NULL logger pointer.");
     }
     loggerp->debug() << "vidcap_v4l2_driver_interface: Initialized.";
+
+    std::string actual_process = video_plugin_base::set_popen_process_string();
+    if (actual_process == "")
+    {
+        throw std::runtime_error("vidcap_v4l2_driver_interface: base popen() process string is empty.");
+    }
+    loggerp->debug() << "vidcap_v4l2_driver_interface: Process popen() string is:  " << actual_process;
 }
 
 void vidcap_v4l2_driver_interface::run()

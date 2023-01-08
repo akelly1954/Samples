@@ -169,10 +169,11 @@ int main(int argc, const char *argv[])
         filestream = vcGlobals::create_runtime_conf_output_file();
         if (filestream == NULL)
         {
-            // detailed error message already emitted by the create function
-            uloggerp->error() << "Exiting...";
             std::cerr << "Failed to create " << vcGlobals::adq(vcGlobals::runtime_config_output_file)
                     << ". See details in the log file.  Exiting..." << std::endl;
+
+            // detailed error message into the log file has already been emitted by the create function
+            uloggerp->error() << "Exiting...";
             Log::Manager::terminate();
 
 #ifndef DOUBLE_FREE_ISSUE_FIXED
@@ -227,8 +228,9 @@ int main(int argc, const char *argv[])
         queuethread = std::thread(VideoCapture::raw_buffer_queue_handler);
         queuethread.detach();
 
-        uloggerp->debug() << argv0 << ": kick-starting the queue operations.";
-        VideoCapture::video_capture_queue::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+        // TODO: Moved to capture thread - remove this.
+        // uloggerp->debug() << argv0 << ": kick-starting the queue operations.";
+        // VideoCapture::video_capture_queue::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
         /////////////////////////////////////////////////////////////////////
         //
@@ -293,7 +295,7 @@ int main(int argc, const char *argv[])
     if (vcGlobals::test_suspend_resume)
     {
         if (!VideoCapture::suspend_resume_test::s_terminated) VideoCapture::suspend_resume_test::set_terminated(true);
-        if (trcc.joinable())            trcc.join();
+        if (trcc.joinable()) trcc.join();
     }
 
     // Wait for the threads to finish

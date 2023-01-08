@@ -81,7 +81,8 @@ namespace VideoCapture {
         virtual bool iserror_terminated(void) = 0;
         virtual void set_paused(bool t) = 0;
         virtual bool ispaused(void) = 0;
-        void set_terminated(bool t);        // Not virtual - meant to operate on the base object only
+        virtual std::string get_popen_process_string() = 0;
+        void set_terminated(bool t);    // Not virtual - meant to operate on the base object only
 
         //////////////////////////////////////////////////////////////////////////////////
         // Methods that use this base class to get things done in other threads
@@ -89,6 +90,7 @@ namespace VideoCapture {
         void start_profiling();
         long long increment_one_frame();
         void add_buffer_to_raw_queue(void *p, size_t bsize);
+        std::string set_popen_process_string();
 
     public:
         static Util::condition_data<int> s_condvar;
@@ -99,6 +101,7 @@ namespace VideoCapture {
         static bool s_terminated;
         static bool s_errorterminated;
         static bool s_paused;
+        static std::string popen_process_string;
     };
 
 } // end of namespace VideoCapture

@@ -57,6 +57,7 @@ VideoCapture::video_plugin_base* VideoCapture::video_plugin_base::interface_ptr 
 bool VideoCapture::video_plugin_base::s_terminated = false;
 bool VideoCapture::video_plugin_base::s_errorterminated = false;
 bool VideoCapture::video_plugin_base::s_paused = false;
+std::string VideoCapture::video_plugin_base::popen_process_string;
 
 void VideoCapture::video_capture()
 {
@@ -132,6 +133,9 @@ void VideoCapture::video_capture()
     // Start the video interface:
     video_plugin_base::interface_ptr->initialize();
 
+    loggerp->debug() << "video_capture: kick-starting the queue operations.";
+    VideoCapture::video_capture_queue::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+
     if (Video::vcGlobals::test_suspend_resume)
     {
         loggerp->debug() << "video_capture() thread: kick-starting the suspend_resume_tests operations.";
@@ -140,6 +144,44 @@ void VideoCapture::video_capture()
 
     video_plugin_base::interface_ptr->run();
     vidcap_profiler::set_terminated(true);
+}
+
+std::string VideoCapture::video_plugin_base::set_popen_process_string()
+{
+    using namespace Video;
+
+    std::string procIndicator;
+    Json::Value& cfg_root = Config::ConfigSingleton::GetJsonRootCopyRef();
+
+    if (vcGlobals::use_other_proc)
+    {
+        // Use the "other" entry in the "pixel-format" section
+        procIndicator = "other";
+    }
+    else
+    {
+        // use the process string indicated by the "preferred-pixel-format" indicator
+        procIndicator = (vcGlobals::pixel_format == pxl_formats::h264? "h264": "yuyv");
+    }
+
+    vcGlobals::output_process = cfg_root["Config"]
+                                            ["Video"]
+                                             ["frame-capture"]
+                                              [vcGlobals::video_grabber_name]
+                                               ["pixel-format"]
+                                                [procIndicator]
+                                                 ["output-process"].asString();
+    std::string actual_process_string;
+    if (vcGlobals::proc_redir && vcGlobals::redir_filename != "")
+    {
+        actual_process_string = vcGlobals::output_process + " 2> " + vcGlobals::redir_filename;
+    }
+    else
+    {
+        actual_process_string = vcGlobals::output_process;
+    }
+    popen_process_string = actual_process_string;
+    return popen_process_string;
 }
 
 void VideoCapture::video_plugin_base::set_terminated(bool t)
@@ -183,7 +225,7 @@ long long VideoCapture::video_plugin_base::increment_one_frame()
 
 void VideoCapture::video_plugin_base::add_buffer_to_raw_queue(void *p, size_t bsize)
 {
-    return VideoCapture::video_capture_queue::video_capture_queue::add_buffer_to_raw_queue(p, bsize);
+    VideoCapture::video_capture_queue::video_capture_queue::add_buffer_to_raw_queue(p, bsize);
 }
 
 

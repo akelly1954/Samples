@@ -96,6 +96,7 @@ namespace VideoCapture
         video_plugin_base* get_interface_pointer() const    { return video_plugin_base::interface_ptr; }
         void set_terminated(bool t)                         { video_plugin_base::set_terminated(t); };
 
+        virtual std::string get_popen_process_string()      { return video_plugin_base::popen_process_string; };
         virtual bool isterminated(void)                     { return video_plugin_base::s_terminated; };
         virtual void set_error_terminated (bool t)          { video_plugin_base::s_errorterminated = t; set_terminated(t); };
         virtual bool iserror_terminated(void)               { return video_plugin_base::s_errorterminated; };
@@ -103,7 +104,7 @@ namespace VideoCapture
         virtual bool ispaused(void)                         { return video_plugin_base::s_paused; };
 
         // These methods are not virtual: they use the base static function explicitly:
-        virtual void start_profiling()                      { video_plugin_base::start_profiling(); }
+        void start_profiling()                              { video_plugin_base::start_profiling(); }
         long long increment_one_frame()                     { return video_plugin_base::increment_one_frame(); }
         void add_buffer_to_raw_queue(void *p, size_t bsize) { return video_plugin_base::add_buffer_to_raw_queue(p, bsize); }
 
