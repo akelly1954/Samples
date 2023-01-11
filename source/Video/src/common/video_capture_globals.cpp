@@ -27,6 +27,7 @@
 #include <video_capture_commandline.hpp>
 #include <ConfigSingleton.hpp>
 #include <video_capture_globals.hpp>
+#include <vidcap_capture_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
@@ -131,9 +132,6 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     bool enable_write_to_process = !(cfg_root["Config"]["App-options"]["write-to-process"].asInt() == 0);
     Video::vcGlobals::write_frames_to_process = enable_write_to_process;
     strm << "\nFrom JSON:  Enable writing raw video frames to process: " << (enable_write_to_process? "true" : "false");
-
-    // TODO: Consider adding an explicit config entry in the json file equivalent to vcGlobals::redir_filename.
-    // Currently, it can only be specified on the command line together with the -proc-redir command line option.
 
     // Enable profiling operations
     bool enable_profiling = !(cfg_root["Config"]["App-options"]["profiling"].asInt() == 0);
@@ -297,8 +295,6 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "    in json config:       Root[\"Config\"][\"Video\"][\"frame-count\"]\n"
          << "\n";
 
-    // TODO: add a member to vcGlobals to handle the "label" - "Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString()
-
     strm << "\nThe following section displays the runtime CONFIGURATION DETAILS OF \n"
          << "THE SPECIFIC PLUGIN which is already loaded and running at this time.\n\n"
          << "   For each item detailed below, the runtime value of the item is displayed,\n"
@@ -380,44 +376,6 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "    in json config:       frameRoot[\"device-name\"].asString(); \n"
          << "\n";
 
-#if 0
-    // [ -use-other-proc ]
-    // vcGlobals::use_other_proc
-
-    std::string procIndicator;
-
-    if (Video::vcGlobals::use_other_proc)
-    {
-        // Use the "other" entry in the "pixel-format" section
-        procIndicator = "other";
-    }
-    else
-    {
-        // use the process string indicated by the "preferred-pixel-format" indicator
-        procIndicator = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
-    }
-
-    Video::vcGlobals::output_process = cfg_root["Config"]
-                                                ["Video"]
-                                                 ["frame-capture"]
-                                                  [Video::vcGlobals::video_grabber_name]
-                                                   ["pixel-format"]
-                                                    [procIndicator]
-                                                     ["output-process"].asString();
-    std::string actual_process;
-    if (Video::vcGlobals::proc_redir && Video::vcGlobals::redir_filename != "")
-    {
-        actual_process = Video::vcGlobals::output_process + " 2> " + Video::vcGlobals::redir_filename;
-    }
-    else
-    {
-        actual_process = Video::vcGlobals::output_process;
-    }
-    loggerp->debug() << "\nraw_buffer_queue_handler: Updated output process to:  " << actual_process;
-
-
-#endif
-
     strm << "    Current pixel format: " << adq(frameRoot["preferred-pixel-format"].asString()) << " - description: " << vcGlobals::pixel_formats_strings[vcGlobals::pixel_format] << "\n"
          << "    command line flag:    [ -pf pixel-format ]\n"
          << "    in object:            vcGlobals::pixel_format (enum)\n"
@@ -425,11 +383,29 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "    in json config:       frameRoot[\"preferred-pixel-format\"].asString(); \n"
          << "\n";
 
+    strm << "    Use \"other process\":  " << rsb(vcGlobals::use_other_proc) << " (output-process set in JSON file to: " << adq(frameRoot["pixel-format"]["other"]["output-process"].asString()) << ") \n"
+         << "    command line flag:    [ -use-other-proc ]\n"
+         << "    in object:            vcGlobals::use_other_proc \n"
+         << "    in json config:       frameRoot[\"pixel-format\"][\"other\"][\"output-process\"].asString(); \n"
+         << "\n";
 
+    strm << "    Redirect proc stderr: " << rsb(vcGlobals::proc_redir) << " (stderr of popen process output to go to: " << adq(vcGlobals::redir_filename) << ") \n"
+         << "    command line flag:    [ -proc-redir [ file ] ] \n"
+         << "    in object:            vcGlobals::proc_redir (bool) \n"
+         << "                          vcGlobals::redir_filename (string) \n"
+         << "    in json config:       none (command line only) \n"
+         << "\n";
 
+    strm << "    //////////////////////////////////////////////////////////////////////////////////////////////\n"
+         << "    // \n"
+         << "    // For the currently running instance of the program, using the configuration established, \n"
+         << "    // the character string used to invoke the process that handles video frames using popen(): \n"
+         << "    // \n"
+         << "    //////////////////////////////////////////////////////////////////////////////////////////////\n"
+         << "\n";
 
-
-
+    strm << "    Popen process string: " << adq( VideoCapture::video_plugin_base::popen_process_string ) << " \n"
+         << "\n";
 
     strm << "SEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n";
 

@@ -161,46 +161,6 @@ int main(int argc, const char *argv[])
     }
     // std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
 
-    std::stringstream sstr;
-    Video::vcGlobals::print_globals(sstr);  // these are the current runtime configuration details
-    FILE *filestream = NULL;
-    if (vcGlobals::display_runtime_config)
-    {
-        filestream = vcGlobals::create_runtime_conf_output_file();
-        if (filestream == NULL)
-        {
-            std::cerr << "Failed to create " << vcGlobals::adq(vcGlobals::runtime_config_output_file)
-                    << ". See details in the log file.  Exiting..." << std::endl;
-
-            // detailed error message into the log file has already been emitted by the create function
-            uloggerp->error() << "Exiting...";
-            Log::Manager::terminate();
-
-#ifndef DOUBLE_FREE_ISSUE_FIXED
-            ::_exit(return_for_exit);  // see TODO: comment at the very end of this file.
-#else
-            return EXIT_FAILURE;
-#endif // DOUBLE_FREE_ISSUE_FIXED
-
-        }
-
-        std::cerr << "DETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << vcGlobals::adq(vcGlobals::runtime_config_output_file) << std::endl;
-        vcGlobals::write_to_runtime_conf_file(filestream, sstr.str());
-    }
-    else
-    {
-        if (vcGlobals::loglevel != Log::Log::eDebug)
-        {
-            std::cerr << "\nTo get DETAILED CURRENT RUNTIME CONFIGURATION DETAILS written to the log file, use log level \"DBUG\" \n"
-                      << "or use the \"[ -dr  [ file-name ] ]\" command line option to write them to a different file.\n" << std::endl;
-
-        }
-        else
-        {
-            uloggerp->debug() << sstr.str();
-        }
-    }
-
     /////////////////
     // Finally, get to work
     /////////////////
@@ -227,10 +187,6 @@ int main(int argc, const char *argv[])
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
         queuethread = std::thread(VideoCapture::raw_buffer_queue_handler);
         queuethread.detach();
-
-        // TODO: Moved to capture thread - remove this.
-        // uloggerp->debug() << argv0 << ": kick-starting the queue operations.";
-        // VideoCapture::video_capture_queue::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
         /////////////////////////////////////////////////////////////////////
         //

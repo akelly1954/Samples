@@ -42,8 +42,6 @@ namespace Video
         h264
     };
 
-    // TODO: add a member to vcGlobals to handle the "label" - Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString()
-
     struct vcGlobals
     {
         static bool log_initialization_info;

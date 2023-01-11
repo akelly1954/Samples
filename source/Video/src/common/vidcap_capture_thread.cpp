@@ -136,6 +136,36 @@ void VideoCapture::video_capture()
     loggerp->debug() << "video_capture: kick-starting the queue operations.";
     VideoCapture::video_capture_queue::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
+    ////////////////////////////////////////////////////////////////////
+    // We have to wait until the plugin is loaded and initialized, and the
+    // queue operations initialized, before we can do this:
+    std::stringstream sstr;
+    Video::vcGlobals::print_globals(sstr);  // these are the current runtime configuration details
+    FILE *filestream = NULL;
+    if (Video::vcGlobals::display_runtime_config)
+    {
+        filestream = Video::vcGlobals::create_runtime_conf_output_file();
+        if (filestream == NULL)
+        {
+            std::cerr << "video_capture(): Failed to create " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file)
+                    << ". See details in the log file.  Exiting..." << std::endl;
+
+            // a detailed error message into the log file has already been emitted by the create function
+            loggerp->error() << "video_capture(): throwing std::runtime_error exception. ";
+            throw std::runtime_error("video_capture(): Error creating runtime config detail output file. ");
+        }
+
+        loggerp->info() << "\n\nDETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << "\n\n";
+        std::cerr << "\nDETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << std::endl;
+        Video::vcGlobals::write_to_runtime_conf_file(filestream, sstr.str());
+    }
+    else
+    {
+        std::cerr << "\nTo get DETAILED CURRENT RUNTIME CONFIGURATION DETAILS written to a text file, use the \n"
+                  << "\"[ -dr  [ file-name ] ]\" command line option to write them together in a single file.\n" << std::endl;
+    }
+
+    ////////////////////////////////////////////////////////////////////
     if (Video::vcGlobals::test_suspend_resume)
     {
         loggerp->debug() << "video_capture() thread: kick-starting the suspend_resume_tests operations.";
