@@ -1,55 +1,91 @@
-# Samples
 
+## (currently updating all README files - please look at the timestamp for each file before believing its content)
+
+# Welcome.
+
+This project includes mostly software I've developed, some earlier code which has been rewritten, all since January 2022.     
+      
+Whereas my original intent was to release the project into the Github mainstream, I now realize, a year later,
+that I have no intention of releasing any of it.  I mostly use Github to keep track of development, and as 
+backup for those times when I mess up and need to push "reset".  You are welcome to view, copy, or clone the
+software as you need to.  Feedback/questions are welcome - email **andrew@akelly.com**.  I do not accept
+collaborators for the repository, therefore your interactions with it would be limited.     
+     
+I do hope that people who view this can use some of the ideas and code for their benefit.  The code I write is
+all licensed under the MIT (very very permissive) license, and the only thing to check is for 3rd party software
+used (logger, json parsing, etc) which might have a different license.  It's all very clearly documented in the 
+source tree as well as the code.     
+     
+Full disclosure for those who are looking for how to do things in a specific language and/or operating system: 
+I am not an expert with Java, Python, Perl, .NET, current embedded toolsets, nor cloud based infrastructures that 
+help large development teams for large corporate technical needs that one person (me) cannot possibly deal with. 
+And although I'm great with C++ in general, not so much with Windows infrastructure and tools (although I do like 
+working with Visual C++).   
+    
+Most of what you find here is Linux/Unix based, using Eclipse, CMake, and the gnu toolchain (g++ etc) for development. 
+Having boasted more than once that I could bake a cake using Eclipse if I had to, it is not actually necessary for the developer. 
+The key with this code is CMake, where using the "-G" flag you can specify which compiler/toolset to use.   If you do that, 
+there are some shell scripts that would have to be modified as well (look for scripts whose name ends with ...linux-build.bash, 
+as well as source/Samples/shell_env/).
+    
+*Apologia*...  Finally, it would be untruthful of me to claim that the main goal of this project is to benefit others. 
+I started this project after my (two-year) sabbatical where I did not touch technology at all.  I then needed to see 
+how I felt about doing the work I performed for decades in the software industry.  I needed to come up to speed on 
+current technologies, remind myself how to spell C++, and see how I felt about it all.  Conclusion:  I loved it, and still
+do. A lot. And taking a break from corporate culture didn't hurt either.    
+    
+My plans for this project change almost daily - I'm governed by my own sense of creativity, and not by what 
+others might consider to be "logical".  I like to be creative, and that inspiration comes with its own logic.    
+
+There's a section below which outlines what's going on right now, and what has been completed recently. 
+These are speculations about the future which may not turn out to be true to reality.  These are definitely
+not promises or commitments.   
+    
+There are other README files listed below as well. Please have fun with it all.     
+    
 ## Going on now:   
 
+Updating README files. It will be done when it's done.   
+   
+   
 **Done with the following projects:**     
      
- * The [README file in the Video project](source/Video/README.md) is complete in its current form.  This is a  multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is recommended reading if you want to wade into these waters. 
-
- * Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
-     
+* Modified the Video project to use **plugins** for dealing with the different streaming interfaces (currently **v4l2** - next, **opencv**).  This involved refactoring some of the design, and much of the code.  First and formoset, the **v4l2** interface was implemented as a plugin, and next comes OpenCV - it is constantly getting pushed down in the priority list - my apologies. At startup, the main program (main_video_capture) loads the interface plugin as per the JSON config file, and it will error-exit if anything goes wrong. The interface for plugins is defined by a README file under source/Video/plugins/. (Not checked in yet - that is the next "thing").     
+       
+       
+* The [README file in the Video project](source/Video/README.md) is complete in its current form.  This is a  multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is recommended reading if you want to wade into these waters.     
+    
+       
+* Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
+       
+      
 * Done with the restructure of the Video project source files (as well as the associated *CMake* files.   
         
+       
 * There is no more **C** code in this project (previous interface to *V4L2*).  It's all **C++** now.     
      
+       
 * Fully integrated **JsonCpp** into the code.  Only used in some applications at this time.    
-    
+      
+       
 * Revamped the command line parsing utility (see CommandLine.cpp/.hpp), as well as the programs that use it.     
       
+       
 * Completed the capability of **main_video_capture** to stream out video frames to a process. 
 This is controlled by the JSON config file (*video_capture.json*). Highly recommend taking a look at 
-the [README](source/Video/README.md) in the **Video** project. 
-
-
- - one has to both enable the pipe to *popen()*, as well as specify the command line of the process to be piped to. Currently the command **"dd of=video_capture.dd.data 2> /dev/null"** is being used.  This allows testing if both the **write-to-file** as well as the **write-to-process** capabilities are enabled in the JSON file.  The *.data* file created by **write-to-file** has to be identical to the *.dd.data* file created by the **dd** utility (see **"output-process"** in *video_capture.json*). Which it is.     
+[source/Video/README](source/Video/README.md).     
+      
      
 **Next Steps**:    
     
-1. Focus on the video frame grabber using opencv (currently planning on **opencv version 4.5.1**) in addition to **V4L2**. It was originally planned to use opencv version 4.6.0, however 4.5.1 is available through the **apt* utility from the Debian repositories with no relevant loss of functionality (currently using Debian 11 bullseye**).     
+1. Complete and checkin the plugin interface documentation.     
      
 2. Add a Qt 5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
      
-Both **main** and **dev** branches are now in sync. Always take **dev** before **main**.  However, **main** is more stable.    
-     
 The **README** files are still lagging behind reality by a bit.     
      
-# Welcome.  
      
-If you are here to look at how to get things done (one way, anyways) or you are here to evaluate my skills for whatever purpose,
-you might want to start with either libraries of objects, or with some main programs that use them, and work your way out from there.
-I'll be updating the README files as I go along, perhaps a step or two behind the software being developed.  
-
-The underlying structure of the Samples project has to do with needing to serve as a cross-platform solution.  You will see references to both Windows (Visual Studio, C++, etc), as well as Linux with various build tool chains - C++, Make, CMake, Eclipse, and more - used for building user interface objects and tools.    
-     
-Those serve as the rationale for basing the whole Samples project on CMake. which seems to be the single most flexible tool which could help drive cross-platform as well as a cross-technology development infrastructure.  You will see references to all that, but in fact the real software and build environment that you see here, as well as the tools to "get it done" starts out being geared towards CMake, Eclipse, and the Gnu tool-chain under Linux.   
-    
-Not having a team of developers working on this at my disposal, I'm trying to get to creating the code first, then testing, with documention in the README's and comments in the code.     
-     
-I am not an expert with Java, Python, and cloud based infrastructures that help 
-large development teams for large corporate technical needs
-that one person (me) cannot possibly deal with.  
-    
-Yes, I am dating myself here - but please, do not waste your time if that is what you  need.     
+# The Samples Project:  
      
 ## A collection of C++ objects (libraries), and some executable programs that utilize those objects.
 
@@ -57,11 +93,11 @@ The sources are organized in a source tree which is built using cmake (minimum v
 
 New work is checked into the **dev** branch. The **main** branch is fairly stable. 
 
-See the **source/README.md** file for detail about the file/directory structure, build tools, and how to build the sources. 
+See [source/README](source/README.md) for detail about the file/directory structure, build tools, and how to build the sources. 
 
-This is an "out of source" build environment. Mostly.  Check the **./.gitignore** file to see what's ignored. The **build** directory can always be removed without affecting any source files.  
+This is an "out of source" build environment. Mostly.  Check the **./.gitignore** file to see what's ignored. The main **build/** directory  as well as any **build/** directory found within the source tree can always be removed without affecting any source files.  
 
-Even though the IDE and build environment are set here as the defaults (eclipse, gnu toolchain), the Eclipse IDE is not required.     
+Even though the IDE and build environment are set here as the defaults (eclipse, cmake, gnu toolchain), the Eclipse IDE is not required (see the **-G** flag for cmake).     
      
       
 ## Intetesting main programs:
@@ -73,10 +109,10 @@ if the reader is looking for a focused project that can help them solve real pro
 found *...Samples/source/Video/src/main_programs/*    
 (used to be *main_v4l2_raw_capture*)     
      
-The sources for this project are being restructured at this time. But it already works (you can take a video on your camera, stream it to a file, convert it to an mp4 file (or any other format) and then play it on your favorite video viewer (vlc?).     
-     
-This is an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then gets rid of these frames (by passing them on) to software that deals with each frame - either saving them in a file, analyzing/modifying each frame, and/or displaying them.    
+This is an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then "gets rid" of these frames (by passing them on) to software that deals with each frame - either piping it to a linux process (ffmpeg, vlc, etc), and/or saving each frame in a file, and/or analyzing/modifying each frame, and/or displaying them.    
       
+In other words, you can take a video on your camera, stream it to a file or a linux process, convert it to an mp4 file (or any other format) and then play it on your favorite video viewer (vlc?).     
+     
 Thanks to the online video community which speaks a different language and uses tools and designs that are a step or three beyond what I know, I'm using a C++ object at the heart of the video frame "pump" that originated from a C program which is published by kernel.org as part of the Linux kernel device driver documentation.  That code, now morphed into a C++ object interfaces betwen the V4L ("Video For Linux" - V4L2 in this case) interface to the hardware, and upper levels of the software (C++ objects, Qt, etc). This is part of software which is provided freely with the V4L2 API.      
      
      The actual C++ object used is based on the *v4l/capture.c* sample program copied 
@@ -85,32 +121,10 @@ Thanks to the online video community which speaks a different language and uses 
      current raw (unmodified) form.      
 
 The (now a) C++ class uses a set of configurable parameters (now read from the JSON config file, as well as adjusted by command line parameters) to fill up to 4 memory mapped buffers with video data in YUYV format (Packed YUV 4:2:2, YUY2) or H264 (H264 with start codes).  These buffers, one at a time as they are filled, are passed on to the next level up (written to a file, used to display in a viewer, analyzed, etc). Each buffer is copied only once, after which a shared pointer is what gets passed from one queue to another for further processing.  This frees up the memory mapped buffer (one of the 4) which allows the V4L driver in the kernel to fill it up with a new frame.
- 
-With h264 pixel format, I'm currently seeing frame sizes of up to 175Kb each using my webcam which 
-provides 1920x1080 pixels per frame. Most frames, though, are less than 50Kb each). The numbers will be exponentialy higher for cameras that have a higher resolution.    
-        
-Currently all of this is implemented and working all the way up to and including writing out the video data to a file.  This file can be viewed by any of several viewers that handle YUYV or H264 formats. In order to see the results from the file in a viewer, you can do this:    
      
-For h264 pixel format:     
-     
-    $ ffmpeg -f h264 -i video_capture.data -vcodec copy main_video_capture.mp4    
-    
-Or, for yuyv pixel format:     
-     
-    $ ffmpeg -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422  \
-             -i video_capture.data -c:v libx264 -preset ultrafast -qp 0 main_video_capture.mp4
-     
-Where the *video_capture.data* is the name of the raw data file created by **main_video_capture**, and the .mp4 file is the output from *ffmpeg*. Having done this, you can view the video with any viewer you normally use, for example:   
-    
-    $ vlc ./main_video_capture.mp4        
-    
-I use this to test the sanity of the layers below the thread which is handling the frame buffers.       
-   
 Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being addressed at the moment).   
     
 Run time profiling implemented in this set of objects, gathers stats of various factors in this mechanism that control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), the current frame rate, etc.   
-
-(Current results: the average frame rate is showing as more than 25 fps (with the driver set to deliver at 25fps).  On the average there are 0 shared_ptr's in the ring buffer:  When I inserted some sleep()'s here and there to simulate load, those number came up into the few dozens depending on which part of the system I slowed down.)
     
     
 **main_ntwk_basic_sock_server.cpp** and **main_client_for_basic_server.cpp**   
@@ -133,7 +147,7 @@ objects covered here. The current implementation uses an std::array<T,N> where *
 found in *...Samples/source/Util/src/main_programs*    
      
 Exercises the condition_data object extensively for use from multiple threads. The program stretches the number of multipe threads to
-a real large number (30,000 in one successful case on my system). This program was used while testing the **LoggerCpp** library at the time when it was eveluated for use in these sources.  This meant writing lots of log lines of output from 30,000 threads concurrently, into a single log file without any of the lines being broken, nor losing any data.  (I settled on **LoggerCpp** for use in these sources after that little experiment - see the *3rdparty* directory for more info on the package).
+a really large number (30,000 in one successful case on my system). This program was used while testing the **LoggerCpp** library at the time when it was eveluated for use in these sources.  This meant writing lots of log lines of output from 30,000 threads concurrently, into a single log file without any of the lines being broken, nor losing any data.  (I settled on **LoggerCpp** for use in these sources after that little experiment - see the *3rdparty* directory for more info on the package).
 
 **main_circular_buffer.cpp**    
 found in *...Samples/source/Util/src/main_programs*   
@@ -194,7 +208,7 @@ The CMake files set up **cmake** to create an **Eclipse IDE** project using **ma
     
     
 # Please Note:
-This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators. Right now, even though I no longer have just some basic libraries and main programs that use/exercise them, there are still more objects coming.  As soon as I introduce enough code that is mostly stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
+This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. There are no Github "collaborators" established for the project (that would happen only in rare cases). In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
      
 Thank you.     
      
@@ -206,8 +220,4 @@ The [LICENSE](./LICENSE) in the root **Samples** folder covering the entirety of
 The [LICENSE](source/3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The [LICENSE](source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
     
-### Current deficiencies:
-
-Currently the Windows' WIN32 configuration has not been built and tested yet. 
-This may be added in the future.
 
