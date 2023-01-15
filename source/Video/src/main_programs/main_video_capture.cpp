@@ -102,8 +102,9 @@ int main(int argc, const char *argv[])
     ///////////////////////////////////////////////////////////
     // Loading the video capture plugin happens as early as possible
     // in the program execution.  We do this right after a potential
-    // emitting of the Usage message followed by termination, and
-    // parsing the json config file.
+    // emitting of the Usage message (which is followed by termination),
+    // as well as the initial parsing of the json config file (so that
+    // we can find the file name of the plugin to be loaded).
     ///////////////////////////////////////////////////////////
     std::string fromFactory;
     try

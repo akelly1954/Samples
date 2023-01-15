@@ -1,4 +1,9 @@
 
+## (currently updating all README files - please look at the timestamp for each file before believing its content)
+     
+-- (this particular file needs a lot of work to reflect additional command line flags, as well as trimmed down (better) output to the 
+log file.  I'm going to finish the plugins' README file first before tackling this one.)    
+    
 # Video Capture 
 
 Stream video frames from the source (a camera), through the linux driver, to the process **main_video_capture**, which uses objects from this project (**Video**), as well as objects from the other projects in this repository.

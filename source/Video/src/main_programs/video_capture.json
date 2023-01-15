@@ -3,7 +3,7 @@
     // Comments can be used within input data to JsonCpp (as a very informal extension to the json standard).
     // See configuration settings for JsonCpp in the JsonCpp source code (Samples/source/3rdparty/JsonCpp).
     // Please note that the json file name cannot be changed from withn the json file itself. It is fixed at
-    // compile time using the compiled channel-name with ".json" appended to it.  (TODO: Useful enhancement)
+    // compile time using the compiled channel-name with ".json" appended to it. 
     
     "Config": {
 

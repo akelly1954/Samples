@@ -1,32 +1,9 @@
+
+## (currently updating all README files - please look at the timestamp for each file before believing its content)
+
 # Samples
-
-## Going on now:   
-
-**Done with the following projects:**     
-     
- * The [README file in the Video project](source/Video/README.md) is complete in its current form.  This is a  multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is recommended reading if you want to wade into these waters. 
-
- * Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
-     
-* Done with the restructure of the Video project source files (as well as the associated *CMake* files.   
-        
-* There is no more **C** code in this project (previous interface to *V4L2*).  It's all **C++** now.     
-     
-* Fully integrated **JsonCpp** into the code.  Only used in some applications at this time.    
     
-* Revamped the command line parsing utility (see CommandLine.cpp/.hpp), as well as the programs that use it.     
-      
-* Completed the capability of **main_video_capture** to stream out video frames to a process.  This is controlled by the JSON config file (*video_capture.json*) - one has to both enable the pipe to *popen()*, as well as specify the command line of the process to be piped to. Currently the command **"dd of=video_capture.dd.data 2> /dev/null"** is being used.  This allows testing if both the **write-to-file** as well as the **write-to-process** capabilities are enabled in the JSON file.  The *.data* file created by **write-to-file** has to be identical to the *.dd.data* file created by the **dd** utility (see **"output-process"** in *video_capture.json*). Which it is.     
-     
-**Next Steps**:    
-    
-1. Focus on the video frame grabber using opencv (currently planning on **opencv version 4.5.1**) in addition to **V4L2**. It was originally planned to use opencv version 4.6.0, however 4.5.1 is available through the **apt* utility from the Debian repositories with no relevant loss of functionality (currently using Debian 11 bullseye**).      
-     
-2. Add a Qt 5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
-     
-Both **main** and **dev** branches are now in sync. Always take **dev** before **main**.  However, **main** is more stable.    
-     
-The **README** files are still lagging behind reality by a bit.     
+**For what's going on right now, please see the [root Samples README.md file](../README.md).**     
      
 ## The Sources and How To Build Them
 
@@ -81,13 +58,6 @@ If you use a different IDE or a different compiler (tool chain) - feel free chan
 and the various **cmake** source files.  As this is not for the faint of heart, I am available for some level of support 
 (including moral support) if you are brave enough to do that (**andrew@akelly.com**).
 
-### Current deficiencies: ###
-
-Currently the Windows' WIN32 configuration has not been built and tested yet. 
-This may be added in the future.  My higher priority is to first get everything
-"in" and get it running under linux.  I'm simply not there yet (not to speak of
-not having a Windows machine). 
-
 
 ## After Building: ##
 
@@ -137,8 +107,9 @@ I tend not to use source code control (git) from within Eclipse, since it tends 
 
 **SEE ALSO:**    
 
-The [README.md file](../README.md) in the root **Samples** folder.    
-The [README file in the Video project](Video/README.md) in the **Video** project.     
+The [README.md file in the root Samples folder](../README.md).
+The [README file in the Video project](Video/README.md).     
+The [README file in the Video/src/plugins project](source/Video/src/plugins/README.md).        
 The file [LICENSE](../LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
 The file [LICENSE](3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The file [LICENSE.txt](3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
