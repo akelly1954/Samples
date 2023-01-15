@@ -1230,6 +1230,7 @@ Thank you.
 
 The [README.md file](../../README.md) in the root **Samples** folder.    
 The [README.md file](../README.md) in the **source** folder.    
+The [README file in the Video/src/plugins project](../Video/src/plugins/README.md).        
 The file [LICENSE](../../LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
 The file [LICENSE](../3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The file [LICENSE.txt](../3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
