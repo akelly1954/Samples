@@ -42,7 +42,7 @@ namespace VideoCapture {
 
     // video capture base thread. This is the thread that
     // the runtime-loaded video capture plugin runs in.
-    void video_capture();
+    void video_capture(std::string cmdline);
 
     class video_plugin_base {
     public:

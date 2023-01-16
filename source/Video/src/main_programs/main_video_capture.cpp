@@ -67,6 +67,12 @@ int main(int argc, const char *argv[])
     VideoCapture::video_capture_plugin_factory plugin_factory;
     VideoCapture::video_plugin_base *ifptr = nullptr;
 
+    std::string command_line_string = argv0;
+    for (int ind = 1; ind < argc; ind++)
+    {
+        command_line_string += (std::string(" ") + vcGlobals::adq(argv[ind]));
+    }
+
     ///////////////////////////////////////////////////////////
     // Initial processing of parsing the command line - set up the Util::CommandLine object
     // and determine whether to emit errors and/or the help feature.
@@ -113,7 +119,7 @@ int main(int argc, const char *argv[])
         if ((ifptr = plugin_factory.create_factory(sstrm)) == nullptr)
         {
             std::cerr << "From Plugin Factory:\n" << sstrm.str() << std::endl;
-            std::cerr << "video_capture main:  Could not load video capture plugin. Aborting..." << std::endl;
+            std::cerr << argv0 << ":  Could not load video capture plugin. Aborting..." << std::endl;
             return EXIT_FAILURE;
         }
         // If all goes well, the log lines reported from the plugin
@@ -152,7 +158,7 @@ int main(int argc, const char *argv[])
     ///////////////////////////////////////////////////////////
     // Set up the logger
     ///////////////////////////////////////////////////////////
-    setup_video_capture_logger(delayedLinesForLogger);
+    setup_video_capture_logger(command_line_string, delayedLinesForLogger);
     std::shared_ptr<Log::Logger> uloggerp = Util::UtilLogger::getLoggerPtr();
 
     if (vcGlobals::log_initialization_info)
@@ -196,7 +202,7 @@ int main(int argc, const char *argv[])
         /////////////////////////////////////////////////////////////////////
         uloggerp->debug() << argv0 << ":  starting the video capture thread.";
 
-        videocapturethread = std::thread(VideoCapture::video_capture);
+        videocapturethread = std::thread(VideoCapture::video_capture, command_line_string);
         videocapturethread.detach();
         uloggerp->debug() << argv0 << ":  kick-starting the video capture operations.";
 

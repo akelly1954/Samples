@@ -59,7 +59,7 @@ bool VideoCapture::video_plugin_base::s_errorterminated = false;
 bool VideoCapture::video_plugin_base::s_paused = false;
 std::string VideoCapture::video_plugin_base::popen_process_string;
 
-void VideoCapture::video_capture()
+void VideoCapture::video_capture(std::string cmdline)
 {
     using namespace VideoCapture;
 
@@ -144,7 +144,7 @@ void VideoCapture::video_capture()
     FILE *filestream = NULL;
     if (Video::vcGlobals::display_runtime_config)
     {
-        filestream = Video::vcGlobals::create_runtime_conf_output_file();
+        filestream = Video::vcGlobals::create_runtime_conf_output_file(cmdline);
         if (filestream == NULL)
         {
             std::cerr << "video_capture(): Failed to create " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file)

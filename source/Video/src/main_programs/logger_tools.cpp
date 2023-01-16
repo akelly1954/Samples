@@ -50,7 +50,7 @@ Util::LoggerOptions Util::setLocalLoggerOptions()
     return localopt;
 }
 
-void Video::setup_video_capture_logger(std::vector<std::string>& delayedLinesForLogger)
+void Video::setup_video_capture_logger(const std::string& cmdline, std::vector<std::string>& delayedLinesForLogger)
 {
     using namespace Video;
 
@@ -80,6 +80,7 @@ void Video::setup_video_capture_logger(std::vector<std::string>& delayedLinesFor
     //////////////////////////////////////////////////////////////
 
     uloggerp->info() << "START OF NEW VIDEO CAPTURE RUN";
+    uloggerp->info() << "Command line: " << cmdline << "\n";
 
     if (vcGlobals::log_initialization_info)     // -loginit flag
     {

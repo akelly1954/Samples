@@ -413,7 +413,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
 }
 
 // Open/truncate the output file that will hold runtime-config info
-FILE * Video::vcGlobals::create_runtime_conf_output_file()
+FILE * Video::vcGlobals::create_runtime_conf_output_file(const std::string& cmdline)
 {
     using namespace Video;
 
@@ -439,7 +439,7 @@ FILE * Video::vcGlobals::create_runtime_conf_output_file()
     tmp = localtime(&t);
     if (tmp) strftime(outstr, sizeof(outstr), "%Y-%m-%d %X", tmp);
 
-    const std::string ostrng = std::string("\nRuntime date/time: ") + outstr + "\n";
+    const std::string ostrng = std::string("\nRuntime date/time: ") + outstr + "\nCommand line: " + cmdline + "\n";
     write_to_runtime_conf_file(output_stream, ostrng);
     return output_stream;   // Check for NULL
 }

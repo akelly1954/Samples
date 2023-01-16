@@ -16,6 +16,7 @@ Stream video frames from the source (a camera), through the linux driver, to the
   * [Option Coverage: JSON file vs. command line](#option-coverage-json-file-vs-command-line)    
 
 [Command Line Flags and Options](#command-line-flags-and-options)    
+  * [The -dr flag:  write runtime configuration to a file](#the--dr-flag)     
   * [The -fn flag:  write to file](#the--fn-flag)     
   * [The -pr flag: profiling](#the--pr-flag)     
   * [The -lg flag: log level](#the--lg-flag)    
@@ -96,6 +97,24 @@ use this code for their own purpose.
  method which uniquely defines the **Json Node** in the Json file. 
  (Please have the file *video_capture.json* open 
  for reference as we go through this. You will see plenty of this syntax in the code - see *video_capture_globals.cpp* or *video_capture_thread.cpp* for examples).     
+
+[(Back to the top)](#video-capture)
+
+
+#### The -dr flag
+       [ -dr [ file-name ] ]     Write out detailed runtime configuration to the parameter "file-name" instead of 
+                                 the log file. The default file-name is "video_capture_runtime_config.txt". 
+                                 The information provided is a snapshot of the runtime configuration after all json options 
+                                 as well as command-line options have been set, and the plugin has been loaded.     
+    
+The **-dr** flag is one of the more relevant command line flags for debugging of loading the video capture plugin, 
+as well as for how video frames wind up being collected in a file, or piped to a process (and which process/flags) once 
+video capture has begun. 
+It causes the main() program to collect the **current** runtime configuration of the running program after all initialization 
+items have been completed without errors.  It shows the current (runtime) value of every relevant item, where to find it in the 
+code - which **Video::vcGlobals** member(s) affect it, which section in the JSON config file is being used, as well as which 
+JSON file fields are relevant, and lastly, which command line flags can affect it. (BTW, the --loginit command line flag is 
+not needed for producing this file and its contents).     
 
 [(Back to the top)](#video-capture)
 

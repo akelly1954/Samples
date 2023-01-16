@@ -82,7 +82,7 @@ namespace Video
         // set, and after the plugin has been loaded.
         static void print_globals(std::ostream&);
 
-        static FILE * create_runtime_conf_output_file();
+        static FILE * create_runtime_conf_output_file(const std::string& cmdline);
         static size_t write_to_runtime_conf_file(FILE *filestream, const std::string& infostring);
 
         // adds double quotes to string - hello to "hello"
