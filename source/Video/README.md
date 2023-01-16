@@ -1265,5 +1265,6 @@ This may be added in the future.
 
 
 
+[video_capture_runtime_config.txt](https://github.com/akelly1954/Samples/files/10429232/video_capture_runtime_config.txt)
 
 
