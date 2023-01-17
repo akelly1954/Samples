@@ -34,7 +34,9 @@ Stream video frames from the source (a camera), through the linux driver, to the
   * [Example 2: A longer run With YUYV Pixel Format](#example-2-a-longer-run-with-yuyv-pixel-format)
   * [Example 3: When Things Go Terribly Wrong](#example-3-when-things-go-terribly-wrong)
   * [Example 4: Is This Working? - Write frames to file](#example-4-is-this-working)    
-
+   
+[SEE ALSO](#see-also)   
+[Attached files](#attached-files)
 
 #### Introduction
 
@@ -115,6 +117,8 @@ items have been completed without errors.  It shows the current (runtime) value 
 code - which **Video::vcGlobals** member(s) affect it, which section in the JSON config file is being used, as well as which 
 JSON file fields are relevant, and lastly, which command line flags can affect it. (BTW, the --loginit command line flag is 
 not needed for producing this file and its contents).     
+    
+Please see the attached file [video_capture_runtime_config.txt](https://github.com/akelly1954/Samples/files/10429232/video_capture_runtime_config.txt) showing a sample output file produced by using the **-dr** flag.    
 
 [(Back to the top)](#video-capture)
 
@@ -1239,13 +1243,11 @@ And we're done.  The next section is quite unneccesary, but is provided for the 
     
     
 # Please Note:
-This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. So for a period of time I've got restrictions on interactions with the repositories that allow one to view, clone and/or otherwise download the code (to which you are welcome as per the LICENSE) but I am not yet welcoming collaborators.     
-     
-Right now, even though I no longer have just some basic libraries and main programs that use/exercise them, there are still more objects coming.  As soon as I introduce enough code that is mostly stable, I'll remove the restrictions.  In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
+This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. There are no Github "collaborators" established for the project (that would happen only in rare cases). In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
      
 Thank you.     
      
-**SEE ALSO:**    
+### SEE ALSO:    
 
 The [README.md file](../../README.md) in the root **Samples** folder.    
 The [README.md file](../README.md) in the **source** folder.    
@@ -1253,18 +1255,10 @@ The [README file in the Video/src/plugins project](../Video/src/plugins/README.m
 The file [LICENSE](../../LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
 The file [LICENSE](../3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The file [LICENSE.txt](../3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
-
-### Current deficiencies:
-
-Currently the Windows' WIN32 configuration has not been built and tested yet. 
-This may be added in the future.
-
-
-
-
-
-
-
-[video_capture_runtime_config.txt](https://github.com/akelly1954/Samples/files/10429232/video_capture_runtime_config.txt)
+    
+    
+### Attached files:    
+    
+[video_capture_runtime_config.txt](https://github.com/akelly1954/Samples/files/10429232/video_capture_runtime_config.txt) - sample output file produced by using the -dr flag.    
 
 
