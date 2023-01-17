@@ -11,7 +11,7 @@ into the **main()** program as early as possible in the program execution (and e
 There are some competing needs at the beginning of main() execution:
 
 1. Whether the program has been invoked with the **-h** or **--help** flag: if that happens, the only thing that
-main() does is emit the Usage screen, and exits.    
+main() does is to emit the Usage screen and exit.    
    
 2. Creation of the log file, which also needs to happen as early as possible during program execution. This winds up being delayed for a bit.       
     
@@ -57,7 +57,6 @@ Thank you.
 The [README.md file in the root Samples folder](../../../../README.md).     
 The [README.md file in the source/ folder](../../../../source/README.md).    
 The [README file in the Video project](../../../Video/README.md).     
-The [README file in the Video/src/plugins project](source/Video/src/plugins/README.md).        
 The [LICENSE](./LICENSE) in the root **Samples** folder covering the entirety of the **Samples** project..    
 The [LICENSE](source/3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The [LICENSE](source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
