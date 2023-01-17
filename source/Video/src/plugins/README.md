@@ -31,18 +31,51 @@ Lastly, **the most relevant command line flag** for the task of developing and d
     
 The more useful way to develop a plugin is to run it once using the **-dr** command line flag when a working video capture plugin is being used (**v4l2** for example), and saving the **video_capture_log.txt** that was produced during the run, before running **main_video_capture** with the plugin you are developing (also using the **-dr** flag).  Comparing what is shown in the saved output file against the contents of your **video_capture_log.txt** is very very useful for debugging.    
      
+### Where to find things     
      
+This might help finding where the sources for specific objects can be found.    
+    
+**main program**: 
+``Samples/source/Video/src/main_programs/main_video_capture.cpp`` 
+
+**json config file**: 
+``Samples/source/Video/src/main_programs/video_capture.json``
+
+**JSON and runtime configuration**:   
+ 
+    Samples/source/Video/src/main_programs/config_tools.cpp 
+    Samples/source/Video/src/main_programs/config_tools.hpp
+    Samples/source/Util/src/ConfigSingleton.cpp 
+    Samples/source/Util/include/ConfigSingleton.hpp 
+    
+**Logger operations**:    
+
+    Samples/source/Video/src/main_programs/logger_tools.hpp
+    Samples/source/Video/src/main_programs/logger_tools.cpp
+    Samples/source/Util/src/MainLogger.cpp
+    Samples/source/Util/include/MainLogger.hpp 
+
+**Command line parsing**: 
+
+    Samples/source/Video/src/main_programs/parse_tools.cpp
+    Samples/source/Video/src/main_programs/parse_tools.hpp
+    Samples/source/Video/src/common/video_capture_commandline.cpp
+    Samples/source/Video/include/video_capture_commandline.hpp
+    Samples/source/Util/src/commandline.cpp
+    Samples/source/Util/include/commandline.hpp 
+
+**Plugin loading and configuration**: 
+
+     Samples/source/Video/src/common/vidcap_plugin_factory.cpp
+     Samples/source/Video/include/vidcap_plugin_factory.hpp
+
+**Video capture thread, plugin initialization and running**: 
+
+     Samples/source/Video/src/common/vidcap_capture_thread.cpp 
+     Samples/source/Video/include/vidcap_capture_thread.hpp
      
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
+There are, of course, dozens more source files, but these are a good starting point.        
+      
    __________________   
    
     
