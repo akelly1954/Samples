@@ -5,13 +5,20 @@
 ### Table of Contents
   1. [Background](#background)    
   2. [Where to find things in the source](#where-to-find-things)    
-   
+     - [main program](#main-program)    
+     - [JSON config file](#json-config-file)    
+     - [JSON and runtime configuration](#json-and-runtime-configuration)    
+     - [Logger operations](#logger-operations)    
+     - [Command line parsing](#command-line-parsing)    
+     - [Plugin loading and configuration](#plugin-loading-and-configuration)    
+     - [Video capture thread - plugin initialization and runtime](#video-capture-thread---plugin-initialization-and-runtime)    
+     - [The declaration of create() and destroy() used by the plugin factory](#the-declaration-of-create-and-destroy-used-by-the-plugin-factory)    
   3. [SEE ALSO](#see-also)    
    
 
 
 
-### Background     
+## Background     
      
 The video capture plugin is loaded at runtime based on its entry in the JSON configuration file.  Since the 
 plugin remains loaded for the duration of execution of the **main_video_capture** executable, we try to load it
@@ -40,32 +47,29 @@ Lastly, **the most relevant command line flag** for the task of developing and d
     
 The more useful way to develop a plugin is to run it once using the **-dr** command line flag when a working video capture plugin is being used (**v4l2** for example), and saving the **video_capture_log.txt** that was produced during the run, before running **main_video_capture** with the plugin you are developing (also using the **-dr** flag).  Comparing what is shown in the saved output file against the contents of your **video_capture_log.txt** is very very useful for debugging.    
      
-### Where to find things     
+## Where to find things     
      
 This might help finding where the sources for specific objects can be found.    
     
-**main program**: 
-``Samples/source/Video/src/main_programs/main_video_capture.cpp`` 
+### main program: 
+    Samples/source/Video/src/main_programs/main_video_capture.cpp 
 
-**json config file**: 
-``Samples/source/Video/src/main_programs/video_capture.json``
+### JSON config file: 
+    Samples/source/Video/src/main_programs/video_capture.json 
 
-**JSON and runtime configuration**:   
- 
+### JSON and runtime configuration:   
     Samples/source/Video/src/main_programs/config_tools.cpp 
     Samples/source/Video/src/main_programs/config_tools.hpp
     Samples/source/Util/src/ConfigSingleton.cpp 
     Samples/source/Util/include/ConfigSingleton.hpp 
-    
-**Logger operations**:    
 
-    Samples/source/Video/src/main_programs/logger_tools.hpp
+### Logger operations:    
+Samples/source/Video/src/main_programs/logger_tools.hpp
     Samples/source/Video/src/main_programs/logger_tools.cpp
     Samples/source/Util/src/MainLogger.cpp
     Samples/source/Util/include/MainLogger.hpp 
 
-**Command line parsing**: 
-
+### Command line parsing: 
     Samples/source/Video/src/main_programs/parse_tools.cpp
     Samples/source/Video/src/main_programs/parse_tools.hpp
     Samples/source/Video/src/common/video_capture_commandline.cpp
@@ -73,28 +77,29 @@ This might help finding where the sources for specific objects can be found.
     Samples/source/Util/src/commandline.cpp
     Samples/source/Util/include/commandline.hpp 
 
-**Plugin loading and configuration** (main thread): 
+### Plugin loading and configuration: 
+    Samples/source/Video/src/common/vidcap_plugin_factory.cpp 
+    Samples/source/Video/include/vidcap_plugin_factory.hpp 
+    
+(The above loading mechanism runs in the **main program thread**). 
 
-     Samples/source/Video/src/common/vidcap_plugin_factory.cpp
-     Samples/source/Video/include/vidcap_plugin_factory.hpp
+### Video capture thread - plugin initialization and runtime:   
+    Samples/source/Video/src/common/vidcap_capture_thread.cpp 
+    Samples/source/Video/include/vidcap_capture_thread.hpp 
+    Samples/source/Video/src/plugins/v4l2/vidcap_v4l2_driver_interface.cpp
+    Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp
+    . . . and/or any other implemented plugin (opencv, etc) 
+    
+(The above **video_capture thread** initializes the already loaded plugin, and runs it to completion).   
 
-**Video capture thread - plugin initialization and runtime** (plugin/capture thread): 
-
-     Samples/source/Video/src/common/vidcap_capture_thread.cpp 
-     Samples/source/Video/include/vidcap_capture_thread.hpp 
-     Samples/source/Video/src/plugins/v4l2/vidcap_v4l2_driver_interface.cpp
-     Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp
-     . . . and/or any other implemented plugin (opencv, etc)
+### The declaration of create() and destroy() used by the plugin factory: 
+    $ grep 'extern "C"' ... (all the Video source files) 
+    Samples/source/Video/include/vidcap_plugin_factory.hpp:    extern "C" video_plugin_base* create(); 
+    Samples/source/Video/include/vidcap_plugin_factory.hpp:    extern "C" void destroy(video_plugin_base* p); 
+    Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp:    extern "C" video_plugin_base* create() { 
+    Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp:    extern "C" void destroy(video_plugin_base* p) { 
      
-**The declaration of create() and destroy() used by the plugin factory**: 
-
-     $ grep 'extern "C"' ... (all the Video source files) 
-     Samples/source/Video/include/vidcap_plugin_factory.hpp:    extern "C" video_plugin_base* create(); 
-     Samples/source/Video/include/vidcap_plugin_factory.hpp:    extern "C" void destroy(video_plugin_base* p); 
-     Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp:    extern "C" video_plugin_base* create() { 
-     Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp:    extern "C" void destroy(video_plugin_base* p) {
-     
-     (and then find those functions in the .cpp files found above - there should be a matching set in each plugin)
+    (each function definition in the plugin .hpp file has a matching declaration in its .cpp file - one set per plugin).
     
 There are, of course, dozens more source files, but these are a good starting point.        
       
