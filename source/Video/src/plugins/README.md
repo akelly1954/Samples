@@ -4,13 +4,13 @@
 
 ### Table of Contents
 
-[Background](#background)    
+ * [Background](#background)    
     
-[Where to find things in the source](#where-to-find-things)    
+ * [Where to find things in the source](#where-to-find-things)    
     
 
 
-[SEE ALSO](#see-also)    
+ * [SEE ALSO](#see-also)    
     
 
 
@@ -90,7 +90,17 @@ This might help finding where the sources for specific objects can be found.
      Samples/source/Video/src/plugins/v4l2/vidcap_v4l2_driver_interface.cpp
      Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp
      . . . and/or any other implemented plugin (opencv, etc)
-          
+     
+**The declaration of create() and destroy() used by the plugin factory**: 
+
+     $ grep 'extern "C"' ... (all the Video source files) 
+     Samples/source/Video/include/vidcap_plugin_factory.hpp:    extern "C" video_plugin_base* create(); 
+     Samples/source/Video/include/vidcap_plugin_factory.hpp:    extern "C" void destroy(video_plugin_base* p); 
+     Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp:    extern "C" video_plugin_base* create() { 
+     Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp:    extern "C" void destroy(video_plugin_base* p) {
+     
+     (and then find those functions in the .cpp files found above - there should be a matching set in each plugin)
+    
 There are, of course, dozens more source files, but these are a good starting point.        
       
    __________________   
