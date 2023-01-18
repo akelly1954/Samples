@@ -406,8 +406,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
     strm << "    Popen process string: " << adq( VideoCapture::video_plugin_base::popen_process_string ) << " \n"
          << "\n";
 
-    strm << "SEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n";
-
+    strm << "SEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n\n";
 
 }
 

@@ -2,6 +2,20 @@
 
 # Video Capture Plugins
 
+###### Table of Contents
+
+[Background](#background)    
+    
+[Where to find things in the source](#wheretofindthings)    
+    
+
+
+[SEE ALSO](#seealso)    
+
+
+
+
+
 ### Background     
      
 The video capture plugin is loaded at runtime based on its entry in the JSON configuration file.  Since the 
@@ -64,16 +78,19 @@ This might help finding where the sources for specific objects can be found.
     Samples/source/Util/src/commandline.cpp
     Samples/source/Util/include/commandline.hpp 
 
-**Plugin loading and configuration**: 
+**Plugin loading and configuration** (main thread): 
 
      Samples/source/Video/src/common/vidcap_plugin_factory.cpp
      Samples/source/Video/include/vidcap_plugin_factory.hpp
 
-**Video capture thread, plugin initialization and running**: 
+**Video capture thread - plugin initialization and runtime** (plugin/capture thread): 
 
      Samples/source/Video/src/common/vidcap_capture_thread.cpp 
-     Samples/source/Video/include/vidcap_capture_thread.hpp
-     
+     Samples/source/Video/include/vidcap_capture_thread.hpp 
+     Samples/source/Video/src/plugins/v4l2/vidcap_v4l2_driver_interface.cpp
+     Samples/source/Video/include/plugins/vidcap_v4l2_driver_interface.hpp
+     . . . and/or any other implemented plugin (opencv, etc)
+          
 There are, of course, dozens more source files, but these are a good starting point.        
       
    __________________   
@@ -85,7 +102,7 @@ This is work in progress -- I'm writing code and uploading the sources to the re
      
 Thank you.     
      
-**SEE ALSO:**    
+### SEE ALSO:    
 
 The [README.md file in the root Samples folder](../../../../README.md).     
 The [README.md file in the source/ folder](../../../../source/README.md).    
