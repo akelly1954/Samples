@@ -2,16 +2,16 @@
 
 # Video Capture Plugins
 
-###### Table of Contents
+### Table of Contents
 
 [Background](#background)    
     
-[Where to find things in the source](#wheretofindthings)    
+[Where to find things in the source](#where-to-find-things)    
     
 
 
-[SEE ALSO](#seealso)    
-
+[SEE ALSO](#see-also)    
+    
 
 
 
