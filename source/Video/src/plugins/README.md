@@ -13,11 +13,10 @@
      - [Plugin loading and configuration](#plugin-loading-and-configuration)    
      - [Video capture thread - plugin initialization and runtime](#video-capture-thread---plugin-initialization-and-runtime)    
      - [The declaration of create() and destroy() used by the plugin factory](#the-declaration-of-create-and-destroy-used-by-the-plugin-factory)    
-  3. [SEE ALSO](#see-also)    
+  3. [The Plugin Interface](#the-plugin-interface)    
+      - [The plugin factory](#the-plugin-factory) 
+  4. [SEE ALSO](#see-also)    
    
-
-
-
 ## Background     
      
 The video capture plugin is loaded at runtime based on its entry in the JSON configuration file.  Since the 
@@ -64,7 +63,7 @@ This might help finding where the sources for specific objects can be found.
     Samples/source/Util/include/ConfigSingleton.hpp 
 
 ### Logger operations:    
-Samples/source/Video/src/main_programs/logger_tools.hpp
+    Samples/source/Video/src/main_programs/logger_tools.hpp
     Samples/source/Video/src/main_programs/logger_tools.cpp
     Samples/source/Util/src/MainLogger.cpp
     Samples/source/Util/include/MainLogger.hpp 
@@ -101,11 +100,48 @@ Samples/source/Video/src/main_programs/logger_tools.hpp
      
     (each function definition in the plugin .hpp file has a matching declaration in its .cpp file - one set per plugin).
     
+**NOTE**: Don't miss the last ten lines of **vidcap_v4l2_driver_interface.hpp** - if you got this far, this is probably what you're looking for...     
+
 There are, of course, dozens more source files, but these are a good starting point.        
-      
-   __________________   
-   
+       
+## The Plugin Interface
+
+To explain the video capture interface, we use the **vidcap_v4l2_driver_interface.hpp/.cpp** streaming interface which is a completely imlemented plugin which is working and is the prototype for other plugins.    
     
+The video capture plugin involves a base class **class VideoCapture::video_plugin_base** which is a non-pure abstract object.  Some key items of the interface actually reside in the instantiated base class, although they are only accessible to the program by calling derived methods that are instantiated in the derived object which exists in the loaded plugin (for example **class VideoCapture::vidcap_v4l2_driver_interface : virtual public VideoCapture::video_plugin_base**).   
+
+#### The plugin factory 
+
+From the main thread, the **video_capture_plugin_factory::create_factory()** method locates the requested plugin by file/path name, loads it, and sets up the basic mechanism for starting up the loaded plugin.   
+    
+The system's **::dlopen()** and **::dlsym()** load the video capture plugin, and match up the two functions that are required by this interface:
+    
+    extern "C" video_plugin_base* create();
+    extern "C" void destroy(video_plugin_base* p);   
+    
+See [The declaration of create() and destroy() used by the plugin factory](#the-declaration-of-create-and-destroy-used-by-the-plugin-factory) above.   
+
+The base class (video_plugin_base - again, instantiated in the main executable, not the plugin) is initialized with some information about the loaded plugin,  Most importantly, the "interface pointer": 
+
+    static video_plugin_base* video_plugin_base::vidcap_v4l2_driver_interface
+    
+is set in the base class to the address of the derived plugin object: 
+
+    class vidcap_v4l2_driver_interface : virtual public video_plugin_base; 
+
+which has just been loaded into the executable. (Getting to the derived methods of the loaded plugin later on during execution, simply becomes a matter of using the interface pointer with a derived virtual method).   
+    
+**Developer TODO**: Implement the **create()** and **destroy()** methods in your new plugin (use the **class VideoCapture::vidcap_v4l2_driver_interface** definition as an example).    
+     
+**Please NOTE**:  The plugin factory **SHOULD NOT** be modified at all in this exercise, unless it is to fix a workaround for a well-known bug which you can see in **video_capture_plugin_factory::destroy_factory()** which I'm currently blaming on **::dlclose()** (not sure about that though).    
+    
+
+#### ... to be continued - still work in progress.
+
+
+
+   __________________    
+   
     
 # Please Note:
 This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. There are no Github "collaborators" established for the project (that would happen only in rare cases). In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     

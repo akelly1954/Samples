@@ -17,7 +17,6 @@ set( SOURCES ${SOURCEFILES} ${HEADERS} "${LOGGER_HEADERS}" ${JSONCPP_HEADERS} )
 file(GLOB JSON_FILES "src/main_programs/*.json")
 
 set ( LIBTYPE "${Video_LIBTYPE}" )
-#####   TODO:  added -ldl here: test:     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
 
 include_directories( ${Video_HEADERS} 
