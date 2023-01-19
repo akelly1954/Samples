@@ -217,6 +217,7 @@ int main(int argc, const char *argv[])
             trcc = std::thread (VideoCapture::test_raw_capture_ctl, argv0);
         }
 
+        // wait for the video capture thread to terminate
         while (! ifptr->isterminated())
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));

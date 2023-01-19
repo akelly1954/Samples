@@ -3,7 +3,7 @@
 # Video Capture Plugins
 
 ### Table of Contents
-  1. [Background](#background)    
+  1. [Early in program execution](#early-in-program-execution)    
   2. [Where to find things in the source](#where-to-find-things)    
      - [main program](#main-program)    
      - [JSON config file](#json-config-file)    
@@ -14,10 +14,11 @@
      - [Video capture thread - plugin initialization and runtime](#video-capture-thread---plugin-initialization-and-runtime)    
      - [The declaration of create() and destroy() used by the plugin factory](#the-declaration-of-create-and-destroy-used-by-the-plugin-factory)    
   3. [The Plugin Interface](#the-plugin-interface)    
-      - [The plugin factory](#the-plugin-factory) 
+      - [The plugin factory](#the-plugin-factory)    
+      - [The video_capture thread](#the-video_capture-thread)    
   4. [SEE ALSO](#see-also)    
    
-## Background     
+## Early in program execution     
      
 The video capture plugin is loaded at runtime based on its entry in the JSON configuration file.  Since the 
 plugin remains loaded for the duration of execution of the **main_video_capture** executable, we try to load it
@@ -44,8 +45,10 @@ There is one command line flag (**-loginit**) which affects how much output from
      
 Lastly, **the most relevant command line flag** for the task of developing and debugging a video capture plugin, is the (**-dr**) flag.  It collects the **current** runtime configuration of the running program after all initialization items (see above) have been completed without errors.  It shows the current (runtime) value of every relevant item, where to find it in the code - which **vcGlobals** member(s) affect it, which section in the JSON config file is being used, as well as which JSON file fields are relevant, and lastly, which command line flags can affect it. (BTW, the --loginit command line flag is not needed for this exercise).     
     
-The more useful way to develop a plugin is to run it once using the **-dr** command line flag when a working video capture plugin is being used (**v4l2** for example), and saving the **video_capture_log.txt** that was produced during the run, before running **main_video_capture** with the plugin you are developing (also using the **-dr** flag).  Comparing what is shown in the saved output file against the contents of your **video_capture_log.txt** is very very useful for debugging.    
-     
+The more useful way to develop a video capture plugin is to run it once using the **-dr** command line flag when a working video capture plugin is being used (**v4l2** for example), and saving the **video_capture_log.txt** that was produced during the run, before running **main_video_capture** with the plugin you are developing (also using the **-dr** flag).  Comparing what is shown in the saved output file against the contents of your **video_capture_log.txt** is very very useful for debugging. (This would require you to have a USB webcam which works with the v4l2 interface used in this program).   
+
+[(Back to the top)](#video-capture-plugins)
+
 ## Where to find things     
      
 This might help finding where the sources for specific objects can be found.    
@@ -76,6 +79,8 @@ This might help finding where the sources for specific objects can be found.
     Samples/source/Util/src/commandline.cpp
     Samples/source/Util/include/commandline.hpp 
 
+[(Back to the top)](#video-capture-plugins)
+
 ### Plugin loading and configuration: 
     Samples/source/Video/src/common/vidcap_plugin_factory.cpp 
     Samples/source/Video/include/vidcap_plugin_factory.hpp 
@@ -102,11 +107,13 @@ This might help finding where the sources for specific objects can be found.
     
 **NOTE**: Don't miss the last ten lines of **vidcap_v4l2_driver_interface.hpp** - if you got this far, this is probably what you're looking for...     
 
-There are, of course, dozens more source files, but these are a good starting point.        
-       
+There are, of course, dozens more source files, but these are a good starting point.    
+
+[(Back to the top)](#video-capture-plugins)
+
 ## The Plugin Interface
 
-To explain the video capture interface, we use the **vidcap_v4l2_driver_interface.hpp/.cpp** streaming interface which is a completely imlemented plugin which is working and is the prototype for other plugins.    
+To explain the video capture plugin interface, we use the **vidcap_v4l2_driver_interface.hpp/.cpp** streaming interface which is a completely imlemented plugin which is working and is the prototype for other plugins.    
     
 The video capture plugin involves a base class **class VideoCapture::video_plugin_base** which is a non-pure abstract object.  Some key items of the interface actually reside in the instantiated base class, although they are only accessible to the program by calling derived methods that are instantiated in the derived object which exists in the loaded plugin (for example **class VideoCapture::vidcap_v4l2_driver_interface : virtual public VideoCapture::video_plugin_base**).   
 
@@ -134,7 +141,35 @@ which has just been loaded into the executable. (Getting to the derived methods 
 **Developer TODO**: Implement the **create()** and **destroy()** methods in your new plugin (use the **class VideoCapture::vidcap_v4l2_driver_interface** definition as an example).    
      
 **Please NOTE**:  The plugin factory **SHOULD NOT** be modified at all in this exercise, unless it is to fix a workaround for a well-known bug which you can see in **video_capture_plugin_factory::destroy_factory()** which I'm currently blaming on **::dlclose()** (not sure about that though).    
-    
+
+[(Back to the top)](#video-capture-plugins)
+
+#### The video_capture thread 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #### ... to be continued - still work in progress.
 
