@@ -16,8 +16,8 @@
   3. [The Plugin Interface](#the-plugin-interface)    
       - [The plugin factory](#the-plugin-factory)    
       - [About thread synchronization in main_video_capture](#about-thread-synchronization-in-main_video_capture)    
-      - [Very Briefly](#very-briefly)    
-      - [Drawbacks to this approach](#drawbacks-to-this-approach) 
+         - [Very Briefly](#very-briefly)    
+         - [Drawbacks to this approach](#drawbacks-to-this-approach) 
       - [The video_capture thread](#the-video_capture-thread)    
   4. [SEE ALSO](#see-also)    
    
@@ -153,9 +153,15 @@ which has just been loaded into the executable. (Getting to the derived methods 
 
 The **video_capture thread** (which among other things starts the video capture plugin running), also starts the **profiling thread**, as well as the **test thread** which optionally exercises the **suspend/resume** mechanism.  By the time the **video_capture thread** starts, the **raw queue thread** (VideoCapture::raw_buffer_queue_handler) has already been started from main().    
     
-What all of these threads do once they are started, is **"wait"** on an object type **Util::condition_data** (Samples/Util/include/condition_data.hpp) which encapsulates an **std::condition_variable** object.  You will see comments in the code referring to "kick-starting" threads - this basically means that the condition variable in each of the condition_data objects is going to be "satisfied" using either condition_data::flush() or condition_data::send_ready(), which allows the thread to begin operations.  That is the mechanism used to synchronize the start of operations of each of the threads discussed here. 
+What all of these threads do once they are started, is **"wait"** (**Util::condition_data::wait_for_ready()** -- see Samples/Util/include/condition_data.hpp). This object encapsulates an **std::condition_variable** object.  You will see comments in the code referring to "kick-starting" threads - this basically means that the condition variable in each of the condition_data objects is going to be "satisfied" using either condition_data::flush() or condition_data::send_ready(), which allows the thread to begin operations.  That is the mechanism used to synchronize the start of operations of each of the threads discussed here. 
 
 #### Drawbacks to this approach
+
+The potential problem with using condition variables to synchronize between threads is that unless the state of each thread is meticulously managed, the thread can very easily hang.  This is because not much in the thread execution (or coming from other threads) can interrupt the "wait_for_ready()" call which keeps the thread in question from continuing.     
+     
+This means that the mechanism used to terminate this thread because of say, errors in other threads or any other reason, uses a **boolean** flag specific to each thread using this mechanism (typically you'll see **static bool s_terminated;** definition as a member of a class definition).   
+    
+Before using the **condition_data** variable (wait_for_ready()), the code must be locked, the termination boolean checked, and only if it is not set to **true**, can the thread call the wait_for_ready() method be made.   (See also the **set_terminated()** method in each of these threads to complete the picture).    
 
 
 
@@ -209,7 +215,8 @@ Thank you.
 
 The [README.md file in the root Samples folder](../../../../README.md).     
 The [README.md file in the source/ folder](../../../../source/README.md).    
-The [README.md file in the Video project](../../../Video/README.md).     
+The [README.md file in the Video project](../../../Video/README.md).   
+    
 The [LICENSE](./LICENSE) in the root **Samples** folder covering the entirety of the **Samples** project..    
 The [LICENSE](source/3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The [LICENSE](source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
