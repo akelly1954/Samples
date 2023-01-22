@@ -151,9 +151,9 @@ which has just been loaded into the executable. (Getting to the derived methods 
 
 ##### Very briefly 
 
-The **video_capture thread** (which among other things starts the video capture plugin running), first starts the **profiling thread**, as well as the **test thread** which optionally exercises the **suspend/resume** mechanism.  By the time the **video_capture thread** starts, the **raw queue thread** (VideoCapture::raw_buffer_queue_handler) has already been started from main().    
+The **video_capture thread** (which among other things starts the video capture plugin running), first kick-starts the **test thread** which optionally exercises the **suspend/resume** mechanism (this thread was started from main()).  By the time the **video_capture thread** starts, the **raw queue thread** (VideoCapture::raw_buffer_queue_handler) had already been started from main() as well.    
     
-What all of these threads do once they are started, is **WAIT"** -- (**Util::condition_data::wait_for_ready()** -- see Samples/Util/include/condition_data.hpp). This object encapsulates an **std::condition_variable** object.  You will see comments in the code referring to "kick-starting" threads - this basically means that the condition variable in each of the condition_data objects is going to be "satisfied" using either condition_data::flush() or condition_data::send_ready(), which allows the thread to begin operations.  That is the mechanism used to synchronize the start of operations of each of the threads discussed here. 
+What all of these threads do once they are started, is **WAIT** -- (**Util::condition_data::wait_for_ready()** -- see Samples/Util/include/condition_data.hpp). This object encapsulates an **std::condition_variable** object.  You will see comments in the code referring to "kick-starting" threads - this basically means that the condition variable in each of the condition_data objects is going to be "satisfied" using either condition_data::flush() or condition_data::send_ready(), which allows the thread to begin operations.  That is the mechanism used to synchronize the start of operations of each of the threads discussed here. 
 
 ##### Drawbacks to this approach
 
@@ -165,46 +165,44 @@ Before using the **condition_data** variable (wait_for_ready()), the code must b
 
 [(Back to the top)](#video-capture-plugins)
 
-
-
-
-
-
-
-
-
-
-
 #### The video_capture thread 
 
+Once this thread is started by **main()**, it first **WAIT**s for the condition_data object to let it continue.  It then goes through initialization of its own data, including preparing the output called for by the **-dr** command line flag, and more.    
 
+At this point in the execution, the thread calls the first actual method in the video capture plugin:     
 
+    video_plugin_base::interface_ptr->initialize();
 
+This method initializes the plugin's copy of the logger's shared_ptr<> and sets the actual string with which the ::popen() call will be made (including stderr redirection).    
 
+Next, it calls:    
 
+    video_plugin_base::interface_ptr->run();
 
+which does all the video capture work.  Soon after this plugin method returns, the program will be terminated.    
 
+Within the video_capture plugin's ->run() method, early on, the **profiling thread** is kick-started right after actual video-capturing is started.  We kick-start the **profiling thread** as late as possible in order to prevent the profiler's statistics from being skewed as a result of waiting for the frames to start showing up.    
+    
+Also, within the video_capture plugin's ->run() method the following base class facilities are used:
 
+ - If profiling is enabled, once a buffer contains a complete video frame, the profiling statistics are incremented by one (this is thread-safe -- all locking is handled outside of this context):    
 
+    if (!isterminated() && Video::vcGlobals::profiling_enabled) 
+        lret = increment_one_frame();    // member of class vidcap_v4l2_driver_interface 
 
+ - Once a buffer contains a complete video frame, it is shipped to the raw buffer queue (this is thread-safe -- all locking is handled outside of this context):   
 
+    // params are not shown here
+    vidcap_v4l2_driver_interface::v4l2if_process_image()   
+    {  
+        . . .
+        add_buffer_to_raw_queue();  // member of class vidcap_v4l2_driver_interface  
+        . . .
+    }
 
+Lastly, please note that there is a distinction between normal termination and error termination.  As a rule, all error terminations also set the "normal termination" flag.  See the various plugin methods that call **set_terminated()** and **set_error_terminated()**.
 
-
-
-
-
-
-
-
-
-
-
-
-
-#### ... to be continued - still work in progress.
-
-
+#### This document will be further developed, but has the essentials in it for now.
 
    __________________    
    

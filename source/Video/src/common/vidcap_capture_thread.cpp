@@ -129,6 +129,12 @@ void VideoCapture::video_capture(std::string cmdline)
 
     // A pointer to the "new"ly created plugin exists here: video_plugin_base::interface_ptr
     // The new object was created in the plugin factory with new() of the default constructor.
+    if (! video_plugin_base::interface_ptr)
+    {
+        std::string str = std::string("Video Capture thread: NULL interface for (") + videoInterface + "). Aborting...";
+        loggerp->error() << str;
+        throw std::runtime_error(str);
+    }
 
     // Start the video interface:
     video_plugin_base::interface_ptr->initialize();

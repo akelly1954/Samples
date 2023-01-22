@@ -217,6 +217,11 @@ int main(int argc, const char *argv[])
             trcc = std::thread (VideoCapture::test_raw_capture_ctl, argv0);
         }
 
+        /////////////////////////////////////////////////////////////////////
+        // At this point all threads have started and potentially are waiting
+        // to be kick-started. Now we wait in the main thread...
+        /////////////////////////////////////////////////////////////////////
+
         // wait for the video capture thread to terminate
         while (! ifptr->isterminated())
         {
