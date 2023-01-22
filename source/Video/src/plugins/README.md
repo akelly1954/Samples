@@ -194,13 +194,16 @@ Also, within the video_capture plugin's ->run() method the following base class 
 
     // params are not shown here
     vidcap_v4l2_driver_interface::v4l2if_process_image()   
-    {  
-        . . .
-        add_buffer_to_raw_queue();  // member of class vidcap_v4l2_driver_interface  
-        . . .
-    }
+    {    
+        . . .     
+        add_buffer_to_raw_queue();  // member of class vidcap_v4l2_driver_interface      
+        . . .    
+    }    
 
 Lastly, please note that there is a distinction between normal termination and error termination.  As a rule, all error terminations also set the "normal termination" flag.  See the various plugin methods that call **set_terminated()** and **set_error_terminated()**.
+
+[(Back to the top)](#video-capture-plugins)
+
 
 #### This document will be further developed, but has the essentials in it for now.
 
