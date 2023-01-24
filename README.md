@@ -1,6 +1,4 @@
 
-## (currently updating all README files - please look at the timestamp for each file before believing its content)
-
 # Welcome.
 
 This project includes mostly software I've developed, some earlier code which has been rewritten, all since January 2022.     
@@ -217,6 +215,7 @@ Thank you.
 The [README](source/README.md) in the **source** folder.    
 The [README](source/Video/README.md) in the **Video** project.     
 The [README](source/Video/src/plugins/README.md) in the **Video/src/plugins** project.        
+    
 The [LICENSE](./LICENSE) in the root **Samples** folder covering the entirety of the **Samples** project..    
 The [LICENSE](source/3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The [LICENSE](source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     

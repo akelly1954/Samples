@@ -1,6 +1,4 @@
 
-## (currently updating all README files - please look at the timestamp for each file before believing its content)
-
 # Samples
     
 **For what's going on right now, please see the [root Samples README.md file](../README.md).**     
@@ -110,15 +108,10 @@ I tend not to use source code control (git) from within Eclipse, since it tends 
 The [README.md file in the root Samples folder](../README.md).    
 The [README file in the Video project](Video/README.md).     
 The [README file in the Video/src/plugins project](Video/src/plugins/README.md).        
+    
 The file [LICENSE](../LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
 The file [LICENSE](3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The file [LICENSE.txt](3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
      
-### Current deficiencies:
-
-Currently the Windows' WIN32 configuration has not been built and tested yet. 
-This may be added in the future.
-
-
 
 

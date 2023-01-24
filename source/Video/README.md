@@ -1,9 +1,4 @@
 
-## (currently updating all README files - please look at the timestamp for each file before believing its content)
-     
--- (this particular file needs a lot of work to reflect additional command line flags, as well as trimmed down (better) output to the 
-log file.  I'm going to finish the plugins' README file first before tackling this one.)    
-    
 # Video Capture 
 
 Stream video frames from the source (a camera), through the linux driver, to the process **main_video_capture**, which uses objects from this project (**Video**), as well as objects from the other projects in this repository.
@@ -1252,13 +1247,8 @@ Thank you.
 The [README.md file](../../README.md) in the root **Samples** folder.    
 The [README.md file](../README.md) in the **source** folder.    
 The [README file in the Video/src/plugins project](../Video/src/plugins/README.md).        
+    
 The file [LICENSE](../../LICENSE) in the root **Samples** folder, contains the legal language covering distribution and use of the sources in this project (that belong to me).    
 The file [LICENSE](../3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/LICENSE) covering **JsonCpp**.    
 The file [LICENSE.txt](../3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/LICENSE.txt) covering **LoggerCpp**.     
     
-    
-### Attached files:    
-    
-[video_capture_runtime_config.txt](https://github.com/akelly1954/Samples/files/10429232/video_capture_runtime_config.txt) - sample output file produced by using the -dr flag.    
-
-

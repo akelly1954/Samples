@@ -1,4 +1,3 @@
-# WORK IN PROGRESS 
 
 # Video Capture Plugins
 
