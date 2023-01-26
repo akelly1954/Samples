@@ -43,7 +43,7 @@ There are other README files listed below as well. Please have fun with it all.
     
 ## Going on now:   
 
-Updating README files. It will be done when it's done.   
+Updating README files and doing some cleanup. It will be done when it's done.   
    
    
 **Done with the following projects:**     
@@ -76,7 +76,7 @@ This is controlled by the JSON config file (*video_capture.json*). Highly recomm
      
 **Next Steps**:    
     
-1. Complete and checkin the plugin interface documentation.     
+1. Complete and checkin the video capture plugin interface documentation.     
      
 2. Add a Qt 5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
      
@@ -98,14 +98,13 @@ This is an "out of source" build environment. Mostly.  Check the **./.gitignore*
 Even though the IDE and build environment are set here as the defaults (eclipse, cmake, gnu toolchain), the Eclipse IDE is not required (see the **-G** flag for cmake).     
      
       
-## Intetesting main programs:
+## Intetesting programs and objects:
 
 These programs are used to test objects, as well as to stress-test them.  They don't always have a useful purpose beyond that, except that 
 if the reader is looking for a focused project that can help them solve real problems they face, this is not a bad way to start.    
      
 **main_video_capture.cpp**    
-found *...Samples/source/Video/src/main_programs/*    
-(used to be *main_v4l2_raw_capture*)     
+found in *...Samples/source/Video/src/main_programs/*    
      
 This is an infrastructure that pumps out video frames from the hardware (USB camera in my case) and then "gets rid" of these frames (by passing them on) to software that deals with each frame - either piping it to a linux process (ffmpeg, vlc, etc), and/or saving each frame in a file, and/or analyzing/modifying each frame, and/or displaying them.    
       
@@ -120,11 +119,21 @@ Thanks to the online video community which speaks a different language and uses 
 
 The (now a) C++ class uses a set of configurable parameters (now read from the JSON config file, as well as adjusted by command line parameters) to fill up to 4 memory mapped buffers with video data in YUYV format (Packed YUV 4:2:2, YUY2) or H264 (H264 with start codes).  These buffers, one at a time as they are filled, are passed on to the next level up (written to a file, used to display in a viewer, analyzed, etc). Each buffer is copied only once, after which a shared pointer is what gets passed from one queue to another for further processing.  This frees up the memory mapped buffer (one of the 4) which allows the V4L driver in the kernel to fill it up with a new frame.
      
-Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being addressed at the moment).   
+Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being planned at the moment).   
     
 Run time profiling implemented in this set of objects, gathers stats of various factors in this mechanism that control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), the current frame rate, etc.   
     
+**Class ConfigSingleton**     
+found in *...Samples/source/Util/include/ConfigSingleton.hpp*    
+found in *...Samples/source/Util/src/ConfigSingleton.cpp*    
+Used from *...Samples/source/Util/src/main_programs/main_jsoncpp_samplecfg.cpp*     
+Used from *...Samples/source/Video/src/main_programs/main_video_capture.cpp*    
     
+This object reads, parses, validates, and updates **JSON** files that deal with configuration (and could be used for other purposes).  It is implemented as a **Singleton**, and demonstrates one of the better ways to use the **std::shared_from_this<>** base class (there are multiple ways to do this).   
+    
+(**Deficiencies** - at this time (Jan 2023) this object has not been put to strenuous use yet in this project.  I will continue to 
+develop it in the future as needed by new applications).     
+     
 **main_ntwk_basic_sock_server.cpp** and **main_client_for_basic_server.cpp**   
 found in *...Samples/source/EnetUtil/src/main_programs/*     
      
