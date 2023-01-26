@@ -69,6 +69,14 @@ vidcap_v4l2_driver_interface::vidcap_v4l2_driver_interface()
     set_terminated(false);
 }
 
+// Update the gloabal pixel_format map<> with this plugin's available pixel formats.
+bool vidcap_v4l2_driver_interface::probe_pixel_format_caps(std::map<std::string,std::string>& pixformat_map)
+{
+    pixformat_map["h264"] = "H264: H264 with start codes (from plugin)";
+    pixformat_map["yuyv"] = "YUYV: (alias YUV 4:2:2): Packed format with ½ horizontal chroma resolution (from plugin)";
+    return true;
+}
+
 void vidcap_v4l2_driver_interface::initialize()
 {
     // This is not done in the constructor since the logger is not set up
@@ -855,7 +863,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         CLEAR(fmt);
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (Video::vcGlobals::pixel_format == Video::pxl_formats::h264) {
+        if (Video::vcGlobals::pixel_fmt == Video::pxl_formats::h264) {
             fmt.fmt.pix.width       = 1920;
             fmt.fmt.pix.height      = 1080;
             fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_H264;
@@ -878,9 +886,9 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
                 }
             }
             loggerp->debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
-                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
+                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_fmt];
 
-        } else if (Video::vcGlobals::pixel_format ==  Video::pxl_formats::yuyv) {
+        } else if (Video::vcGlobals::pixel_fmt ==  Video::pxl_formats::yuyv) {
             fmt.fmt.pix.width       = 640;
             fmt.fmt.pix.height      = 480;
             fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
@@ -900,7 +908,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
                 }
             }
             loggerp->debug() << "Set video format to (" << fmt.fmt.pix.width << " x " << fmt.fmt.pix.height
-                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
+                           << "), pixel format is " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_fmt];
         } else {
             /* Preserve original settings as set by v4l2-ctl for example */
             if (v4l2if_xioctl(fd, VIDIOC_G_FMT, &fmt) == -1)

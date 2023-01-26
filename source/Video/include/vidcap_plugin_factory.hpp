@@ -26,6 +26,8 @@
 
 #include <vidcap_capture_thread.hpp>
 #include <MainLogger.hpp>
+#include <video_capture_globals.hpp>
+#include <ConfigSingleton.hpp>
 #include <Utility.hpp>
 #include <condition_data.hpp>
 #include <sstream>
@@ -49,7 +51,6 @@ namespace VideoCapture {
         static void* s_plugin_handle;
         static video_plugin_base* s_vplugin_handle;
         static destroy_t* s_destroy_function_handle;
-        static std::string s_plugin_so_filename;
     };
 
     extern "C" video_plugin_base* create();

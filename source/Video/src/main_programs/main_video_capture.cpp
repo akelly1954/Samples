@@ -59,8 +59,9 @@ int main(int argc, const char *argv[])
 {
     using namespace Video;
 
-    // Setting up the config singleton before the logger is set
-    // up - we will accumulate logger lines until it is.
+    // This vector is for lines written to the log file
+    // before the logger is set up.  We will accumulate
+    // logger lines in the vector until logger is set up.
     std::vector<std::string> delayedLinesForLogger;
 
     std::string argv0 = argv[0];
@@ -86,8 +87,14 @@ int main(int argc, const char *argv[])
     Util::CommandLine cmdline(argc, argv, allowedFlags);
     if (! Video::initial_commandline_parse(cmdline, argc, argv0, std::cerr))
     {
-        std::cerr << std::endl;     // flush out std::cerr
-        return EXIT_SUCCESS;
+        // If help was requested and there is no error, the process
+        // will exit until after configuration help is displayed below.
+        if (!cmdline.isHelp() || cmdline.isError())
+        {
+            std::cerr << std::endl;     // flush out std::cerr
+            std::cerr << "\nNOTE:  Additional config/plugin help information not provided because of command line error.\n" << std::endl;
+            return EXIT_SUCCESS;
+        }
     }
     std::cerr << std::endl;         // flush out std::cerr
 
@@ -148,13 +155,30 @@ int main(int argc, const char *argv[])
     std::stringstream lstrm;
     if (! VidCapCommandLine::parse(lstrm, cmdline))
     {
-        std::cerr << "\nERROR in command line parsing:\n" << lstrm.str() << std::endl;
-        return EXIT_FAILURE;
+        Video::pixel_format::displayPixelFormatConfig(std::cerr);
+        std::cerr << std::endl;
+
+        if (cmdline.isError())
+        {
+            std::cerr << "\nERROR in command line parsing:\n" << lstrm.str() << std::endl;
+            return EXIT_FAILURE;
+        }
+        return EXIT_SUCCESS;
     }
 
     ParseOutputString = std::string("\nCommand line parsing:\n") + lstrm.str();
     // std::cerr << ParseOutputString << std::endl;
     delayedLinesForLogger.push_back(ParseOutputString);
+
+    // if the -h flag was explicitly invoked, exit after displaying the information
+    if (cmdline.isHelp())
+    {
+        Video::pixel_format::pixfmt_setup();
+        std::cerr << "\nFrom plugin:  ";
+        Video::pixel_format::displayPixelFormatConfig(std::cerr);
+        std::cerr << std::endl;
+        return EXIT_SUCCESS;
+    }
 
     ///////////////////////////////////////////////////////////
     // Set up the logger
@@ -165,9 +189,9 @@ int main(int argc, const char *argv[])
     if (vcGlobals::log_initialization_info)
     {
         // Logger lines from the plugin factory up above
-        uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory << "\n";
+        uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory;
     }
-    // std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
+    // DEBUG:  std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
 
     /////////////////
     // Finally, get to work

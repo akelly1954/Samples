@@ -24,7 +24,7 @@
         "Video": {
 
             "preferred-interface" :     "v4l2",
-            "frame-count":              20,
+            "frame-count":              200, 
 
             "frame-capture": {
 
@@ -36,12 +36,15 @@
 
                     "pixel-format": {
                         "h264": {
+                            "format-description":   "H264: H264 with start codes",
                             "output-process":       "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4"
                         },
                         "yuyv": {
+                            "format-description":   "YUYV: (alias YUV 4:2:2): Packed format with ½ horizontal chroma resolution",
                             "output-process":       "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
                         },
                         "other": {
+                            "format-description":   "alternative format",
                             "output-process":       "dd of=video_capture.dd.data" 
                         }
                     }
@@ -51,17 +54,20 @@
                     "name":                         "OPENCV",
                     "device-name" :                 "/dev/video0",
                     "preferred-pixel-format":       "other",
-                    "plugin-file-name"    :         "notfound_OPENCV.so",
+                    "plugin-file-name"    :         "notfound_OPENCV_plugin.so",
 
                     "pixel-format": {
                         "h264": {
-                            "output-process":   "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4"
+                            "format-description":   "H264: H264 with start codes",
+                            "output-process":       "ffmpeg -nostdin -y -f h264 -i  pipe:0 -vcodec copy video_capture.mp4"
                         },
                         "yuyv": {
-                            "output-process":   "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
+                            "format-description":   "YUYV: (alias YUV 4:2:2): Packed format with ½ horizontal chroma resolution",
+                            "output-process":       "ffmpeg -nostdin -y -f rawvideo -vcodec rawvideo -s 640x480 -r 25 -pix_fmt yuyv422 -i  pipe:0 -c:v libx264 -preset ultrafast -qp 0 video_capture.mp4"
                         },
                         "other": {
-                            "output-process":   "dd of=video_capture.dd.data" 
+                            "format-description":   "alternative format",
+                            "output-process":       "dd of=video_capture.dd.data" 
                         }
                     }
                 }

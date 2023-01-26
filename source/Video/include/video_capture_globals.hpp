@@ -75,7 +75,7 @@ namespace Video
         // Indexed by enum pxl_formats values
         // has a string description for each enum value
         // See /usr/include/linux/videodev2.h
-        static enum pxl_formats pixel_format;
+        static enum pxl_formats pixel_fmt;
         static std::vector<std::string> pixel_formats_strings;
 
         // Displays runtime configuration after all options have been
@@ -92,9 +92,20 @@ namespace Video
         static std::string rsb(bool x);
     };
 
-// This function overwrites values in Video::vcGlobals with content from
-// the json config file.
-bool updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::Value& cfg_root);
+    struct pixel_format
+    {
+        static bool pixfmt_setup(void);
+        static bool pixfmt_setup(const Json::Value& cfg_root);
+        static std::string pixfmt_description(std::string pixfmtname);
+        static void displayPixelFormatConfig(std::ostream& ostrm);
+        static std::map<std::string, std::string> s_pixformat;
+        static bool s_pix_initialized;
+        static std::string s_video_interface;
+    };
+
+    // This function overwrites values in Video::vcGlobals with content from
+    // the json config file.
+    bool updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::Value& cfg_root);
 
 } // end of namespace Video
 

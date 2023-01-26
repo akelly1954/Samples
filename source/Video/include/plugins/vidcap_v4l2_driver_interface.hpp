@@ -96,6 +96,7 @@ namespace VideoCapture
         video_plugin_base* get_interface_pointer() const    { return video_plugin_base::interface_ptr; }
         void set_terminated(bool t)                         { video_plugin_base::set_terminated(t); };
 
+        virtual bool probe_pixel_format_caps(std::map<std::string,std::string>& pixformat_map);
         virtual std::string get_popen_process_string()      { return video_plugin_base::popen_process_string; };
         virtual bool isterminated(void)                     { return video_plugin_base::s_terminated; };
         virtual void set_error_terminated (bool t)          { video_plugin_base::s_errorterminated = t; set_terminated(t); };

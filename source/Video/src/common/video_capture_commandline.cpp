@@ -275,7 +275,7 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
     strm << "    Video frame grabber device name is set to " << Video::vcGlobals::str_dev_name << "\n";
 
 
-    std::string pixelfmt = (Video::vcGlobals::pixel_format == Video::pxl_formats::h264? "h264": "yuyv");
+    std::string pixelfmt = (Video::vcGlobals::pixel_fmt == Video::pxl_formats::h264? "h264": "yuyv");
     switch(cmdline.get_template_arg("-pf", pixelfmt))
     {
         case Util::ParameterStatus::FlagNotProvided:
@@ -298,18 +298,18 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
     /////////////////
     if (pixelfmt == "h264")
     {
-        Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
+        Video::vcGlobals::pixel_fmt = Video::pxl_formats::h264;
     }
     else if (pixelfmt == "yuyv")
     {
-        Video::vcGlobals::pixel_format = Video::pxl_formats::yuyv;
+        Video::vcGlobals::pixel_fmt = Video::pxl_formats::yuyv;
     }
     else
     {
         strm << "ERROR: pixel format is invalid: " << pixelfmt << "\n";
         return false;
     }
-    strm << "    Video pixel format is set to: " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format] << "\n";
+    strm << "    Video pixel format is set to: " << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_fmt] << "\n";
 
 
     int useotherproc = static_cast<int>(Video::vcGlobals::use_other_proc);

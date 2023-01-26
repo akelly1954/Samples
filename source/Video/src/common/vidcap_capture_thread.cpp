@@ -84,7 +84,7 @@ void VideoCapture::video_capture(std::string cmdline)
     loggerp->debug() << "VideoCapture::video_capture: Running.";
 
     // Find out which interface is configured (v4l2 or opencv)
-    Json::Value& ref_root_copy = Config::ConfigSingleton::GetJsonRootCopyRef();
+    Json::Value& ref_root_copy = Config::ConfigSingleton::instance()->GetJsonRootCopyRef();
 
     std::string videoInterface = Video::vcGlobals::video_grabber_name;
 
@@ -187,7 +187,7 @@ std::string VideoCapture::video_plugin_base::set_popen_process_string()
     using namespace Video;
 
     std::string procIndicator;
-    Json::Value& cfg_root = Config::ConfigSingleton::GetJsonRootCopyRef();
+    Json::Value& cfg_root = Config::ConfigSingleton::JsonRoot();
 
     if (vcGlobals::use_other_proc)
     {
@@ -197,7 +197,7 @@ std::string VideoCapture::video_plugin_base::set_popen_process_string()
     else
     {
         // use the process string indicated by the "preferred-pixel-format" indicator
-        procIndicator = (vcGlobals::pixel_format == pxl_formats::h264? "h264": "yuyv");
+        procIndicator = (vcGlobals::pixel_fmt == pxl_formats::h264? "h264": "yuyv");
     }
 
     vcGlobals::output_process = cfg_root["Config"]

@@ -76,6 +76,7 @@ namespace VideoCapture {
     public:
         virtual void initialize() = 0;
         virtual void run() = 0;
+        virtual bool probe_pixel_format_caps(std::map<std::string,std::string>& pixformat_map) = 0;
         virtual bool isterminated() = 0;
         virtual void set_error_terminated (bool t) = 0;
         virtual bool iserror_terminated(void) = 0;

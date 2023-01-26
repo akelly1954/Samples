@@ -67,11 +67,81 @@ bool            Video::vcGlobals::test_suspend_resume =         false;
 
 
 // See /usr/include/linux/videodev2.h for the descriptive strings in the vector<>
-enum Video::pxl_formats Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
-std::vector<std::string> Video::vcGlobals::pixel_formats_strings ={         // indexed by pixel_format used as an int
+enum Video::pxl_formats Video::vcGlobals::pixel_fmt = Video::pxl_formats::h264;
+std::vector<std::string> Video::vcGlobals::pixel_formats_strings ={         // indexed by pixel_fmt used as an int
                                         "V4L2_PIX_FMT_YYUV: 16bit YUV 4:2:2",
                                         "V4L2_PIX_FMT_H264: H264 with start codes"
                                     };
+
+//////////////////////////////////////////////////////////////////////////////
+// struct pixel_format members and methods
+//////////////////////////////////////////////////////////////////////////////
+
+std::map<std::string,std::string> Video::pixel_format::s_pixformat;
+bool Video::pixel_format::s_pix_initialized = false;
+std::string Video::pixel_format::s_video_interface;
+
+// This method probes the JSON object for all the pixel formats
+// allowed in the preferred-interface selected in the "Video" section
+// of the JSON config file.
+bool Video::pixel_format::pixfmt_setup(const Json::Value& cfg_root)
+{
+
+    s_video_interface = cfg_root["Config"]["Video"]["preferred-interface"].asString();
+
+    Json::Value pixfmt = cfg_root["Config"]
+                                  ["Video"]
+                                   ["frame-capture"]
+                                    [s_video_interface]
+                                     ["pixel-format"];
+
+    for (auto itr = pixfmt.begin(); itr != pixfmt.end(); itr++)
+    {
+        std::string itrkey = itr.key().asString();
+        if (itrkey != "other")
+        {
+            std::string fdesc = (*itr)["format-description"].asString();
+            s_pixformat[itrkey] = fdesc;
+        }
+    }
+
+    // DEBUG: Check the map
+    // for (auto mitr = s_pixformat.begin(); mitr != s_pixformat.end(); mitr++)
+    // {
+    //     std::cerr << "       map[" << Video::vcGlobals::adq(mitr->first) << "] = " << Video::vcGlobals::adq(mitr->second) << std::endl;
+    // }
+    s_pix_initialized = true;
+    return true;
+}
+
+// overload
+bool Video::pixel_format::pixfmt_setup(void)
+{
+    Json::Value& Root = Config::ConfigSingleton::instance()->JsonRoot();
+    return Video::pixel_format::pixfmt_setup(Root);
+}
+
+std::string Video::pixel_format::pixfmt_description(std::string pixfmtname)
+{
+    if (! s_pix_initialized) return "";
+    auto mitr = s_pixformat.find(pixfmtname);
+    if (mitr != s_pixformat.end()) return mitr->second;
+    return "";
+}
+
+void Video::pixel_format::displayPixelFormatConfig(std::ostream& ostrm)
+{
+    ostrm << "Available pixel formats for interface " << Video::vcGlobals::adq(Video::pixel_format::s_video_interface) << ":\n";
+    for (auto mitr = Video::pixel_format::s_pixformat.begin(); mitr != Video::pixel_format::s_pixformat.end(); mitr++)
+    {
+        ostrm << "     " << Video::vcGlobals::adq(mitr->first) << " pixel-format -> " << Video::vcGlobals::adq(mitr->second) << "\n";
+    }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+// function updateInternalConfigsWithJsonValues
+//////////////////////////////////////////////////////////////////////////////
 
 // This function overwrites values in Video::vcGlobals with content from
 // the json config file.
@@ -83,29 +153,11 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
 {
     using namespace Util;
 
-    std::string preferredInterface = cfg_root["Config"]["Video"]["preferred-interface"].asString();
-    // logChannelName
-    strm << "\nFrom JSON:  Getting available pixel formats for interface "
-         << "\"" << preferredInterface << "\":\n";
-
-    // Create the list
-    std::string pixlist = "        {  ";
-    Json::Value pixfmt = cfg_root["Config"]
-                                  ["Video"]
-                                   ["frame-capture"]
-                                    [preferredInterface]
-                                     ["pixel-format"];
-
-    for (auto itr = pixfmt.begin(); itr != pixfmt.end(); itr++)
-    {
-        std::string itrkey = itr.key().asString();
-        pixlist += (itrkey + "  ");
-    }
-    pixlist += "  }";
-
-    strm << pixlist;
-
-    // End of list creation
+    // TODO: This block has to move from here until after plugin_factory loads up the plugin
+    // Video::pixel_format::pixfmt_setup(cfg_root);
+    // strm << "\nFrom JSON:  ";
+    // Video::pixel_format::displayPixelFormatConfig(strm);
+    // TODO: The above block has to move from here until after plugin_factory loads up the plugin
 
     Video::vcGlobals::logChannelName = Utility::trim(cfg_root["Config"]["Logger"]["channel-name"].asString());
     strm << "\nFrom JSON:  Set logger channel-name to: " << Video::vcGlobals::logChannelName;
@@ -169,7 +221,7 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
                                                      ["plugin-file-name"].asString();
     strm << "\nFrom JSON:  Set grabber plugin file name to " << Video::vcGlobals::str_plugin_file_name;
 
-    // Video::vcGlobals::pixel_format is either "h264" or "yuyv"
+    // Video::vcGlobals::pixel_fmt is either "h264" or "yuyv"
     std::string pixelFormat = cfg_root["Config"]
                                        ["Video"]
                                         ["frame-capture"]
@@ -177,18 +229,18 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
                                           ["preferred-pixel-format"].asString();
     if (pixelFormat == "h264")
     {
-        Video::vcGlobals::pixel_format = Video::pxl_formats::h264;
+        Video::vcGlobals::pixel_fmt = Video::pxl_formats::h264;
     }
     else if (pixelFormat == "yuyv")
     {
-        Video::vcGlobals::pixel_format = Video::pxl_formats::yuyv;
+        Video::vcGlobals::pixel_fmt = Video::pxl_formats::yuyv;
     }
     else
     {
         throw std::runtime_error(std::string("ERROR in Video::updateInternalConfigsWithJsonValues(): Invalid pixel format: ") + pixelFormat + " specified");
     }
     strm << "\nFrom JSON:  Set " << Video::vcGlobals::video_grabber_name << " pixel format to "
-            << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_format];
+            << Video::vcGlobals::pixel_formats_strings[Video::vcGlobals::pixel_fmt];
 
     // Raw video output file
     Video::vcGlobals::output_process = cfg_root["Config"]
@@ -375,9 +427,9 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "    in json config:       frameRoot[\"device-name\"].asString(); \n"
          << "\n";
 
-    strm << "    Current pixel format: " << adq(frameRoot["preferred-pixel-format"].asString()) << " - description: " << vcGlobals::pixel_formats_strings[vcGlobals::pixel_format] << "\n"
+    strm << "    Current pixel format: " << adq(frameRoot["preferred-pixel-format"].asString()) << " - description: " << vcGlobals::pixel_formats_strings[vcGlobals::pixel_fmt] << "\n"
          << "    command line flag:    [ -pf pixel-format ]\n"
-         << "    in object:            vcGlobals::pixel_format (enum)\n"
+         << "    in object:            vcGlobals::pixel_fmt (enum)\n"
          << "                          (vcGlobals::pixel_formats_strings (string vector - converts enum to string)\n"
          << "    in json config:       frameRoot[\"preferred-pixel-format\"].asString(); \n"
          << "\n";
@@ -406,7 +458,9 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
     strm << "    Popen process string: " << adq( VideoCapture::video_plugin_base::popen_process_string ) << " \n"
          << "\n";
 
-    strm << "SEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n\n";
+    Video::pixel_format::displayPixelFormatConfig(strm);
+
+    strm << "\nSEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n\n";
 
 }
 
