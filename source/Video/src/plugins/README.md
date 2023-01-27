@@ -130,19 +130,21 @@ The system's **::dlopen()** and **::dlsym()** load the video capture plugin, and
     
 See [The declaration of create() and destroy() used by the plugin factory](#the-declaration-of-create-and-destroy-used-by-the-plugin-factory) above.   
 
-The base class (video_plugin_base - again, instantiated in the main executable, not the plugin) is initialized with some information about the loaded plugin,  Most importantly, the "interface pointer": 
+The base class (video_plugin_base - instantiated in the main executable after the plugin is loaded) is initialized with some information about the loaded plugin,  Most importantly, the "interface pointer": 
 
-    static video_plugin_base* video_plugin_base::vidcap_v4l2_driver_interface
+    static VideoCapture::video_plugin_base* VideoCapture::video_plugin_base::interface_ptr;
     
-is set in the base class to the address of the derived plugin object: 
+is set in the base class to the address of the derived plugin object (using the v4l2 plugin as an example): 
 
     class vidcap_v4l2_driver_interface : virtual public video_plugin_base; 
 
-which has just been loaded into the executable. (Getting to the derived methods of the loaded plugin later on during execution, simply becomes a matter of using the interface pointer with a derived virtual method).   
+which has just been loaded into the executable. (Getting to the derived methods of the loaded plugin later on during execution, simply becomes a matter of using the interface pointer with an instantiated derived virtual method).   
     
+Some of the initialization done in the factory after the interface pointer has been set, is to call a few methods in the loaded plugin to get from the plugin its own idea of what type of data it uses, and what its capabilities are (for example - pixel formats' capabilities - see the virtual *probe_pixel_format_caps()* method in the plugin's derived object).     
+     
 **Developer TODO**: Implement the **create()** and **destroy()** methods in your new plugin (use the **class VideoCapture::vidcap_v4l2_driver_interface** definition as an example).    
      
-**Please NOTE**:  The plugin factory **SHOULD NOT** be modified at all in this exercise, unless it is to fix a workaround for a well-known bug which you can see in **video_capture_plugin_factory::destroy_factory()** which I'm currently blaming on **::dlclose()** (not sure about that though).    
+**Please NOTE**:  The plugin factory **SHOULD NOT** be modified at all in this exercise, unless it is to fix a workaround for a well-known bug which you can see in **video_capture_plugin_factory::destroy_factory()** which I'm currently blaming on **::dlclose()** (not 100% sure about that though).    
 
 [(Back to the top)](#video-capture-plugins)
 
