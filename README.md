@@ -48,7 +48,7 @@ Updating README files and doing some cleanup. It will be done when it's done.
    
 **Done with the following projects:**     
      
-* Modified the Video project to use **plugins** for dealing with the different streaming interfaces (currently **v4l2** - next, **opencv**).  This involved refactoring some of the design, and much of the code.  First and formoset, the **v4l2** interface was implemented as a plugin, and next comes OpenCV - it is constantly getting pushed down in the priority list - my apologies. At startup, the main program (main_video_capture) loads the interface plugin as per the JSON config file, and it will error-exit if anything goes wrong. The interface for plugins is defined by a README file under source/Video/plugins/.      
+* Modified the Video project to use **plugins** for dealing with the different streaming interfaces (currently **v4l2** - next, **opencv**).  This involved refactoring some of the design, and much of the code.  First and formoset, the **v4l2** interface was implemented as a plugin, and next comes OpenCV - it is constantly getting pushed down in the priority list - my apologies. At startup, the main program (main_video_capture) loads the interface plugin as per the JSON config file, and it will error-exit if anything goes wrong. The interface for plugins is defined by [README.md](source/Video/src/plugins/README.md) under source/Video/plugins/.      
        
        
 * The [README file in the Video project](source/Video/README.md) is complete in its current form.  This is a  multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is recommended reading if you want to wade into these waters. (Some of the sections are slightly out of date - but do not impede forward movement.  I will be updating this doc gradually over time).     
@@ -76,9 +76,9 @@ This is controlled by the JSON config file (*video_capture.json*). Highly recomm
      
 **Next Steps**:    
     
-1. Complete and checkin the video capture plugin interface documentation.     
+1. Further development of the video capture plugin interface documentation - [source/Video/src/plugins/README.md](source/Video/src/plugins/README.md).  The document covers just about everything (Jan 2023), but will be fleshed out with more details in the future.     
      
-2. Add a Qt 5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
+2. Add a Qt5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
      
 The **README** files are still lagging behind reality by a bit.     
      
@@ -139,7 +139,7 @@ found in *...Samples/source/EnetUtil/src/main_programs/*
      
 Multiple instances of the client can be started in parallel, each sending the contents of some (any) file to the 
 server, which writes the data into its own copy of the file, and reports back to the client that it succeeded.  
-Enough information is written to the server log file to enable the user to compare each of the resulting server files to its original client side copy, to ensure that no files were left out and that the content it identical (there are potentially hundreds of output files involved in any real live test).  The server is heavily multi-threaded. Each accepted connection starts a new thread in the server to handle the connection and to receive the contents of the one file that the connection handles reliably. 
+Enough information is written to the server log file to enable the user to compare each of the resulting server files to its original client side copy, to ensure that no files were left out and that the content is identical (there are potentially hundreds of output files involved in any real live test).  The server is heavily multi-threaded. Each accepted connection starts a new thread in the server to handle the connection and to receive the contents of the one file that the connection handles reliably. 
 The basis for handling the data is the **fixed_size_array** object (see *NtwkFixedArray.hpp* below) which encapsulates an *std::array<>* object (see *NtwkFixedArray.hpp* below). All communication of data is based on this fixed size container.    
     
 In the same source directory the script **test_basic_server.bash** runs one test scenario which requires various data files (that are not checked in to this repository - some can be rather large). The script setup and use is documented at the beginning of the source file in a comment.    
