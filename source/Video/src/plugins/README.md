@@ -186,12 +186,12 @@ Within the video_capture plugin's ->run() method, early on, the **profiling thre
     
 Also, within the video_capture plugin's ->run() method the following base class facilities are used:
 
-If profiling is enabled, once a buffer contains a complete video frame, the profiling statistics are incremented by one (this is thread-safe -- all locking is handled outside of this context):    
+(1) If profiling is enabled, once a buffer contains a complete video frame, the profiling statistics are incremented by one (this is thread-safe -- all locking is handled outside of this context):    
 
     if (!isterminated() && Video::vcGlobals::profiling_enabled) 
         lret = increment_one_frame();    // member of class vidcap_v4l2_driver_interface 
 
-Once a buffer contains a complete video frame, it is shipped to the raw buffer queue (this is thread-safe -- all locking is handled outside of this context):    
+(2) Once a buffer contains a complete video frame, it is shipped to the raw buffer queue (this is thread-safe -- all locking is handled outside of this context):    
 
       // params are not shown here 
       vidcap_v4l2_driver_interface::v4l2if_process_image() 
