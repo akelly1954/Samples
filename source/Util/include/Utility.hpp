@@ -69,6 +69,12 @@ namespace Util {
         static void to_lower(std::string &str);
         static std::string to_lower(const std::string &str);
 
+        // Encapsulate string with double-quotes (or woth any other string which is desired)
+        static std::string string_enquote(const std::string& str, std::string quotedelim = std::string("\""));
+
+        // returns the string "true" or "false" based on the parameter
+        static std::string stringify_bool(bool x);
+
         // Called with errno after failure to get error string
         static std::string get_errno_message(int);
     };

@@ -58,6 +58,7 @@
 int main(int argc, const char *argv[])
 {
     using namespace Video;
+    using Util::Utility;
 
     // This vector is for lines written to the log file
     // before the logger is set up.  We will accumulate
@@ -72,7 +73,7 @@ int main(int argc, const char *argv[])
     std::string command_line_string = argv0;
     for (int ind = 1; ind < argc; ind++)
     {
-        command_line_string += (std::string(" ") + vcGlobals::adq(argv[ind]));
+        command_line_string += (std::string(" ") + Utility::string_enquote(argv[ind]));
     }
 
     ///////////////////////////////////////////////////////////
@@ -145,7 +146,7 @@ int main(int argc, const char *argv[])
        return EXIT_FAILURE;
     }
 
-    std::cerr << "Plugin Factory: plugin " << vcGlobals::adq(vcGlobals::str_plugin_file_name) << " was loaded and initialized successfully." << std::endl;
+    std::cerr << "Plugin Factory: plugin " << Utility::string_enquote(vcGlobals::str_plugin_file_name) << " was loaded and initialized successfully." << std::endl;
 
     ///////////////////////////////////////////////////////////
     // Parse the command line for video capture features

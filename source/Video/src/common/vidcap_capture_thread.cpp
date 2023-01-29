@@ -62,6 +62,7 @@ std::string VideoCapture::video_plugin_base::popen_process_string;
 void VideoCapture::video_capture(std::string cmdline)
 {
     using namespace VideoCapture;
+    using Util::Utility;
 
     auto loggerp = Util::UtilLogger::getLoggerPtr();
 
@@ -153,7 +154,7 @@ void VideoCapture::video_capture(std::string cmdline)
         filestream = Video::vcGlobals::create_runtime_conf_output_file(cmdline);
         if (filestream == NULL)
         {
-            std::cerr << "video_capture(): Failed to create " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file)
+            std::cerr << "video_capture(): Failed to create " << Utility::string_enquote(Video::vcGlobals::runtime_config_output_file)
                     << ". See details in the log file.  Exiting..." << std::endl;
 
             // a detailed error message into the log file has already been emitted by the create function
@@ -161,8 +162,8 @@ void VideoCapture::video_capture(std::string cmdline)
             throw std::runtime_error("video_capture(): Error creating runtime config detail output file. ");
         }
 
-        loggerp->info() << "\n\nDETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << "\n\n";
-        std::cerr << "\nDETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << std::endl;
+        loggerp->info() << "\n\nDETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << Utility::string_enquote(Video::vcGlobals::runtime_config_output_file) << "\n\n";
+        std::cerr << "\nDETAILED CURRENT RUNTIME CONFIGURATION DETAILS are written to " << Utility::string_enquote(Video::vcGlobals::runtime_config_output_file) << std::endl;
         Video::vcGlobals::write_to_runtime_conf_file(filestream, sstr.str());
     }
     else

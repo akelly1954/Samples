@@ -182,6 +182,30 @@ std::string Utility::to_lower(const std::string &str)
     return ts;
 }
 
+// adds double quotes to string - hello to "hello"
+// (quotedelim defaults to doublequote. Could be anything).
+std::string Utility::string_enquote(const std::string& str, std::string quotedelim)
+{
+    return quotedelim + str + quotedelim;
+}
+
+// returns the string "true" or "false" based on the parameter
+std::string Utility::stringify_bool(bool x)
+{
+    return ((x)? "true": "false");
+}
+
+
+
+
+
+
+
+
+
+
+
+
 std::string Utility::get_errno_message(int errnum)
 {
     char buf[1024];

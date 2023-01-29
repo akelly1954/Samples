@@ -94,13 +94,15 @@ bool parse(std::ostream &strm, Util::CommandLine& cmdline);
 
 bool check_input_file(std::ostream &strm, std::string input_filename, struct stat *sb, size_t & numbytesinfile)
 {
+    using Util::Utility;
+
     int errnocopy = 0;
 
     if (stat(input_filename.c_str(), sb) == -1)
     {
         errnocopy = errno;
         strm << "\nCannot perform stat() on input file \"" << input_filename << "\": "
-                << Util::Utility::get_errno_message(errnocopy) << "\n"
+                << Utility::get_errno_message(errnocopy) << "\n"
                 << std::endl;
         return false;
     }
@@ -185,7 +187,7 @@ int main(int argc, const char *argv[])
     {
         errnocopy = errno;
         std::cerr << "\nCannot open input file \"" << input_filename << "\": "
-                << Util::Utility::get_errno_message(errnocopy) << "\n"
+                << Utility::get_errno_message(errnocopy) << "\n"
                 << std::endl;
         Usage(std::cerr, argv0);
         return 1;

@@ -25,10 +25,12 @@
 #include <video_capture_globals.hpp>
 #include <vidcap_raw_queue_thread.hpp>
 #include <commandline.hpp>
+#include <Utility.hpp>
 
 void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
 {
     using namespace Video;
+    using Util::Utility;
 
     strm << "\nUsage:    " << command << " --help (or -h or help)" << "\n";
     strm << "Or:       " << command
@@ -46,7 +48,7 @@ void Video::VidCapCommandLine::Usage(std::ostream &strm, std::string command)
             << "                                        (The default is the runtime value of \"log-level\" in the Json config file).\n"
             << "              [ -loginit ]              -(no parameters) This flag enables the logging of initialization info.\n"
             << "              [ -dr [ file-name ] ]     -Write out detailed runtime configuration to the parameter \"file-name\" instead of \n"
-            << "                                        the log file. The default file-name is " << vcGlobals::adq(vcGlobals::runtime_config_output_file) << ". \n"
+            << "                                        the log file. The default file-name is " << Utility::string_enquote(vcGlobals::runtime_config_output_file) << ". \n"
             << "                                        The information provided is a snapshot of the runtime configuration after all json options \n"
             << "                                        as well as command-line options have been set, and the plugin has been loaded. \n"
             << "              [ -fg video-grabber ]     -The video frame grabber to be used. Can be one of {\"v4l2\", \"opencv\"}. (The \n"
@@ -151,8 +153,8 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
         default:
             assert (fail_int == -669);   // Bug encountered. Will cause abnormal termination
     }
-    strm << "    write-frames-to-file is set to " << Video::vcGlobals::rsb(Video::vcGlobals::write_frames_to_file)
-         << ", file name is " << Video::vcGlobals::adq(Video::vcGlobals::output_file) << "\n";
+    strm << "    write-frames-to-file is set to " << Utility::stringify_bool(Video::vcGlobals::write_frames_to_file)
+         << ", file name is " << Utility::string_enquote(Video::vcGlobals::output_file) << "\n";
 
     switch(cmdline.get_template_arg("-dr", Video::vcGlobals::runtime_config_output_file))
     {
@@ -161,18 +163,18 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             break;
         case Util::ParameterStatus::FlagPresentParameterPresent:
             Video::vcGlobals::display_runtime_config = true;
-            // strm << "Turning on display_runtime_config, using: " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << ". \n";
+            // strm << "Turning on display_runtime_config, using: " << Utility::string_enquote(Video::vcGlobals::runtime_config_output_file) << ". \n";
             break;
         case Util::ParameterStatus::FlagProvidedWithEmptyParameter:
             Video::vcGlobals::display_runtime_config = true;
             // strm << "Turning on display_runtime_config, using the default: " <<
-            //         Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << ". \n";
+            //         Utility::string_enquote(Video::vcGlobals::runtime_config_output_file) << ". \n";
             break;
         default:
             assert (fail_int == -1669);   // Bug encountered. Will cause abnormal termination
     }
-    strm << "    display_runtime_config is set to " << Video::vcGlobals::rsb(Video::vcGlobals::display_runtime_config)
-         << ", output file name is " << Video::vcGlobals::adq(Video::vcGlobals::runtime_config_output_file) << "\n";
+    strm << "    display_runtime_config is set to " << Utility::stringify_bool(Video::vcGlobals::display_runtime_config)
+         << ", output file name is " << Utility::string_enquote(Video::vcGlobals::runtime_config_output_file) << "\n";
 
     // assignment to vcGlobals happens after everything else has been assigned below.
     int fcount_value = Video::vcGlobals::framecount;

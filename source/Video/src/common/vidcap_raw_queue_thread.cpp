@@ -62,6 +62,7 @@ Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUti
 void VideoCapture::raw_buffer_queue_handler()
 {
     using namespace Video;
+    using Util::Utility;
 
     FILE *filestream = NULL;        // if write_frames_to_file
     FILE *processstream = NULL;     // if write_frames_to_process
@@ -201,7 +202,7 @@ void VideoCapture::raw_buffer_queue_handler()
             errnocopy = errno;
             loggerp->error() << "Error shutting down the process \""
                               << Video::vcGlobals::output_process << "\" on pclose(): "
-                              << Util::Utility::get_errno_message(errnocopy);
+                              << Utility::get_errno_message(errnocopy);
         }
     }
 }
@@ -247,6 +248,8 @@ void video_capture_queue::add_buffer_to_raw_queue(void *p, size_t bsize)
 // Open/truncate the output file that will hold captured frames
 FILE * VideoCapture::create_output_file()
 {
+    using Util::Utility;
+
     int errnocopy = 0;
     FILE *output_stream = NULL;
 
@@ -256,7 +259,7 @@ FILE * VideoCapture::create_output_file()
     {
         errnocopy = errno;
         loggerp->error() << "Cannot create/truncate output file \"" <<
-        Video::vcGlobals::output_file << "\": " << Util::Utility::get_errno_message(errnocopy);
+        Video::vcGlobals::output_file << "\": " << Utility::get_errno_message(errnocopy);
     }
     else
     {
@@ -268,6 +271,8 @@ FILE * VideoCapture::create_output_file()
 // Start up the process that will receive video frames in it's std input
 FILE * VideoCapture::create_output_process()
 {
+    using Util::Utility;
+
     int errnocopy = 0;
     FILE *output_stream = NULL;
 
@@ -286,7 +291,7 @@ FILE * VideoCapture::create_output_process()
     {
         errnocopy = errno;
         loggerp->error() << "create_output_process: Could not start the process \"" << actual_process
-                       << "\": " << Util::Utility::get_errno_message(errnocopy);
+                       << "\": " << Utility::get_errno_message(errnocopy);
     }
     else
     {
@@ -298,6 +303,8 @@ FILE * VideoCapture::create_output_process()
 size_t VideoCapture::write_frame_to_file(FILE *filestream,
             std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
 {
+    using Util::Utility;
+
     size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), filestream);
     int errnocopy = 0;
     size_t byteswritten = elementswritten * sizeof(uint8_t);
@@ -308,7 +315,7 @@ size_t VideoCapture::write_frame_to_file(FILE *filestream,
     {
         loggerp->error() << "VideoCapture::write_frame_to_file: fwrite returned a short count or 0 bytes written. Requested: " <<
                         sp_frame->num_valid_elements() << ", got " << byteswritten << " bytes: " <<
-                        Util::Utility::get_errno_message(errnocopy);
+                        Utility::get_errno_message(errnocopy);
     }
     fflush(filestream);
 
@@ -318,6 +325,8 @@ size_t VideoCapture::write_frame_to_file(FILE *filestream,
 size_t VideoCapture::write_frame_to_process(FILE *processstream,
             std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
 {
+    using Util::Utility;
+
     auto loggerp = Util::UtilLogger::getLoggerPtr();
 
     size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), processstream);
@@ -328,7 +337,7 @@ size_t VideoCapture::write_frame_to_process(FILE *processstream,
     {
         loggerp->error() << "VideoCapture::write_frame_to_process: fwrite returned a short count or 0 bytes written. Requested: " <<
                         sp_frame->num_valid_elements() << ", got " << byteswritten << " bytes: " <<
-                        Util::Utility::get_errno_message(errnocopy);
+                        Utility::get_errno_message(errnocopy);
     }
     fflush(processstream);
 

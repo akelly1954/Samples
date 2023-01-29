@@ -86,6 +86,7 @@ std::string Video::pixel_format::s_video_interface;
 // of the JSON config file.
 bool Video::pixel_format::pixfmt_setup(const Json::Value& cfg_root)
 {
+    using namespace Util;
 
     s_video_interface = cfg_root["Config"]["Video"]["preferred-interface"].asString();
 
@@ -108,7 +109,7 @@ bool Video::pixel_format::pixfmt_setup(const Json::Value& cfg_root)
     // DEBUG: Check the map
     // for (auto mitr = s_pixformat.begin(); mitr != s_pixformat.end(); mitr++)
     // {
-    //     std::cerr << "       map[" << Video::vcGlobals::adq(mitr->first) << "] = " << Video::vcGlobals::adq(mitr->second) << std::endl;
+    //     std::cerr << "       map[" << Utility::string_enquote(mitr->first) << "] = " << Utility::string_enquote(mitr->second) << std::endl;
     // }
     s_pix_initialized = true;
     return true;
@@ -131,10 +132,12 @@ std::string Video::pixel_format::pixfmt_description(std::string pixfmtname)
 
 void Video::pixel_format::displayPixelFormatConfig(std::ostream& ostrm)
 {
-    ostrm << "Available pixel formats for interface " << Video::vcGlobals::adq(Video::pixel_format::s_video_interface) << ":\n";
+    using namespace Util;
+
+    ostrm << "Available pixel formats for interface " << Utility::string_enquote(Video::pixel_format::s_video_interface) << ":\n";
     for (auto mitr = Video::pixel_format::s_pixformat.begin(); mitr != Video::pixel_format::s_pixformat.end(); mitr++)
     {
-        ostrm << "     " << Video::vcGlobals::adq(mitr->first) << " pixel-format -> " << Video::vcGlobals::adq(mitr->second) << "\n";
+        ostrm << "     " << Utility::string_enquote(mitr->first) << " pixel-format -> " << Utility::string_enquote(mitr->second) << "\n";
     }
 }
 
@@ -255,23 +258,11 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     return true;
 }
 
-// adds double quotes to string - hello to "hello"
-std::string Video::vcGlobals::adq(const std::string& str)
-{
-    std::string rstr = "\"";
-    rstr += str;
-    rstr +="\"";
-    return rstr;
-}
-
-std::string Video::vcGlobals::rsb(bool x)
-{
-    return ((x)? "true": "false");
-}
-
 void Video::vcGlobals::print_globals(std::ostream& strm)
 {
     using namespace Video;
+    using Util::Utility;
+
     Json::Value& Root = Config::ConfigSingleton::instance()->JsonRoot();
 
     strm << "\n\n"
@@ -282,34 +273,34 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "   the detail is modified and set: the \"struct vcGlobals\" member name, followed\n"
          << "   by the json location in the config file. \n"
          << "\n"
-         << "   PLEASE NOTE that for any configuration detail, the value stored in the " << adq("vcGlobals") << "\n"
-         << "   object is the definitive runtime value. Details that are not represented in " << adq("vcGlobals") << "\n"
+         << "   PLEASE NOTE that for any configuration detail, the value stored in the " << Utility::string_enquote("vcGlobals") << "\n"
+         << "   object is the definitive runtime value. Details that are not represented in " << Utility::string_enquote("vcGlobals") << "\n"
          << "   should be found in the json file.\n"
          << "\n"
          << "   PLEASE NOTE: The json config file name is always the logger channel name, \n"
          << "   with \".json\" appended to it.\n"
          << "\n";
 
-    strm << "Logger channel-name:      " << adq(Video::vcGlobals::logChannelName) << "\n"
-         << "    command line flag(s): NONE: can only be set in " << adq(Video::vcGlobals::logChannelName + ".json") << "\n"
+    strm << "Logger channel-name:      " << Utility::string_enquote(Video::vcGlobals::logChannelName) << "\n"
+         << "    command line flag(s): NONE: can only be set in " << Utility::string_enquote(Video::vcGlobals::logChannelName + ".json") << "\n"
          << "    in vcGlobals object:  vcGlobals::logChannelName\n"
          << "    in json config:       Root[\"Config\"][\"Logger\"][\"channel-name\"]\n"
          << "\n";
 
-    strm << "Log file name:            " << adq(vcGlobals::logFilelName) << "\n"
-         << "    command line flag(s): NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << "\n"
+    strm << "Log file name:            " << Utility::string_enquote(vcGlobals::logFilelName) << "\n"
+         << "    command line flag(s): NONE: can only be set in " << Utility::string_enquote(vcGlobals::logChannelName + ".json") << "\n"
          << "    in object:            vcGlobals::logFilelName\n"
          << "    in json config:       Root[\"Config\"][\"Logger\"][\"channel-name\"]\n"
          << "\n";
 
-    strm << "Log level:                " << adq(vcGlobals::log_level) << "\n"
+    strm << "Log level:                " << Utility::string_enquote(vcGlobals::log_level) << "\n"
          << "    command line flag:    [ -lg log-level ]\n"
          << "    in object:            vcGlobals::log_level (as string)\n"
          << "                          vcGlobals::loglevel (as enum)\n"
          << "    in json config:       Root[\"Config\"][\"Logger\"][\"log-level\"]\n"
          << "\n";
 
-    strm << "Enable profiling:         " << rsb(vcGlobals::profiling_enabled) << ", " << vcGlobals::profile_timeslice_ms << " milliseconds per slice\n"
+    strm << "Enable profiling:         " << Utility::stringify_bool(vcGlobals::profiling_enabled) << ", " << vcGlobals::profile_timeslice_ms << " milliseconds per slice\n"
          << "    command line flag:    [ -pr [ timeslice_ms ] ]\n"
          << "    in object:            vcGlobals::profiling_enabled\n"
          << "                          vcGlobals::profile_timeslice_ms\n"
@@ -317,7 +308,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "                          Root[\"Config\"][\"App-options\"][\"profile-timeslice-ms\"]\n"
          << "\n";
 
-    strm << "Enable write to file:     " << rsb(vcGlobals::write_frames_to_file) << ", output file: " << adq(vcGlobals::output_file) << "\n"
+    strm << "Enable write to file:     " << Utility::stringify_bool(vcGlobals::write_frames_to_file) << ", output file: " << Utility::string_enquote(vcGlobals::output_file) << "\n"
          << "    command line flag:    [ -fn [ file-name ] ]\n"
          << "    in object:            vcGlobals::write_frames_to_file\n"
          << "                          vcGlobals::output_file\n"
@@ -325,7 +316,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "                          Root[\"Config\"][\"App-options\"][\"output-file\"]\n"
          << "\n";
 
-    strm << "Enable write to process:  " << rsb(vcGlobals::write_frames_to_process) << ", stderr redirected to: " << adq(vcGlobals::redir_filename) << "\n"
+    strm << "Enable write to process:  " << Utility::stringify_bool(vcGlobals::write_frames_to_process) << ", stderr redirected to: " << Utility::string_enquote(vcGlobals::redir_filename) << "\n"
          << "    command line flag:    [ -proc-redir [ file ]]\n"
          << "    in object:            vcGlobals::write_frames_to_process\n"
          << "                          vcGlobals::redir_filename\n"
@@ -333,7 +324,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "                          (the stderr redirection file-name does not currently exist in the json file).\n"
          << "\n";
 
-    strm << "Frame grabber name:       " << adq(vcGlobals::video_grabber_name) << "\n"
+    strm << "Frame grabber name:       " << Utility::string_enquote(vcGlobals::video_grabber_name) << "\n"
          << "    command line flag:    [ -fg video-grabber ] \n"
          << "    in object:            vcGlobals::video_grabber_name\n"
          << "    in json config:       Root[\"Config\"][\"Video\"][\"preferred-interface\"]\n"
@@ -368,7 +359,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
     // std::cerr << "output process : " << outproc << std::endl;
     // std::string pluginlabel = Root["Config"]["Video"]["frame-capture"][vcGlobals::video_grabber_name]["name"].asString();
 
-    strm << "The loaded plugin is: " << adq(vcGlobals::str_plugin_file_name) << ".\n"
+    strm << "The loaded plugin is: " << Utility::string_enquote(vcGlobals::str_plugin_file_name) << ".\n"
          << "\n"
          << "   In order to get to specific json \"node\" associated with the plugin, as well as values \n"
          << "   within the \"node\" itself, we use several variables available from within the program in \n"
@@ -401,46 +392,46 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
     strm << "    //////////////////////////////////////////////////////////////////////////////////////////////\n"
          << "    // \n"
          << "    // So, for the currently running instance of the program, \n"
-         << "    // using:   const Json::Value& frameRoot = Root[\"Config\"][\"Video\"][\"frame-capture\"][" << adq(vcGlobals::video_grabber_name) << "]; \n"
-         << "    // and:     std::string pixformat = frameRoot[" << adq(pixformat) << "].asString(); \n"
+         << "    // using:   const Json::Value& frameRoot = Root[\"Config\"][\"Video\"][\"frame-capture\"][" << Utility::string_enquote(vcGlobals::video_grabber_name) << "]; \n"
+         << "    // and:     std::string pixformat = frameRoot[" << Utility::string_enquote(pixformat) << "].asString(); \n"
          << "    // \n"
          << "    //////////////////////////////////////////////////////////////////////////////////////////////\n"
          << "\n";
 
-    strm << "    Loaded vidcap plugin: " << adq(vcGlobals::str_plugin_file_name) << " \n"
-         << "    command line flag:    NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << " before runtime.\n"
+    strm << "    Loaded vidcap plugin: " << Utility::string_enquote(vcGlobals::str_plugin_file_name) << " \n"
+         << "    command line flag:    NONE: can only be set in " << Utility::string_enquote(vcGlobals::logChannelName + ".json") << " before runtime.\n"
          << "    in object:            vcGlobals::str_plugin_file_name\n"
          << "    in json config:       frameRoot[\"plugin-file-name\"] \n"
          << "\n";
 
     // std::string pluginlabel = frameRoot["name"].asString();
 
-    strm << "    Plugin label:         " << adq(frameRoot["name"].asString()) << " (mostly unused plugin type identifier) \n"
-         << "    command line flag:    NONE: can only be set in " << adq(vcGlobals::logChannelName + ".json") << " before runtime.\n"
+    strm << "    Plugin label:         " << Utility::string_enquote(frameRoot["name"].asString()) << " (mostly unused plugin type identifier) \n"
+         << "    command line flag:    NONE: can only be set in " << Utility::string_enquote(vcGlobals::logChannelName + ".json") << " before runtime.\n"
          << "    in object:            none\n"
          << "    in json config:       frameRoot[\"name\"] \n"
          << "\n";
 
-    strm << "    Camera device name:   " << adq(vcGlobals::str_dev_name) << "\n"
+    strm << "    Camera device name:   " << Utility::string_enquote(vcGlobals::str_dev_name) << "\n"
          << "    command line flag:    [ -dv video-device ]\n"
          << "    in object:            vcGlobals::str_dev_name\n"
          << "    in json config:       frameRoot[\"device-name\"].asString(); \n"
          << "\n";
 
-    strm << "    Current pixel format: " << adq(frameRoot["preferred-pixel-format"].asString()) << " - description: " << vcGlobals::pixel_formats_strings[vcGlobals::pixel_fmt] << "\n"
+    strm << "    Current pixel format: " << Utility::string_enquote(frameRoot["preferred-pixel-format"].asString()) << " - description: " << vcGlobals::pixel_formats_strings[vcGlobals::pixel_fmt] << "\n"
          << "    command line flag:    [ -pf pixel-format ]\n"
          << "    in object:            vcGlobals::pixel_fmt (enum)\n"
          << "                          (vcGlobals::pixel_formats_strings (string vector - converts enum to string)\n"
          << "    in json config:       frameRoot[\"preferred-pixel-format\"].asString(); \n"
          << "\n";
 
-    strm << "    Use \"other process\":  " << rsb(vcGlobals::use_other_proc) << " (output-process set in JSON file to: " << adq(frameRoot["pixel-format"]["other"]["output-process"].asString()) << ") \n"
+    strm << "    Use \"other process\":  " << Utility::stringify_bool(vcGlobals::use_other_proc) << " (output-process set in JSON file to: " << Utility::string_enquote(frameRoot["pixel-format"]["other"]["output-process"].asString()) << ") \n"
          << "    command line flag:    [ -use-other-proc ]\n"
          << "    in object:            vcGlobals::use_other_proc \n"
          << "    in json config:       frameRoot[\"pixel-format\"][\"other\"][\"output-process\"].asString(); \n"
          << "\n";
 
-    strm << "    Redirect proc stderr: " << rsb(vcGlobals::proc_redir) << " (stderr of popen process output to go to: " << adq(vcGlobals::redir_filename) << ") \n"
+    strm << "    Redirect proc stderr: " << Utility::stringify_bool(vcGlobals::proc_redir) << " (stderr of popen process output to go to: " << Utility::string_enquote(vcGlobals::redir_filename) << ") \n"
          << "    command line flag:    [ -proc-redir [ file ] ] \n"
          << "    in object:            vcGlobals::proc_redir (bool) \n"
          << "                          vcGlobals::redir_filename (string) \n"
@@ -455,12 +446,12 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
          << "    //////////////////////////////////////////////////////////////////////////////////////////////\n"
          << "\n";
 
-    strm << "    Popen process string: " << adq( VideoCapture::video_plugin_base::popen_process_string ) << " \n"
+    strm << "    Popen process string: " << Utility::string_enquote( VideoCapture::video_plugin_base::popen_process_string ) << " \n"
          << "\n";
 
     Video::pixel_format::displayPixelFormatConfig(strm);
 
-    strm << "\nSEE ALSO: The displayed help shown when running " << adq("main_video_capture --help") << "\n\n";
+    strm << "\nSEE ALSO: The displayed help shown when running " << Utility::string_enquote("main_video_capture --help") << "\n\n";
 
 }
 
@@ -468,6 +459,7 @@ void Video::vcGlobals::print_globals(std::ostream& strm)
 FILE * Video::vcGlobals::create_runtime_conf_output_file(const std::string& cmdline)
 {
     using namespace Video;
+    using Util::Utility;
 
     int errnocopy = 0;
     FILE *output_stream = NULL;
@@ -477,11 +469,11 @@ FILE * Video::vcGlobals::create_runtime_conf_output_file(const std::string& cmdl
     if ((output_stream = ::fopen (Video::vcGlobals::runtime_config_output_file.c_str(), "w+")) == NULL)
     {
         errnocopy = errno;
-        loggerp->error() << "Cannot create/truncate runtime config output file " << vcGlobals::adq(vcGlobals::runtime_config_output_file) << ": " << Util::Utility::get_errno_message(errnocopy);
+        loggerp->error() << "Cannot create/truncate runtime config output file " << Utility::string_enquote(vcGlobals::runtime_config_output_file) << ": " << Utility::get_errno_message(errnocopy);
         return NULL;
     }
 
-    loggerp->debug() << "Created/truncated runtime config output file " << vcGlobals::adq(vcGlobals::output_file);
+    loggerp->debug() << "Created/truncated runtime config output file " << Utility::string_enquote(vcGlobals::output_file);
 
     char outstr[200];
     time_t t;
@@ -498,6 +490,8 @@ FILE * Video::vcGlobals::create_runtime_conf_output_file(const std::string& cmdl
 
 size_t Video::vcGlobals::write_to_runtime_conf_file(FILE *filestream, const std::string& infostring)
 {
+    using Util::Utility;
+
     size_t elementswritten = std::fwrite(infostring.c_str(), sizeof(const char), infostring.length(), filestream);
     int errnocopy = 0;
     size_t byteswritten = elementswritten * sizeof(const char);
@@ -508,7 +502,7 @@ size_t Video::vcGlobals::write_to_runtime_conf_file(FILE *filestream, const std:
     {
         loggerp->error() << "vcGlobals::write_to_runtime_conf_file: fwrite returned a short count or 0 bytes written. Requested: " <<
                 infostring.length() << ", got " << byteswritten << " bytes: " <<
-                        Util::Utility::get_errno_message(errnocopy);
+                        Utility::get_errno_message(errnocopy);
     }
     fflush(filestream);
 

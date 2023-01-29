@@ -68,6 +68,8 @@ std::map<std::string, std::pair<std::string, std::string>>
 std::map<std::string, std::pair<std::string, std::string>>
     EnetUtil::get_all_self_ip_addresses(Log::Logger logger)
 {
+    using Util::Utility;
+
     std::map<std::string, std::pair<std::string, std::string>> emptyMap;
     std::map<std::string, std::pair<std::string, std::string>> resultMap;
 
@@ -77,7 +79,7 @@ std::map<std::string, std::pair<std::string, std::string>>
 
     if (::getifaddrs(&ifAddrStruct) != 0)
     {
-        logger.notice() << "getifaddrs() failed: " << Util::Utility::get_errno_message(errno);
+        logger.notice() << "getifaddrs() failed: " << Utility::get_errno_message(errno);
         return emptyMap;
     }
 
@@ -96,7 +98,7 @@ std::map<std::string, std::pair<std::string, std::string>>
             char addressBuffer[INET_ADDRSTRLEN];
             if (::inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN) == NULL)
             {
-                logger.notice() << "inet_ntop() failed (AF_INET): " << Util::Utility::get_errno_message(errno);
+                logger.notice() << "inet_ntop() failed (AF_INET): " << Utility::get_errno_message(errno);
                 return emptyMap;
             }
 
@@ -111,7 +113,7 @@ std::map<std::string, std::pair<std::string, std::string>>
             char addressBuffer[INET6_ADDRSTRLEN];
             if (::inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN) == NULL)
             {
-                logger.notice() << "inet_ntop() failed (AF_INET6): " << Util::Utility::get_errno_message(errno);
+                logger.notice() << "inet_ntop() failed (AF_INET6): " << Utility::get_errno_message(errno);
                 return emptyMap;
             }
             resultMap[addressBuffer] =
@@ -154,6 +156,8 @@ std::string EnetUtil::get_primary_self_ip_address(  Log::Logger logger,
                                                     std::string useIpAddress,
                                                     uint16_t udpDnsPort)
 {
+    using Util::Utility;
+
     std::string errorString;
     std::string resultString;
 
@@ -162,7 +166,7 @@ std::string EnetUtil::get_primary_self_ip_address(  Log::Logger logger,
     errnocopy = errno;
     if (sock == -1)
     {
-        logger.notice() << "::socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+        logger.notice() << "::socket() failed: " << Utility::get_errno_message(errnocopy);
         return errorString;
     }
 
@@ -177,7 +181,7 @@ std::string EnetUtil::get_primary_self_ip_address(  Log::Logger logger,
     if (err == -1)
     {
         ::close(sock);
-        logger.notice() << "::connect() failed: " << Util::Utility::get_errno_message(errnocopy);
+        logger.notice() << "::connect() failed: " << Utility::get_errno_message(errnocopy);
         return errorString;
     }
 
@@ -188,7 +192,7 @@ std::string EnetUtil::get_primary_self_ip_address(  Log::Logger logger,
     if (err == -1)
     {
         ::close(sock);
-        logger.notice() << "::getsockname() failed: " << Util::Utility::get_errno_message(errnocopy);
+        logger.notice() << "::getsockname() failed: " << Utility::get_errno_message(errnocopy);
         return errorString;
     }
 
@@ -200,7 +204,7 @@ std::string EnetUtil::get_primary_self_ip_address(  Log::Logger logger,
     if (p == NULL)
     {
         ::close(sock);
-        logger.notice() << "::inet_ntop() failed: " << Util::Utility::get_errno_message(errnocopy);
+        logger.notice() << "::inet_ntop() failed: " << Utility::get_errno_message(errnocopy);
         return errorString;
     }
 
@@ -218,6 +222,8 @@ std::string EnetUtil::get_primary_self_ip_address(  Log::Logger logger,
 // Returns empty string if not found or any errors occured.
 std::string EnetUtil::get_self_mac_address(Log::Logger logger, std::string interfaceName)
 {
+    using Util::Utility;
+
     std::string errorString;
     std::string resultString;
     int errnocopy = 0;
@@ -226,7 +232,7 @@ std::string EnetUtil::get_self_mac_address(Log::Logger logger, std::string inter
     errnocopy = errno;
     if (sock == -1)
     {
-        logger.notice() << "get_self_mac_address() - ::socket() failed: " << Util::Utility::get_errno_message(errnocopy);
+        logger.notice() << "get_self_mac_address() - ::socket() failed: " << Utility::get_errno_message(errnocopy);
         return errorString;
     }
 
@@ -239,7 +245,7 @@ std::string EnetUtil::get_self_mac_address(Log::Logger logger, std::string inter
     if (err == -1)
     {
         ::close(sock);
-        logger.notice() << "get_self_mac_address() - ::ioctl() failed: " << Util::Utility::get_errno_message(errnocopy);
+        logger.notice() << "get_self_mac_address() - ::ioctl() failed: " << Utility::get_errno_message(errnocopy);
         return errorString;
     }
 

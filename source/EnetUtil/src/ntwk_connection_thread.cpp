@@ -50,6 +50,8 @@ std::vector<std::thread> socket_connection_thread::s_connection_workers;
 auto thread_connection_handler =
         [](int socketfd, int threadno, Log::Logger logger)
 {
+    using Util::Utility;
+
     // FOR DEBUG    std::cout << "socket_connection_thread::handler(): started thread for connection "
     //                        << threadno << ", fd = " << socketfd << std::endl;
 
@@ -75,7 +77,7 @@ auto thread_connection_handler =
         return;
     }
 
-    std::vector<std::string> remote_message_vector = Util::Utility::split(message, "|");
+    std::vector<std::string> remote_message_vector = Utility::split(message, "|");
 
     // for (std::string const& str: remote_message_vector)
     // {
@@ -147,7 +149,7 @@ auto thread_connection_handler =
                 {
                     errnocopy = errno;
                     logger.error() << "Cannot create/truncate output file (thread " << threadno << ") \"" <<
-                    output_filename << "\": " << Util::Utility::get_errno_message(errnocopy);
+                    output_filename << "\": " << Utility::get_errno_message(errnocopy);
                     finished = true;
                     continue;
                 }
@@ -164,7 +166,7 @@ auto thread_connection_handler =
             {
                 errnocopy = errno;
                 logger.error() << "Error writing output file (thread " << threadno << ") \"" <<
-                output_filename << "\": " << Util::Utility::get_errno_message(errnocopy);
+                output_filename << "\": " << Utility::get_errno_message(errnocopy);
                 finished = true;
                 continue;
             }
