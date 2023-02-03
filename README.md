@@ -1,7 +1,7 @@
 
 # Welcome.
 
-This project includes mostly software I've developed, some earlier code which has been rewritten, all since January 2022.     
+This project includes new software I've developed in the past year (since Jan 2022), and some newly rewritten older code.     
       
 Whereas my original intent was to release the project into the Github mainstream, I now realize, a year later,
 that I have no intention of releasing any of it.  I mostly use Github to keep track of development, and as 
