@@ -35,6 +35,7 @@
 # local
 lastbuild_log.txt
 build/
+build-*/
 tmp/
 .swp
 .project
