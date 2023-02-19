@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QWidget>
+#include <memory>
+#include <MainLogger.hpp>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -11,7 +13,7 @@ class MainWindow : public QWidget
   Q_OBJECT
 
 public:
-  MainWindow(QWidget *parent = nullptr);
+  MainWindow(std::shared_ptr<Log::Logger> loggerp = nullptr, QWidget *parent = nullptr);
   ~MainWindow();
 
 private slots:
@@ -21,8 +23,11 @@ private slots:
 
 private:
   void makeConnections();
+  void initializeCapture();
   void closeEvent(QCloseEvent *event);
 
 private:
   Ui::MainWindow *ui;
+  std::shared_ptr<Log::Logger> uloggerp = nullptr;
+
 };

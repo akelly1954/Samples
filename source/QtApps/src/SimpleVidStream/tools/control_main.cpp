@@ -340,6 +340,7 @@ int control_main(int argc, const char *argv[])
     // Terminate the Log Manager (destroy the Output objects)
     Log::Manager::terminate();
 
+#define DOUBLE_FREE_ISSUE_FIXED
 #ifndef DOUBLE_FREE_ISSUE_FIXED
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // TODO: This is a hack to get around an issue with double-free/abort
@@ -353,7 +354,8 @@ int control_main(int argc, const char *argv[])
 
 #else // DOUBLE_FREE_ISSUE_FIXED
 
-    return return_for_exit;
+    return 0;
+    // return return_for_exit;
 
 #endif // DOUBLE_FREE_ISSUE_FIXED
 }

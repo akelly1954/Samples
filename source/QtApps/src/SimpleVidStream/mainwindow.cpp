@@ -4,11 +4,16 @@
 #include <QPushButton>
 #include <QCloseEvent>
 #include <QMessageBox>
-#include <unistd.h>
+#include <QThread>
+#include <MainLogger.hpp>
 
-MainWindow::MainWindow(QWidget *parent)
+#include <unistd.h>
+#include <memory>
+
+MainWindow::MainWindow(std::shared_ptr<Log::Logger> loggerp, QWidget *parent)
   : QWidget(parent)
   , ui(new Ui::MainWindow)
+  , uloggerp(loggerp)
 {
   ui->setupUi(this);
   makeConnections();
@@ -47,25 +52,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
   stringmap[1] = "1 No time for This ";
   stringmap[2] = "2 Is time for This ";
 
-  playwithstrings(stringmap);
-
-  ui->NoteLabel->setText(QString::fromStdString(stringmap[1]));
-
-  for (auto ind = 1; ind <= 2; ind++)
-  {
-    QString qstr = QString::fromStdString(stringmap[ind]);
-    ui->NoteLabel->setText(qstr);
-
-    QMessageBox::StandardButton resButton = QMessageBox::question( this, "SimpleVidStream",
-                                                                   qstr + "\n",
-                                                                   QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
-                                                                   QMessageBox::Yes);
-    if (resButton != QMessageBox::Yes) {
-        event->ignore();
-    } else {
-        event->accept();
-    }
-  }
+  // TODO: This is for the initial debugging stage. Get rid of this.
+  playwithstrings(stringmap, uloggerp);
 
   ui->NoteLabel->setText("Stop/Exit button clicked...");
 
