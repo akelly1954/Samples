@@ -32,12 +32,13 @@ set( JsonCpp_LIB              "${JsonCpp_BASE}/build/lib/libjsoncpp.a")
 set( LoggerCpp_LIBTYPE "STATIC")
 set( JsonCpp_LIBTYPE "SHARED")
 
-set (EnetUtil_LIB "$ENV{SampleRoot_DIR}/build/EnetUtil/libEnetUtil.so")
+set (EnetUtil_LIB "$ENV{SampleRoot_DIR}/build/lib/libEnetUtil.so")
 set (Enet_LIBTYPE "SHARED")
-set (Util_LIB "$ENV{SampleRoot_DIR}/build/Util/libUtil.so")
+set (Util_LIB "$ENV{SampleRoot_DIR}/build/lib/libUtil.so")
 set (Util_LIBTYPE "SHARED")
-set (Video_LIB "$ENV{SampleRoot_DIR}/build/Video/libVideo.so")
+set (Video_LIB "$ENV{SampleRoot_DIR}/build/lib/libVideo.so")
 set (Video_LIBTYPE "SHARED")
+set (VideoPlugin_V4L2_LIB "$ENV{SampleRoot_DIR}/build/lib/libVideoPlugin_V4L2.so")
 
 find_package( Threads )
 ####    find_package( OpenCV REQUIRED )
@@ -48,7 +49,10 @@ find_package( Threads )
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
+
 include_directories( ${CMAKE_SOURCE_DIR} )
+include_directories( ${CMAKE_SOURCE_DIR}/tools )
 include_directories( ${EnetUtil_HEADERS} )
 include_directories( ${Util_HEADERS} )
 include_directories( ${VideoPlugin_V4L2_HEADERS} )
@@ -65,9 +69,18 @@ set(PROJECT_SOURCES
         graphicsviewwidget.h
         graphicsviewwidget.cpp
         graphicsviewwidget.ui
-        resources.qrc
         TestUtil.cpp
         TestUtil.hpp
+        tools/control_main.cpp
+        tools/control_main.hpp
+        tools/logger_tools.hpp
+        tools/parse_tools.hpp
+        tools/config_tools.cpp
+        tools/config_tools.hpp
+        tools/parse_tools.cpp
+        tools/logger_tools.cpp
+        resources.qrc
+        SimpleVidStream.json
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -96,7 +109,8 @@ endif()
 target_link_libraries(
             SimpleVidStream PRIVATE 
             Qt${QT_VERSION_MAJOR}::Widgets
-            ${VideoPlugin_V4L2}
+            ${Video_LIB}
+            ###  TODO:  This is not linked in here - it's a plugin:   ${VideoPlugin_V4L2_LIB}
             ${EnetUtil_LIB}
             ${Util_LIB}
             ${LoggerCpp_LIB}
