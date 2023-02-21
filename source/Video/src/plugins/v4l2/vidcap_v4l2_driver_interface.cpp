@@ -132,12 +132,6 @@ void vidcap_v4l2_driver_interface::run()
             }
         }
 
-        if (Video::vcGlobals::profiling_enabled)
-        {
-            loggerp->debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
-            start_profiling();
-        }
-
         if (isterminated() || !v4l2if_mainloop())
         {
             if (!isterminated())
@@ -389,6 +383,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
 
 bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
 {
+    bool is_initialized = false;
     static int count = Video::vcGlobals::framecount;
     int errnocopy = 0;
 
@@ -403,10 +398,20 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
             break;
         }
 
+        if (Video::vcGlobals::profiling_enabled && !is_initialized)
+        {
+            loggerp->debug() << "vidcap_v4l2_driver_interface::run() - kick-starting the video_profiler operations.";
+            start_profiling();
+            is_initialized = true;
+        }
+
         long long lret = 0;
-        if (!isterminated() && Video::vcGlobals::profiling_enabled) lret = increment_one_frame();
-        // For debug: loggerp->debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
-        // For debug: loggerp->debug() << "From v4l2if_mainloop: profiler reports count = " << lret;
+        if (!isterminated() && Video::vcGlobals::profiling_enabled && !ispaused())
+        {
+            lret = increment_one_frame();
+            // For debug: loggerp->debug() << "From v4l2if_mainloop: Got new frame, count = " << count;
+            // For debug: loggerp->debug() << "From v4l2if_mainloop: profiler reports count = " << lret;
+        }
 
         while(! isterminated())
         {

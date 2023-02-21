@@ -127,17 +127,17 @@ public:
     }
 
     size_t size() const {
-        size_t size = max_size_;
+        std::lock_guard<std::mutex> lock(mutex_);
+        size_t _size = max_size_;
 
         if (!full_) {
             if (head_ >= tail_) {
-                size = head_ - tail_;
+                _size = head_ - tail_;
             } else {
-                size = max_size_ + head_ - tail_;
+                _size = max_size_ + head_ - tail_;
             }
         }
-
-        return size;
+        return _size;
     }
 
 private:
