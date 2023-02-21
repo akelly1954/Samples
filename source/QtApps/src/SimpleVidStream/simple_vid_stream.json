@@ -16,8 +16,8 @@
         "App-options": {
             "output-file":              "simple_vid_stream.data",
             "write-to-file":            0,
-            "write-to-process":         1,
-            "profiling":                0,
+            "write-to-process":         0,
+            "profiling":                1,
             "profile-timeslice-ms":     800
         },
 

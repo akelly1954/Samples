@@ -1,3 +1,4 @@
+#include "control_main.hpp"
 #include <mainwindow.h>
 #include <./ui_mainwindow.h>
 #include <TestUtil.hpp>
@@ -6,7 +7,8 @@
 #include <QMessageBox>
 #include <QThread>
 #include <MainLogger.hpp>
-
+#include <vidcap_capture_thread.hpp>
+#include <condition_data.hpp>
 #include <unistd.h>
 #include <memory>
 
@@ -34,27 +36,30 @@ void MainWindow::makeConnections()
 void MainWindow::StartButtonClicked()
 {
   ui->NoteLabel->setText("Start button clicked...");
+  std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
+  VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+
+  if (loggerp != nullptr) loggerp->debug() << "MainWindow: StartButtonClicked: Setting the capture engine to RESUME";
+  if (ifptr) ifptr->set_paused(false);
 }
 
 void MainWindow::PauseButtonClicked()
 {
   ui->NoteLabel->setText("Pause button clicked...");
+  std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
+  VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+
+  if (loggerp != nullptr) loggerp->debug() << "MainWindow: PauseButtonClicked: Setting pause in the capture engine to TRUE.";
+  if (ifptr) ifptr->set_paused(true);
 }
 
 void MainWindow::StopButtonClicked()
 {
-  QWidget::close();
+  QWidget::close();  // This goes to the closeEvent() override method below
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-  std::map<int,std::string> stringmap;
-  stringmap[1] = "1 No time for This ";
-  stringmap[2] = "2 Is time for This ";
-
-  // TODO: This is for the initial debugging stage. Get rid of this.
-  playwithstrings(stringmap, uloggerp);
-
   ui->NoteLabel->setText("Stop/Exit button clicked...");
 
   QMessageBox::StandardButton resButton = QMessageBox::question( this, "SimpleVidStream",
@@ -64,6 +69,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
   if (resButton != QMessageBox::Yes) {
       event->ignore();
   } else {
+      set_terminated();
+      control_main_wait_for_ready();
       event->accept();
-  }
+    }
 }
+
+void MainWindow::set_terminated(std::string str)
+{
+  std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
+  VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+
+  if (loggerp != nullptr) loggerp->debug() << "MainWindow: Exit/StopButtonClicked: Requesting NORMAL termination of video capture.";
+  if (ifptr) ifptr->set_terminated(true);
+}
+

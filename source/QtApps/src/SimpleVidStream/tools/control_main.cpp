@@ -28,7 +28,6 @@
 #include <parse_tools.hpp>
 #include <logger_tools.hpp>
 #include <video_capture_globals.hpp>
-#include <suspend_resume_test_thread.hpp>
 #include <JsonCppUtil.hpp>
 #include <commandline.hpp>
 #include <Utility.hpp>
@@ -56,17 +55,22 @@
 // override json and precompiled options, json options override precompiled options, and precompiled
 // options override nothing.
 //
+
+// This will delay return from control_main until everything is cleaned up properly.
+Util::condition_data<int> s_condvar(0);
+
 int control_main(int argc, const char *argv[])
 {
     using namespace Video;
     using Util::Utility;
 
-    // TODO: Do something about this...
+    // TODO: Do something about this...  should become a video capture method which
+    //       initializes main-specific globals close to the beginning of most/all main()'s.
     vcGlobals::logChannelName =              "simple_vid_stream";
     vcGlobals::logFilelName =                Video::vcGlobals::logChannelName + "_log.txt";
     vcGlobals::output_file =                 Video::vcGlobals::logChannelName + ".data"; // Name of file intended for the video frames
     vcGlobals::runtime_config_output_file =  Video::vcGlobals::logChannelName + "_runtime_config.txt";
-    vcGlobals::loglevel =                    Log::Log::Level::eNotice;
+    vcGlobals::loglevel =                    Log::Log::Level::eDebug;
     vcGlobals::log_level =                   Log::Log::toString(Video::vcGlobals::loglevel);
     vcGlobals::config_file_name =            Video::vcGlobals::logChannelName + ".json";
 
@@ -94,7 +98,7 @@ int control_main(int argc, const char *argv[])
     ///////////////////////////////////////////////////////////
 
     const Util::StringVector allowedFlags ={
-            "-fn", "-pr", "-dr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc", "-test-suspend-resume"
+            "-fn", "-pr", "-dr", "-fg", "-lg", "-fc", "-dv", "-proc-redir", "-pf", "-loginit", "-use-other-proc"
     };
 
     Util::CommandLine cmdline(argc, argv, allowedFlags);
@@ -213,7 +217,6 @@ int control_main(int argc, const char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
     std::thread videocapturethread;
-    std::thread trcc;  // gets activated only if vcGlobals::test_suspend_resume.
 
     bool error_termination = false;
     try
@@ -245,14 +248,6 @@ int control_main(int argc, const char *argv[])
         uloggerp->debug() << argv0 << ":  kick-starting the video capture operations.";
 
         VideoCapture::video_plugin_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
-
-        // Start the test for suspend/resume (-test-suspend-resume command line flag)
-        if (vcGlobals::test_suspend_resume)
-        {
-            // this will pause/sleep/resume/sleep a bunch of times, then signal the
-            // main thread to terminate normally.
-            trcc = std::thread (VideoCapture::test_raw_capture_ctl, argv0);
-        }
 
         /////////////////////////////////////////////////////////////////////
         // At this point all threads have started and potentially are waiting
@@ -299,12 +294,6 @@ int control_main(int argc, const char *argv[])
 
     // FINISHED:
 
-    if (vcGlobals::test_suspend_resume)
-    {
-        if (!VideoCapture::suspend_resume_test::s_terminated) VideoCapture::suspend_resume_test::set_terminated(true);
-        if (trcc.joinable()) trcc.join();
-    }
-
     // Wait for the threads to finish
     if (queuethread.joinable())
     {
@@ -335,28 +324,25 @@ int control_main(int argc, const char *argv[])
     plugin_factory.destroy_factory(dstrm);
     uloggerp->info() << dstrm.str();
 
-    uloggerp->info() << "Terminating the logger.";
+    // Free up the waiting Qt MainWindow thread if it's waiting.
+    s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+
+    // Give the rest of this thread a chance to truly be finished.
+    std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
     // Terminate the Log Manager (destroy the Output objects)
+    uloggerp->info() << "Terminating the logger.";
     Log::Manager::terminate();
 
-#define DOUBLE_FREE_ISSUE_FIXED
-#ifndef DOUBLE_FREE_ISSUE_FIXED
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // TODO: This is a hack to get around an issue with double-free/abort
-    // message after the regular return which is currently commented out (see
-    // below). This does not affect functionality at all. Restore the "return"
-    // once this is fixed.
-    //
-           ::_exit(return_for_exit);
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-#else // DOUBLE_FREE_ISSUE_FIXED
-
+    // Qt (MainWindow) gets its toes tied in a knot if the return value is not zero...
     return 0;
-    // return return_for_exit;
-
-#endif // DOUBLE_FREE_ISSUE_FIXED
 }
 
+// Called from the MainWindow thread - it will wait until we finish cleaning up this thread.
+void control_main_wait_for_ready()
+{
+  std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
+  if (loggerp)  loggerp->debug() << "control_main_wait_for_ready: WAITING";
+  s_condvar.wait_for_ready();
+  if (loggerp)  loggerp->debug() << "control_main_wait_for_ready: RELEASED";
+}

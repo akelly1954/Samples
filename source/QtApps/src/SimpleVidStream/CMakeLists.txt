@@ -69,8 +69,6 @@ set(PROJECT_SOURCES
         graphicsviewwidget.h
         graphicsviewwidget.cpp
         graphicsviewwidget.ui
-        TestUtil.cpp
-        TestUtil.hpp
         tools/control_main.cpp
         tools/control_main.hpp
         tools/logger_tools.hpp
@@ -80,7 +78,7 @@ set(PROJECT_SOURCES
         tools/parse_tools.cpp
         tools/logger_tools.cpp
         resources.qrc
-        SimpleVidStream.json
+        simple_vid_stream.json
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

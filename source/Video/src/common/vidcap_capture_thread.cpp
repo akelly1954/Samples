@@ -229,7 +229,7 @@ void VideoCapture::video_plugin_base::set_terminated(bool t)
 
     if (Video::vcGlobals::profiling_enabled)
     {
-        loggerp->debug() << "Setting profiler termination from video_plugin_base.";
+        if (loggerp) loggerp->debug() << "Setting profiler termination from video_plugin_base.";
         vidcap_profiler::set_terminated(true);
     }
 
