@@ -14,7 +14,7 @@ const char *Argv[] = {
   "SimpleVidStream",
   "-lg",
   "DBUG",
-  "-loginit",
+  // "-loginit",
   "-dr",
   "-fc",
   "800",

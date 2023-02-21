@@ -383,7 +383,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
 
 bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
 {
-    bool is_initialized = false;
+    static bool is_initialized = false;
     static int count = Video::vcGlobals::framecount;
     int errnocopy = 0;
 

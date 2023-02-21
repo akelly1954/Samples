@@ -43,9 +43,19 @@ There are other README files listed below as well. Please have fun with it all.
     
 ## Going on now:   
 
-Updating README files and doing some cleanup. It will be done when it's done.   
-   
-   
+Updating README files and doing some cleanup. It will be done when it's done.    
+     
+Developing a video streaming app in Qt6 (**SimpleVidStream**) relying on the video capture project. 
+For now this is merely a sandbox for ideas and trying things out in the **dev** branch.  But it's beginning
+to look like a real app. Work in progress - please stay tuned.     
+     
+It's become obvious that we're losing frame-rate performance in the video capture 
+project as a result of writing frames to a file and/or to an external process from
+the very same thread that's picking off shared_ptr's from the video frames in the
+raw video queue thread. The actual I/O (writing of buffers) needs to be moved to two different 
+threads.  That's the next thing on the todo list.       
+      
+      
 **Done with the following projects:**     
      
 * Modified the Video project to use **plugins** for dealing with the different streaming interfaces (currently **v4l2** - next, **opencv**).  This involved refactoring some of the design, and much of the code.  First and formoset, the **v4l2** interface was implemented as a plugin, and next comes OpenCV - it is constantly getting pushed down in the priority list - my apologies. At startup, the main program (main_video_capture) loads the interface plugin as per the JSON config file, and it will error-exit if anything goes wrong. The interface for plugins is defined by [README.md](source/Video/src/plugins/README.md) under source/Video/plugins/.      

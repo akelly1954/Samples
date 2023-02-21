@@ -122,8 +122,8 @@ void VideoCapture::raw_buffer_queue_handler()
     {
         // loggerp->debug() << "In VideoCapture::raw_buffer_queue_handler(): not terminated, waiting on condvar 1";
         video_capture_queue::s_condvar.wait_for_ready();
-
         // loggerp->debug() << "In VideoCapture::raw_buffer_queue_handler(): kick started, looping";
+
         while (!video_capture_queue::s_terminated && !video_capture_queue::s_ringbuf.empty())
         {
             // This shared_ptr serves all consumers of this particular video data buffer
