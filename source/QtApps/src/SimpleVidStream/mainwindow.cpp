@@ -69,13 +69,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
   ui->NoteLabel->setText("Stop/Exit button clicked...");
 
   QMessageBox::StandardButton resButton = QMessageBox::question( this, "SimpleVidStream",
-                                                                 tr("Are you sure?\n"),
+                                                                 tr("Click Yes to exit...\n"),
                                                                  QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
                                                                  QMessageBox::Yes);
   if (resButton != QMessageBox::Yes) {
       event->ignore();
   } else {
-      set_terminated();
+      set_terminated("MainWindow: Exit/StopButtonClicked: Requesting NORMAL termination of video capture.");
       control_main_wait_for_ready();
       event->accept();
     }
@@ -86,7 +86,7 @@ void MainWindow::set_terminated(std::string str)
   std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
   VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
 
-  if (loggerp != nullptr) loggerp->debug() << "MainWindow: Exit/StopButtonClicked: Requesting NORMAL termination of video capture.";
+  if (loggerp != nullptr) loggerp->debug() << str;
   if (ifptr) ifptr->set_terminated(true);
 }
 

@@ -17,7 +17,7 @@ const char *Argv[] = {
   // "-loginit",
   "-dr",
   "-fc",
-  "800",
+  "0",
   "-pr",
   nullptr
 };
@@ -56,10 +56,10 @@ void detect_video_capture_done(std::shared_ptr<Log::Logger> loggerp, MainWindow 
 {
   unsigned long sleepfor = 600;
 
-  if (loggerp) loggerp->debug() << "detect_video_capture_thread: Running....";
+  if (loggerp) loggerp->debug() << "detect_video_capture_done thread: Running....";
   if (!wp)
   {
-    if (loggerp) loggerp->debug() << "detect_video_capture_done:  ERROR:  MainWindow NULL pointer.";
+    if (loggerp) loggerp->debug() << "detect_video_capture_done thread:  ERROR:  MainWindow NULL pointer.";
     return;
   }
 
@@ -67,7 +67,7 @@ void detect_video_capture_done(std::shared_ptr<Log::Logger> loggerp, MainWindow 
   {
       std::this_thread::sleep_for(std::chrono::milliseconds(sleepfor));
   } while (! isControlMainFinished);
-  if (loggerp) loggerp->debug() << "Done with detect_video_capture_thread";
+  if (loggerp) loggerp->debug() << "detect_video_capture_done thread: SimpleVidStream ready to exit...";
   wp->CallCloseEvent();
   return;
 }
