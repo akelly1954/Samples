@@ -26,6 +26,12 @@ MainWindow::~MainWindow()
   delete ui;
 }
 
+// Static method used from outside Qt, to exit the app properly.
+void MainWindow::CallCloseEvent()
+{
+  QWidget::close();  // This goes to the closeEvent() override method below
+}
+
 void MainWindow::makeConnections()
 {
   connect(ui->StartButton, &QPushButton::clicked, this, &MainWindow::StartButtonClicked);

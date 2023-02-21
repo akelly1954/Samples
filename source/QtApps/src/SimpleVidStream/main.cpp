@@ -35,6 +35,7 @@ void initializeCapture()
   do
   {
     if ((loggerp = Util::UtilLogger::getLoggerPtr()) != nullptr) break;
+
     if (ct > 10)
     {
       std::cerr << "ERROR: Logger not initialized." << std::endl;
@@ -49,9 +50,34 @@ void initializeCapture()
   while (true);
 }
 
+bool isControlMainFinished = false;
+
+void detect_video_capture_done(std::shared_ptr<Log::Logger> loggerp, MainWindow *wp)
+{
+  unsigned long sleepfor = 600;
+
+  if (loggerp) loggerp->debug() << "detect_video_capture_thread: Running....";
+  if (!wp)
+  {
+    if (loggerp) loggerp->debug() << "detect_video_capture_done:  ERROR:  MainWindow NULL pointer.";
+    return;
+  }
+
+  do
+  {
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepfor));
+  } while (! isControlMainFinished);
+  if (loggerp) loggerp->debug() << "Done with detect_video_capture_thread";
+  wp->CallCloseEvent();
+  return;
+}
+
 int main(int argc, char *argv[])
 {
+  isControlMainFinished = false;
+
   std::thread control_main_thread;
+  std::thread detect_video_capture_done_thread;
 
   control_main_thread = std::thread(control_main, Argc, Argv);
   control_main_thread.detach();
@@ -66,6 +92,9 @@ int main(int argc, char *argv[])
   QApplication a(argc, argv);
   MainWindow w(loggerp);
 
+  detect_video_capture_done_thread = std::thread(detect_video_capture_done, loggerp, &w);
+  detect_video_capture_done_thread.detach();
+
   if (loggerp != nullptr) loggerp->debug() << "Main: Initializing the capture engine to PAUSE";
   if (ifptr) ifptr->set_paused(true);
 
@@ -76,6 +105,7 @@ int main(int argc, char *argv[])
               a.exec();
 
   if (control_main_thread.joinable())  control_main_thread.join();
+  if (detect_video_capture_done_thread.joinable())  detect_video_capture_done_thread.join();
 
   // TODO: _Exit() is used instead of return to avoid "double-free"
   //       exception after the return (unwinding objects).  BUG.

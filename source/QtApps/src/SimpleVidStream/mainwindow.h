@@ -21,6 +21,9 @@ private slots:
   void PauseButtonClicked();
   void StopButtonClicked();
 
+public slots:
+  void CallCloseEvent();
+
 private:
   void makeConnections();
   void initializeCapture();

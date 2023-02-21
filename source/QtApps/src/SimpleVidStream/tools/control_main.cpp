@@ -293,6 +293,7 @@ int control_main(int argc, const char *argv[])
     }
 
     // FINISHED:
+    isControlMainFinished = true;
 
     // Wait for the threads to finish
     if (queuethread.joinable())
