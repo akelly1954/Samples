@@ -34,6 +34,7 @@
 
 # local
 lastbuild_log.txt
+CMakeLists.txt.user
 build/
 build-*/
 tmp/
