@@ -24,6 +24,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <control_main.hpp>
+#include <nonqt_util.hpp>
 #include <video_capture_commandline.hpp>
 #include <parse_tools.hpp>
 #include <logger_tools.hpp>
@@ -62,6 +63,7 @@ Util::condition_data<int> s_condvar(0);
 int control_main(int argc, const char *argv[])
 {
     using namespace Video;
+    using NonQtUtil::nqUtil;
     using Util::Utility;
 
     // TODO: Do something about this...  should become a video capture method which
@@ -293,7 +295,7 @@ int control_main(int argc, const char *argv[])
     }
 
     // FINISHED:
-    isControlMainFinished = true;
+    nqUtil::isControlMainFinished = true;
 
     // Wait for the threads to finish
     if (queuethread.joinable())

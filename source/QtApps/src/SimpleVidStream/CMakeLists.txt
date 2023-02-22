@@ -77,6 +77,8 @@ set(PROJECT_SOURCES
         tools/config_tools.hpp
         tools/parse_tools.cpp
         tools/logger_tools.cpp
+        tools/nonqt_util.cpp
+        tools/nonqt_util.hpp
         resources.qrc
         simple_vid_stream.json
 )
