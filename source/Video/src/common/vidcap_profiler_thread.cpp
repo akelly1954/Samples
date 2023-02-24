@@ -87,6 +87,13 @@ void VideoCapture::video_profiler()
 
     while (!vidcap_profiler::s_terminated)
     {
+        // This covers the time period from before we actually start streaming.
+        if (profiler_frame::stats_total_num_frames == 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+            continue;
+        }
+
         logger.info() << "  ---  Profiler info...";
         logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
         logger.info() << "Number of frames received: " << profiler_frame::stats_total_num_frames;

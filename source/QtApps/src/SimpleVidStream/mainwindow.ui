@@ -22,6 +22,12 @@
     <height>350</height>
    </size>
   </property>
+  <property name="font">
+   <font>
+    <family>Sans</family>
+    <pointsize>10</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
@@ -39,17 +45,102 @@
     <number>0</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,1,0">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0,0,0">
      <property name="sizeConstraint">
       <enum>QLayout::SetDefaultConstraint</enum>
      </property>
      <item>
+      <widget class="QLabel" name="TopBarLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="font">
+        <font>
+         <family>Sans</family>
+         <pointsize>10</pointsize>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter frame count (0 means continuous): &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+       <property name="indent">
+        <number>4</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="FrameCountLineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>70</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Sans</family>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:small;&quot;&gt;Enter the frame count before clicking Start Video. &lt;br/&gt;A value of 0 means continuous streaming. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="frame">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>false</bool>
+       </property>
+       <property name="clearButtonEnabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="StartButton">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>60</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Sans</family>
+         <pointsize>10</pointsize>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="toolTip">
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start video stream&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string/>
+        <string>Start Video</string>
        </property>
        <property name="icon">
         <iconset resource="resources.qrc">
@@ -57,8 +148,8 @@
        </property>
        <property name="iconSize">
         <size>
-         <width>28</width>
-         <height>28</height>
+         <width>20</width>
+         <height>20</height>
         </size>
        </property>
        <property name="flat">
@@ -68,11 +159,24 @@
      </item>
      <item>
       <widget class="QPushButton" name="PauseButton">
+       <property name="minimumSize">
+        <size>
+         <width>60</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <family>Sans</family>
+         <pointsize>10</pointsize>
+         <bold>false</bold>
+        </font>
+       </property>
        <property name="toolTip">
         <string>Pause Video Stream</string>
        </property>
        <property name="text">
-        <string/>
+        <string>Pause Video</string>
        </property>
        <property name="icon">
         <iconset resource="resources.qrc">
@@ -80,8 +184,8 @@
        </property>
        <property name="iconSize">
         <size>
-         <width>28</width>
-         <height>28</height>
+         <width>20</width>
+         <height>20</height>
         </size>
        </property>
        <property name="flat">
@@ -90,37 +194,22 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="NoteLabel">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-         <horstretch>1</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+      <widget class="QPushButton" name="StopButton">
        <property name="minimumSize">
         <size>
-         <width>64</width>
+         <width>0</width>
          <height>0</height>
         </size>
        </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
+       <property name="font">
+        <font>
+         <family>Sans</family>
+         <pointsize>10</pointsize>
+         <bold>false</bold>
+        </font>
        </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="indent">
-        <number>3</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="StopButton">
        <property name="toolTip">
         <string>Stop video stream and Exit</string>
-       </property>
-       <property name="text">
-        <string/>
        </property>
        <property name="icon">
         <iconset resource="resources.qrc">
@@ -128,8 +217,8 @@
        </property>
        <property name="iconSize">
         <size>
-         <width>28</width>
-         <height>28</height>
+         <width>20</width>
+         <height>20</height>
         </size>
        </property>
        <property name="flat">

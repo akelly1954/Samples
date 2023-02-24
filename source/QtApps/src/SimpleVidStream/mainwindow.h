@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QWidget>
+#include <QLineEdit>
+#include <QRegularExpressionValidator>
 #include <MainLogger.hpp>
 #include <memory>
 
@@ -20,12 +22,14 @@ private slots:
   void StartButtonClicked();
   void PauseButtonClicked();
   void StopButtonClicked();
+  void onFrameCountLineEditReturnPressed();
 
 public slots:
   void CallCloseEvent();
 
 private:
   void makeConnections();
+  void setInitialState();
   void initializeCapture();
   void closeEvent(QCloseEvent *event);
   void set_terminated(std::string str = "Termination requested (Qt)");

@@ -57,15 +57,16 @@ namespace Video
         static bool profiling_enabled;
         static int  profile_timeslice_ms;
         static bool capture_finished;
-        static bool capture_pause;
         static std::string config_file_name;
 
         // Video configuration
         static std::string video_grabber_name;
-        static size_t framecount;
         static bool write_frames_to_file;
         static bool write_frames_to_process;
+        static size_t framecount;
         static std::string str_frame_count;
+        static void set_framecount(int count);
+        static void set_framecount(std::string strcount);
         static std::string str_dev_name;
         static std::string str_plugin_file_name;
         static bool proc_redir;

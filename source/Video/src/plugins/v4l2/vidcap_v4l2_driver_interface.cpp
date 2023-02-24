@@ -384,8 +384,17 @@ bool vidcap_v4l2_driver_interface::v4l2if_read_frame(void)
 bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
 {
     static bool is_initialized = false;
-    static int count = Video::vcGlobals::framecount;
     int errnocopy = 0;
+
+    if (ispaused()) loggerp->debug() << "vidcap_v4l2_driver_interface::v4l2if_mainloop: Waiting for RESUME";
+    while(ispaused())
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    static int count = Video::vcGlobals::framecount;
+    loggerp->debug() << "vidcap_v4l2_driver_interface::v4l2if_mainloop: Frame count is " << count;
+
 
     // Loop while not finished, and original int_frame_count was 0, or counter is not done counting
     // (Having a null finished callback() is an error checked for earlier).

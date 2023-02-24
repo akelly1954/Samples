@@ -17,10 +17,12 @@ int main(int argc, char *argv[])
   std::thread control_main_thread;
   std::thread detect_video_capture_done_thread;
 
+  // control_main runs in its own thread.
   control_main_thread = std::thread(control_main, nqUtil::Argc, nqUtil::Argv);
   control_main_thread.detach();
 
   // this waits for the video capture thread to start running and initialize.
+  // The function runs in this (main) thread.
   nqUtil::initializeCapture();
 
   // The significance of ifptr being non-null at this point is that
@@ -30,14 +32,20 @@ int main(int argc, char *argv[])
   // out what happened.
   VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
 
+  if (ifptr == nullptr)
+  {
+    std::cerr << "Main: Fatal ERROR: Could not obtain valid pointer to plugin.  Exiting...." << std::endl;
+
+    // See comment at the end of main()
+    ::_Exit(0);
+    // TODO: Should be - return EXIT_FAILURE;
+  }
+
   QApplication a(argc, argv);
   MainWindow w(nqUtil::loggerp);
 
   detect_video_capture_done_thread = std::thread(nqUtil::detect_video_capture_done, nqUtil::loggerp, &w);
   detect_video_capture_done_thread.detach();
-
-  if (nqUtil::loggerp != nullptr) nqUtil::loggerp->debug() << "Main: Initializing the capture engine to PAUSE";
-  if (ifptr) ifptr->set_paused(true);
 
   w.show();
 

@@ -7,10 +7,10 @@ const char * NonQtUtil::nqUtil::Argv[] ={
       "SimpleVidStream",
       "-lg",
       "DBUG",
-      // "-loginit",
+      "-loginit",
       "-dr",
       "-fc",
-      "300",
+      "0",
       "-pr",
       nullptr
 };
@@ -64,6 +64,11 @@ void NonQtUtil::nqUtil::initializeCapture()
     ct++;
   }
   while (true);
+
+  // Not using the set_paused() method since it's virtual and would require the
+  // plugin to be already loaded, which it may or may not be...
+  if (nqUtil::loggerp != nullptr) nqUtil::loggerp->debug() << "Main/initializeCapture(): Initializing the capture engine to PAUSE";
+  VideoCapture::video_plugin_base::s_paused = true;
 }
 
 

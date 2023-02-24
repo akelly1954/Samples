@@ -75,6 +75,7 @@ int control_main(int argc, const char *argv[])
     vcGlobals::loglevel =                    Log::Log::Level::eDebug;
     vcGlobals::log_level =                   Log::Log::toString(Video::vcGlobals::loglevel);
     vcGlobals::config_file_name =            Video::vcGlobals::logChannelName + ".json";
+    VideoCapture::video_plugin_base::s_paused = true;
 
     // This vector is for lines written to the log file
     // before the logger is set up.  We will accumulate
@@ -223,11 +224,12 @@ int control_main(int argc, const char *argv[])
     bool error_termination = false;
     try
     {
-        // Start the profiling thread if it's enabled. It wont do anything until it's kicked
+        // Start the profiing thread if it's enabled. It wont do anything until it's kicked
         // by the condition variable. See loaded plugin source - look for:
         // VideoCapture::vidcap_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
         if (Video::vcGlobals::profiling_enabled)
         {
+            VideoCapture::vidcap_profiler::set_terminated(false);
             profilingthread = std::thread(VideoCapture::video_profiler);
             uloggerp->debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
@@ -330,11 +332,11 @@ int control_main(int argc, const char *argv[])
     // Free up the waiting Qt MainWindow thread if it's waiting.
     s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
-    // Give the rest of this thread a chance to truly be finished.
-    std::this_thread::sleep_for(std::chrono::milliseconds(600));
-
     // Terminate the Log Manager (destroy the Output objects)
     uloggerp->info() << "Terminating the logger.";
+
+    // Give the rest of this thread a chance to truly be finished.
+    std::this_thread::sleep_for(std::chrono::milliseconds(600));
     Log::Manager::terminate();
 
     // Qt (MainWindow) gets its toes tied in a knot if the return value is not zero...

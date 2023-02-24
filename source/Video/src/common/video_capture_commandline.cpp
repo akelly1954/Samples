@@ -395,15 +395,13 @@ bool Video::VidCapCommandLine::parse(std::ostream &strm, Util::CommandLine& cmdl
             strm << "\nWARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing\n";
             std::cerr << "        WARNING: Adjusting frame count to " << fcount_value << " for suspend/resume testing" << std::endl;
         }
-        Video::vcGlobals::framecount = fcount_value;
-        Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
+        Video::vcGlobals::set_framecount(fcount_value);
         strm << "\nWARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread).\n" ;
         std::cerr << "        WARNING: Setting frame count to " << Video::vcGlobals::str_frame_count << " for testing (trcc thread)." << std::endl;
     }
     else
     {
-        Video::vcGlobals::framecount = fcount_value;
-        Video::vcGlobals::str_frame_count = std::to_string(Video::vcGlobals::framecount);
+        Video::vcGlobals::set_framecount(fcount_value);
         strm << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)\n";
         // std::cerr << "    Frame count is set to " << Video::vcGlobals::framecount << "(int) = " << Video::vcGlobals::str_frame_count << "(string)" << std::endl;
     }

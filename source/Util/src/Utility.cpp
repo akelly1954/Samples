@@ -195,17 +195,6 @@ std::string Utility::stringify_bool(bool x)
     return ((x)? "true": "false");
 }
 
-
-
-
-
-
-
-
-
-
-
-
 std::string Utility::get_errno_message(int errnum)
 {
     char buf[1024];

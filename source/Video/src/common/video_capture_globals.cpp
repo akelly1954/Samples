@@ -73,6 +73,24 @@ std::vector<std::string> Video::vcGlobals::pixel_formats_strings ={         // i
                                         "V4L2_PIX_FMT_H264: H264 with start codes"
                                     };
 
+
+//////////////////////////////////////////////////////////////////////////////
+// static methods dealing with the frame count
+//////////////////////////////////////////////////////////////////////////////
+
+// static size_t framecount;
+// static std::string str_frame_count;
+void Video::vcGlobals::set_framecount(int count)
+{
+    Video::vcGlobals::framecount = count;
+    Video::vcGlobals::str_frame_count = std::to_string(count);
+}
+void Video::vcGlobals::set_framecount(std::string strcount)
+{
+    Video::vcGlobals::str_frame_count = strcount;
+    Video::vcGlobals::framecount = static_cast<int>(strtoul(strcount.c_str(), NULL, 10));
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // struct pixel_format members and methods
 //////////////////////////////////////////////////////////////////////////////
@@ -201,7 +219,8 @@ bool Video::updateInternalConfigsWithJsonValues(std::ostream& strm, const Json::
     strm << "\nFrom JSON:  Set default video-frame-grabber to: " << Video::vcGlobals::video_grabber_name;
 
     // video grabber frame count
-    Video::vcGlobals::framecount = cfg_root["Config"]["Video"]["frame-count"].asInt();
+    int ct = cfg_root["Config"]["Video"]["frame-count"].asInt();
+    Video::vcGlobals::set_framecount(ct);
     strm << "\nFrom JSON:  Set number of frames to grab (framecount) to: " << Video::vcGlobals::framecount;
 
     ///////////// Specific video-grabber section (i.e. v4l2, opencv, etc) /////////////////
