@@ -37,6 +37,8 @@ int main(int argc, char *argv[])
 {
   using NonQtUtil::nqUtil;
 
+  QApplication a(argc, argv);
+
   nqUtil::isControlMainFinished = false;
 
   std::thread control_main_thread;
@@ -66,17 +68,17 @@ int main(int argc, char *argv[])
     // TODO: Should be - return EXIT_FAILURE;
   }
 
-  QApplication a(argc, argv);
+  // QApplication a(argc, argv);
   MainWindow w(nqUtil::loggerp);
+  w.show();
 
   detect_video_capture_done_thread = std::thread(nqUtil::detect_video_capture_done, nqUtil::loggerp, &w);
   detect_video_capture_done_thread.detach();
 
-  w.show();
-
   /* TODO: If the "return ret" below is uncommented, the "int ret" declaration needs to be as well.
    * int ret = */
-              a.exec();
+
+  a.exec();
 
   if (control_main_thread.joinable())  control_main_thread.join();
   if (detect_video_capture_done_thread.joinable())  detect_video_capture_done_thread.join();

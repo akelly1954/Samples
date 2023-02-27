@@ -94,10 +94,13 @@ void VideoCapture::video_profiler()
             continue;
         }
 
-        logger.info() << "  ---  Profiler info...";
-        logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
-        logger.info() << "Number of frames received: " << profiler_frame::stats_total_num_frames;
-        logger.info() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
+        if (Video::vcGlobals::profile_logprint_enabled)
+        {
+            logger.info() << "  ---  Profiler info...";
+            logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
+            logger.info() << "Number of frames received: " << profiler_frame::stats_total_num_frames;
+            logger.info() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
+        }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(slp));
     }
@@ -134,8 +137,8 @@ long long profiler_frame::increment_one_frame(void)
     // Use the first frame as the baseline for the total duration counter.
     if (!profiler_frame::initialized)
     {
-        profiler_frame::initialized = true;
         vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
+        profiler_frame::initialized = true;
     }
     else
     {

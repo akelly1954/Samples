@@ -44,6 +44,7 @@ MainWindow::MainWindow(std::shared_ptr<Log::Logger> loggerp, QWidget *parent)
   ui->setupUi(this);
   makeConnections();
   setInitialState();
+  profctl.operateProfilingStats();
 }
 
 MainWindow::~MainWindow()
@@ -63,6 +64,7 @@ void MainWindow::makeConnections()
   connect(ui->PauseButton, &QPushButton::clicked, this, &MainWindow::PauseButtonClicked);
   connect(ui->StopButton, &QPushButton::clicked, this, &MainWindow::StopButtonClicked);
   connect(ui->FrameCountLineEdit, &QLineEdit::returnPressed, this, &MainWindow::onFrameCountLineEditReturnPressed);
+  connect(&profctl, &ProfilingController::update_stats_signal, this, &MainWindow::UpdateProfilerStats);
 }
 
 void MainWindow::setInitialState()
@@ -80,6 +82,23 @@ void MainWindow::setInitialState()
 
   // ensure that ony numbers go in the lne edit field.
   ui->FrameCountLineEdit->setValidator(validator);
+}
+
+void MainWindow::UpdateProfilerStats(long long nframes, double fps)
+{
+#if 0
+  std::string stdstringnframes = std::to_string(nframes);
+  QString snframes = stdstringnframes.c_str();
+  std::string stdsfps = std::to_string(fps);
+  QString sfps = stdsfps.c_str();
+#endif // 0
+
+  size_t frames_requested = Video::vcGlobals::framecount;
+  QString srequested = (frames_requested == 0? QString("Continuous") : QString::number(frames_requested));
+
+  QString fstr = " Frames requested: " + srequested + "       Streamed: " + QString::number(nframes) + "       FPS: " + QString::number(fps, 'f', 3);
+  ui->TopBarLabel->setText(fstr);
+
 }
 
 void MainWindow::StartButtonClicked()
@@ -161,13 +180,6 @@ void MainWindow::onFrameCountLineEditReturnPressed()
   QString field = ui->FrameCountLineEdit->text();
   int nframes = field.toInt();
 
-  if (nframes == 0)
-  {
-    message = "Continuous video streaming selected.  Please Confirm.     ";
-    msgBox.setText(message);
-    msgBox.exec();
-  }
-
   Video::vcGlobals::set_framecount(nframes);
   loggerp->debug() << "MainWindow: Setting frame count to " << Video::vcGlobals::framecount;
   field = Video::vcGlobals::str_frame_count.c_str();
@@ -181,6 +193,12 @@ void MainWindow::onFrameCountLineEditReturnPressed()
 
   }
   ui->FrameCountLineEdit->setDisabled(true);
+  if (nframes == 0)
+  {
+    message = "Continuous video streaming selected.  Please Confirm.     ";
+    msgBox.setText(message);
+    msgBox.exec();
+  }
 
   StartButtonClicked();
 }

@@ -79,6 +79,8 @@ set(PROJECT_SOURCES
         tools/logger_tools.cpp
         tools/nonqt_util.cpp
         tools/nonqt_util.hpp
+        tools/vidstream_profiler_thread.hpp
+        tools/vidstream_profiler_thread.cpp
         resources.qrc
         simple_vid_stream.json
 )

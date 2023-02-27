@@ -56,6 +56,7 @@ namespace Video
         static std::string log_level;
         static bool profiling_enabled;
         static int  profile_timeslice_ms;
+        static bool profile_logprint_enabled;
         static bool capture_finished;
         static std::string config_file_name;
 

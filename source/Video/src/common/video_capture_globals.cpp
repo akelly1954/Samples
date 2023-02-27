@@ -51,6 +51,8 @@ Log::Log::Level Video::vcGlobals::loglevel =                    Log::Log::Level:
 std::string     Video::vcGlobals::log_level =                   Log::Log::toString(Video::vcGlobals::loglevel);
 std::string     Video::vcGlobals::config_file_name =            Video::vcGlobals::logChannelName + ".json";
 bool            Video::vcGlobals::profiling_enabled =           false;
+bool            Video::vcGlobals::profile_logprint_enabled =    true;
+
 int             Video::vcGlobals::profile_timeslice_ms =        800;
 
 // Video configuration

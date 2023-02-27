@@ -28,6 +28,7 @@
 #include <video_capture_commandline.hpp>
 #include <parse_tools.hpp>
 #include <logger_tools.hpp>
+#include <vidstream_profiler_thread.hpp>
 #include <video_capture_globals.hpp>
 #include <JsonCppUtil.hpp>
 #include <commandline.hpp>
@@ -48,13 +49,14 @@
 #include <iostream>
 #include <vector>
 
-// CONFIGURATION
+// NOTE:
 //
-// Configuration of this program is affected by the initial (compiled) defaults of certain
-// specific objects that can at run time be overwritten with values obtained from json configuration
-// file, as well as command line parameters. That is the order of precedence:  command line options
-// override json and precompiled options, json options override precompiled options, and precompiled
-// options override nothing.
+// This object mixes Qt objects with external std:: based objects (including std::thread), as well
+// as other external libraries (.so, .a, etc).  For a period of time this object will be a mess -
+// a hodge podge of slightly compatible technologies.
+//
+// As time goes on, some objects will be transitioned to Qt (QThreads, etc), while other objects
+// (Log::Logger, some condition variables) will stay as they are.  Take care.
 //
 
 // This will delay return from control_main until everything is cleaned up properly.
@@ -68,14 +70,15 @@ int control_main(int argc, const char *argv[])
 
     // TODO: Do something about this...  should become a video capture method which
     //       initializes main-specific globals close to the beginning of most/all main()'s.
-    vcGlobals::logChannelName =              "simple_vid_stream";
-    vcGlobals::logFilelName =                Video::vcGlobals::logChannelName + "_log.txt";
-    vcGlobals::output_file =                 Video::vcGlobals::logChannelName + ".data"; // Name of file intended for the video frames
-    vcGlobals::runtime_config_output_file =  Video::vcGlobals::logChannelName + "_runtime_config.txt";
-    vcGlobals::loglevel =                    Log::Log::Level::eDebug;
-    vcGlobals::log_level =                   Log::Log::toString(Video::vcGlobals::loglevel);
-    vcGlobals::config_file_name =            Video::vcGlobals::logChannelName + ".json";
-    VideoCapture::video_plugin_base::s_paused = true;
+    vcGlobals::logChannelName =                   "simple_vid_stream";
+    vcGlobals::logFilelName =                     Video::vcGlobals::logChannelName + "_log.txt";
+    vcGlobals::output_file =                      Video::vcGlobals::logChannelName + ".data"; // Name of file intended for the video frames
+    vcGlobals::runtime_config_output_file =       Video::vcGlobals::logChannelName + "_runtime_config.txt";
+    vcGlobals::loglevel =                         Log::Log::Level::eDebug;
+    vcGlobals::log_level =                        Log::Log::toString(Video::vcGlobals::loglevel);
+    vcGlobals::config_file_name =                 Video::vcGlobals::logChannelName + ".json";
+    VideoCapture::video_plugin_base::s_paused =   true;
+    Video::vcGlobals::profile_logprint_enabled =  false;     // We don't want two profilers writing to the log
 
     // This vector is for lines written to the log file
     // before the logger is set up.  We will accumulate
@@ -220,6 +223,8 @@ int control_main(int argc, const char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
     std::thread videocapturethread;
+    //    std::thread vidstreamprofilerthread;
+    ProfilingController pctl;
 
     bool error_termination = false;
     try
@@ -234,6 +239,10 @@ int control_main(int argc, const char *argv[])
             uloggerp->debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
             uloggerp->debug() << argv0 << ":  the video capture thread will kick-start the video_profiler operations.";
+
+            uloggerp->debug() << argv0 << ":  Starting the vidstream profiler thread operations.";
+            pctl.operateProfilingStats();
+            // VideoCapture::vidstream_profiler::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
         }
 
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
@@ -252,6 +261,7 @@ int control_main(int argc, const char *argv[])
         uloggerp->debug() << argv0 << ":  kick-starting the video capture operations.";
 
         VideoCapture::video_plugin_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+
 
         /////////////////////////////////////////////////////////////////////
         // At this point all threads have started and potentially are waiting
@@ -314,6 +324,9 @@ int control_main(int argc, const char *argv[])
     {
         VideoCapture::vidcap_profiler::set_terminated(true);
         if(profilingthread.joinable()) profilingthread.join();
+
+        // VideoCapture::vidstream_profiler::set_terminated(true);
+        // if(vidstreamprofilerthread.joinable()) vidstreamprofilerthread.join();
     }
 
     if (videocapturethread.joinable()) videocapturethread.join();

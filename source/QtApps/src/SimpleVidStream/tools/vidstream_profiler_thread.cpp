@@ -1,4 +1,4 @@
-#pragma once
+
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -24,44 +24,54 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
-#include <QWidget>
-#include <QLineEdit>
-#include <QRegularExpressionValidator>
+#include <QObject>
+#include <QThread>
+#include <mainwindow.h>
+#include <vidcap_raw_queue_thread.hpp>
 #include <vidstream_profiler_thread.hpp>
+#include <Utility.hpp>
+#include <NtwkUtil.hpp>
+#include <NtwkFixedArray.hpp>
+#include <video_capture_globals.hpp>
 #include <MainLogger.hpp>
-#include <memory>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <iostream>
+#include <chrono>
+#include <vector>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <assert.h>
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
+using namespace VideoCapture;
 
-class MainWindow : public QWidget
+void ProfilingWorker::runProfilingWork()
 {
-  Q_OBJECT
+  auto loggerp = Util::UtilLogger::getLoggerPtr();
 
-public:
-  MainWindow(std::shared_ptr<Log::Logger> loggerp = nullptr, QWidget *parent = nullptr);
-  ~MainWindow();
+  int slp = (Video::vcGlobals::profile_timeslice_ms/3*2) + 50;   // milliseconds
+  if (slp <= 0)
+  {
+    slp = Video::vcGlobals::profile_timeslice_ms;
+  }
+  loggerp->debug() << "ProfilingWorker: started profiling thread";
 
-private slots:
-  void StartButtonClicked();
-  void PauseButtonClicked();
-  void StopButtonClicked();
-  void onFrameCountLineEditReturnPressed();
+  while (! vidcap_profiler::s_terminated)
+  {
+      // This covers the time period from before we actually start streaming.
+      if (profiler_frame::stats_total_num_frames == 0)
+      {
+          std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+          continue;
+      }
 
-public slots:
-  void CallCloseEvent();
-  void UpdateProfilerStats(long long nframes, double fps);
+      emit postStats(VideoCapture::profiler_frame::stats_total_num_frames, VideoCapture::profiler_frame::frames_per_second());
 
-private:
-  void makeConnections();
-  void setInitialState();
-  void initializeCapture();
-  void closeEvent(QCloseEvent *event);
-  void set_terminated(std::string str = "Termination requested (Qt)");
+      std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+  }
+}
 
-private:
-  Ui::MainWindow *ui;
-  std::shared_ptr<Log::Logger> uloggerp = nullptr;
-  ProfilingController profctl;
-};
+

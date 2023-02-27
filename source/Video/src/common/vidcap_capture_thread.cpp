@@ -256,7 +256,7 @@ void VideoCapture::video_plugin_base::start_profiling()
 long long VideoCapture::video_plugin_base::increment_one_frame()
 {
     long long lret = 0;
-    if (Video::vcGlobals::profiling_enabled) lret = profiler_frame::increment_one_frame();
+    if (Video::vcGlobals::profiling_enabled && !get_interface_pointer()->ispaused()) lret = profiler_frame::increment_one_frame();
     return lret;
 }
 
