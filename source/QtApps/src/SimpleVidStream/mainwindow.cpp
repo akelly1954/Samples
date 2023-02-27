@@ -86,13 +86,6 @@ void MainWindow::setInitialState()
 
 void MainWindow::UpdateProfilerStats(long long nframes, double fps)
 {
-#if 0
-  std::string stdstringnframes = std::to_string(nframes);
-  QString snframes = stdstringnframes.c_str();
-  std::string stdsfps = std::to_string(fps);
-  QString sfps = stdsfps.c_str();
-#endif // 0
-
   size_t frames_requested = Video::vcGlobals::framecount;
   QString srequested = (frames_requested == 0? QString("Continuous") : QString::number(frames_requested));
 
@@ -103,14 +96,7 @@ void MainWindow::UpdateProfilerStats(long long nframes, double fps)
 
 void MainWindow::StartButtonClicked()
 {
-  std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
-  VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
-
-  if (loggerp != nullptr) loggerp->debug() << "MainWindow: StartButtonClicked: Setting the capture engine to RESUME";
-  if (ifptr) ifptr->set_paused(false);
-  ui->PauseButton->setEnabled(true);
-  PauseButtonClicked();
-  ui->StartButton->setDisabled(true);
+  onFrameCountLineEditReturnPressed();
 }
 
 void MainWindow::PauseButtonClicked()
@@ -173,6 +159,7 @@ void MainWindow::set_terminated(std::string str)
 void MainWindow::onFrameCountLineEditReturnPressed()
 {
   std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
+  VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
 
   QString message;
   QMessageBox msgBox;
@@ -200,7 +187,12 @@ void MainWindow::onFrameCountLineEditReturnPressed()
     msgBox.exec();
   }
 
-  StartButtonClicked();
+  if (loggerp != nullptr) loggerp->debug() << "MainWindow: Framecount entered/StartButtonClicked: Setting the capture engine to RESUME";
+  if (ifptr) ifptr->set_paused(false);
+
+  ui->PauseButton->setEnabled(true);
+  PauseButtonClicked();
+  ui->StartButton->setDisabled(true);
 }
 
 

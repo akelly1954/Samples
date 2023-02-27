@@ -70,7 +70,7 @@ void VideoCapture::video_profiler()
     Log::Logger logger = *(Util::UtilLogger::getLoggerPtr());
 
     int slp = Video::vcGlobals::profile_timeslice_ms;   //milliseconds
-    profiler_frame::initialize();
+    // TODO: Remove?   --    profiler_frame::initialize();
 
     logger.debug() << "Profiler thread started...";
     logger.info() << "Profiler thread: skipping first frame to establish a duration baseline.";
@@ -114,34 +114,44 @@ void VideoCapture::video_profiler()
 void profiler_frame::initialize(void)
 {
     using namespace std::chrono;
+
+    if (profiler_frame::initialized)
+    {
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(stats_frames_mutex);
+
+    // This is the real streaming start time point.
+    vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
 
     stats_total_num_frames = 0;
     stats_total_frame_duration_milliseconds =
             duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
+    profiler_frame::initialized = true;
 }
 
 long long profiler_frame::increment_one_frame(void)
 {
     using namespace std::chrono;
 
-    auto ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
-    if (!ifptr || ifptr->ispaused())
+    if (VideoCapture::video_plugin_base::s_paused)
     {
         // if we're paused, there are not changes to the stats.
         return stats_total_num_frames;
     }
 
-    std::lock_guard<std::mutex> lock(stats_frames_mutex);
-
-    // Use the first frame as the baseline for the total duration counter.
+    // Use the first frame as the baseline for the total duration counter:
+    // The else{} below does not count the first frame.
     if (!profiler_frame::initialized)
     {
-        vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
-        profiler_frame::initialized = true;
+        // make sure this is not locked already, otherwise - deadlock.
+        profiler_frame::initialize();
     }
     else
     {
+        std::lock_guard<std::mutex> lock(stats_frames_mutex);
+
         stats_total_num_frames++;
         stats_total_frame_duration_milliseconds =
                 duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);

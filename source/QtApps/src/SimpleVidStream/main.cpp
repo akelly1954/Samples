@@ -70,10 +70,12 @@ int main(int argc, char *argv[])
 
   // QApplication a(argc, argv);
   MainWindow w(nqUtil::loggerp);
-  w.show();
 
   detect_video_capture_done_thread = std::thread(nqUtil::detect_video_capture_done, nqUtil::loggerp, &w);
   detect_video_capture_done_thread.detach();
+
+  w.show();
+
 
   /* TODO: If the "return ret" below is uncommented, the "int ret" declaration needs to be as well.
    * int ret = */
