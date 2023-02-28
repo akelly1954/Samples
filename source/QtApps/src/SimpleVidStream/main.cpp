@@ -37,6 +37,9 @@ int main(int argc, char *argv[])
 {
   using NonQtUtil::nqUtil;
 
+  // This has to be defined as close to the beginning of execution
+  // as possible so as to become THE main thread of the app (since we
+  // have other QApplication-derived objects defined in other threads).
   QApplication a(argc, argv);
 
   nqUtil::isControlMainFinished = false;
@@ -68,7 +71,6 @@ int main(int argc, char *argv[])
     // TODO: Should be - return EXIT_FAILURE;
   }
 
-  // QApplication a(argc, argv);
   MainWindow w(nqUtil::loggerp);
 
   detect_video_capture_done_thread = std::thread(nqUtil::detect_video_capture_done, nqUtil::loggerp, &w);

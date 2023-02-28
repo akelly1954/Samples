@@ -395,6 +395,8 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
+    // TODO: Improve mechanism so that framecount changes past this point
+    // actually take effect.
     static int count = Video::vcGlobals::framecount;
     loggerp->debug() << "vidcap_v4l2_driver_interface::v4l2if_mainloop: Frame count is " << count;
 

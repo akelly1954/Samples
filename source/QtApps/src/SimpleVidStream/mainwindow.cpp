@@ -76,8 +76,8 @@ void MainWindow::setInitialState()
   // From Qt6 doc:     regexp: optional '-' followed by between 1 and 3 digits
   // From Qt6 doc:     QRegularExpression rx("-?\\d{1,3}");
 
-  // Allow only numerics - at least 1 char, at most 5 chars - 99999 max frame count
-  QRegularExpression rx("\\d{1,5}");
+  // Allow only numerics - optional space followed by at least 1 numeric char, at most 5 chars - 99999 max frame count
+  QRegularExpression rx(" ?\\d{1,5}");
   QValidator *validator = new QRegularExpressionValidator(rx, this);
 
   // ensure that ony numbers go in the lne edit field.
@@ -165,6 +165,7 @@ void MainWindow::onFrameCountLineEditReturnPressed()
   QMessageBox msgBox;
 
   QString field = ui->FrameCountLineEdit->text();
+
   int nframes = field.toInt();
 
   Video::vcGlobals::set_framecount(nframes);

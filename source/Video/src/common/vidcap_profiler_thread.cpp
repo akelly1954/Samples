@@ -74,25 +74,32 @@ void VideoCapture::video_profiler()
     int slp = Video::vcGlobals::profile_timeslice_ms;   //milliseconds
     // TODO: Remove?   --    profiler_frame::initialize();
 
-    logger.debug() << "Profiler thread started...";
-    logger.info() << "Profiler thread: skipping first frame to establish a duration baseline.";
+    logger.debug() << "video_profiler(): Profiler thread started...";
+    logger.info() << "video_profiler(): Profiler thread: skipping first frame to establish a duration baseline.";
 
     {
         std::lock_guard<std::mutex> lock(vidcap_profiler::profiler_mutex);
 
         if (!vidcap_profiler::s_terminated)
         {
-            // Wait for main() to signal us to start
+            logger.debug() << "video_profiler(): waiting for main() to kick-start thread";
             vidcap_profiler::s_condvar.wait_for_ready();
+            logger.debug() << "video_profiler(): kick-started. Continue processing.";
         }
     }
 
     while (!vidcap_profiler::s_terminated)
     {
         // This covers the time period from before we actually start streaming.
-        if (profiler_frame::stats_total_num_frames == 0)
+        int ct = 1;
+        if ((profiler_frame::stats_total_num_frames + profiler_frame::stats_total_paused_num_frames) == 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(slp));
+            std::this_thread::sleep_for(std::chrono::milliseconds(slp/2));
+            if (((ct-1) % 10) == 0)  // do this every 10 loops (about 8 seconds currently)
+            {
+                logger.debug() << "video_profiler(): Wait looping: " << (ct * slp / 2 / 100) << " seconds at a time for frames to start streaming.";
+            }
+            ct++;
             continue;
         }
 
@@ -128,8 +135,16 @@ void profiler_frame::initialize(void)
     // This is the real streaming start time point.
     vidcap_profiler::s_profiler_start_timepoint = std::chrono::steady_clock::now();
 
-    stats_total_num_frames = 0;
-    stats_total_paused_num_frames = 0;
+    if (VideoCapture::video_plugin_base::is_base_paused())
+    {
+        stats_total_num_frames = 0;
+        stats_total_paused_num_frames = 1;
+    }
+    else
+    {
+        stats_total_num_frames = 1;
+        stats_total_paused_num_frames = 0;
+    }
     stats_total_frame_duration_milliseconds =
             duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
     profiler_frame::initialized = true;
@@ -144,25 +159,33 @@ long long profiler_frame::increment_one_frame(void)
 {
     using namespace std::chrono;
 
-    if (VideoCapture::video_plugin_base::is_base_paused())
-    {
-        // if we're paused, there is no change to the stats.
-        stats_total_paused_num_frames++;
-        return profiler_frame::get_total_unpaused_num_frames();
-    }
-
     // Use the first frame as the baseline for the total duration counter:
     // The else{} below does not count the first frame.
     if (!profiler_frame::initialized)
     {
         // make sure this is not locked already, otherwise - deadlock.
         profiler_frame::initialize();
+        return 0;
+    }
+
+    if (VideoCapture::video_plugin_base::is_base_paused())
+    {
+        std::lock_guard<std::mutex> lock(stats_frames_mutex);
+
+        // if we're paused, there is no change to the stats.
+        stats_total_paused_num_frames++;
+
+        // TODO: This calculation is just a placeholder.  It's incorrect of course.
+        stats_total_frame_duration_milliseconds =
+                duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
     }
     else
     {
         std::lock_guard<std::mutex> lock(stats_frames_mutex);
 
         stats_total_num_frames++;
+
+        // TODO: This calculation is just a placeholder.  It's incorrect of course.
         stats_total_frame_duration_milliseconds =
                 duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
     }

@@ -105,10 +105,7 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:small;&quot;&gt;Enter the frame count before clicking Start Video. &lt;br/&gt;A value of 0 means continuous streaming. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
-        <string/>
-       </property>
-       <property name="frame">
-        <bool>false</bool>
+        <string> 0</string>
        </property>
        <property name="readOnly">
         <bool>false</bool>
