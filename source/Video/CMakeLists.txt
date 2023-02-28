@@ -24,7 +24,7 @@ include_directories( ${Video_HEADERS}
                      ../Util/include
                      ../EnetUtil/include
                      ${LoggerCpp_HEADERS}
-                     ${JsonCpp_HEADERS}} )
+                     ${JsonCpp_HEADERS} )
 
 add_library( ${Video} ${LIBTYPE} ${SOURCES} )
 target_link_libraries( ${Video}

@@ -101,19 +101,19 @@ void MainWindow::StartButtonClicked()
 
 void MainWindow::PauseButtonClicked()
 {
-  static bool ispaused = true;
+  static bool isDiagPaused = true;
 
   std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
   VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
 
-  if (ispaused)
+  if (isDiagPaused)
   {
     ui->PauseButton->setText("  Pause Video");
     ui->PauseButton->setIcon(QIcon(":/icons/8665214_circle_pause_icon.svg"));
 
     if (loggerp != nullptr) loggerp->debug() << "MainWindow: PauseButtonClicked: Setting pause in the capture engine to FALSE.";
     if (ifptr) ifptr->set_paused(false);
-    ispaused = false;
+    isDiagPaused = false;
   }
   else
   {
@@ -123,7 +123,7 @@ void MainWindow::PauseButtonClicked()
     if (loggerp != nullptr) loggerp->debug() <<
                               "MainWindow: PauseButtonClicked: Setting pause in the capture engine to TRUE.";
     if (ifptr) ifptr->set_paused(true);
-    ispaused = true;
+    isDiagPaused = true;
   }
 }
 

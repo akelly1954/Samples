@@ -121,6 +121,7 @@ void vidcap_v4l2_driver_interface::run()
                 loggerp->error() << "vidcap_v4l2_driver_interface::run() - v4l2if_init_device() FAILED. Terminating...";
                 set_error_terminated(true);
             }
+            loggerp->debug() << "vidcap_v4l2_driver_interface::run() - v4l2if_init_device() SUCCEEDED.";
         }
 
         if (isterminated() || !v4l2if_start_capturing())
@@ -129,6 +130,7 @@ void vidcap_v4l2_driver_interface::run()
             {
                 loggerp->error() << "vidcap_v4l2_driver_interface::run() - v4l2if_start_capturing() FAILED. Terminating...";
                 set_error_terminated(true);
+                loggerp->debug() << "vidcap_v4l2_driver_interface::run() - v4l2if_start_capturing() SUCCEEDED.";
             }
         }
 
@@ -139,6 +141,7 @@ void vidcap_v4l2_driver_interface::run()
                 loggerp->error() << "vidcap_v4l2_driver_interface::run() - v4l2if_mainloop() FAILED. Terminating...";
                 set_error_terminated(true);
             }
+            loggerp->debug() << "vidcap_v4l2_driver_interface::run() - v4l2if_mainloop() SUCCEEDED.";
         }
 
         v4l2if_stop_capturing();
@@ -402,7 +405,8 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
     {
         if (Video::vcGlobals::framecount != 0 && count-- <= 0)
         {
-            loggerp->debug() << "In v4l2if_mainloop: end of loop, count = " << count;
+            // count+1 below because of count-- above
+            loggerp->debug() << "In v4l2if_mainloop: end of loop, count = " << count+1;
             set_terminated(true);
             break;
         }
@@ -415,7 +419,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
         }
 
         long long lret = 0;
-        if (!isterminated() && Video::vcGlobals::profiling_enabled && !ispaused())
+        if (!isterminated() && Video::vcGlobals::profiling_enabled)
         {
             lret = increment_one_frame();
             // For debug: loggerp->debug() << "From v4l2if_mainloop: Got new frame, count = " << count;

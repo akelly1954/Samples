@@ -101,8 +101,8 @@ namespace VideoCapture
         virtual bool isterminated(void)                     { return video_plugin_base::s_terminated; };
         virtual void set_error_terminated (bool t)          { video_plugin_base::s_errorterminated = t; set_terminated(t); };
         virtual bool iserror_terminated(void)               { return video_plugin_base::s_errorterminated; };
-        virtual void set_paused(bool t)                     { video_plugin_base::s_paused = t; };
-        virtual bool ispaused(void)                         { return video_plugin_base::s_paused; };
+        virtual void set_paused(bool t)                     { video_plugin_base::set_base_paused(t); };
+        virtual bool ispaused(void)                         { return video_plugin_base::is_base_paused(); };
 
         // These methods are not virtual: they use the base static function explicitly:
         void start_profiling()                              { video_plugin_base::start_profiling(); }

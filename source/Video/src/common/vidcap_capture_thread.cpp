@@ -56,7 +56,7 @@ VideoCapture::video_plugin_base* VideoCapture::video_plugin_base::interface_ptr 
 
 bool VideoCapture::video_plugin_base::s_terminated = false;
 bool VideoCapture::video_plugin_base::s_errorterminated = false;
-bool VideoCapture::video_plugin_base::s_paused = false;
+bool VideoCapture::video_plugin_base::s_paused = true;  // TODO: Change back to false?
 std::string VideoCapture::video_plugin_base::popen_process_string;
 
 void VideoCapture::video_capture(std::string cmdline)
@@ -244,6 +244,26 @@ void VideoCapture::video_plugin_base::set_terminated(bool t)
     }
 }
 
+void VideoCapture::video_plugin_base::set_base_paused(bool t)
+{
+    using namespace VideoCapture;
+    using Util::Utility;
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+    std::lock_guard<std::mutex> lock(video_plugin_base::p_video_capture_mutex);
+
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        if (loggerp) loggerp->debug() << "Setting profiler base pause to " << Utility::stringify_bool(t);
+        video_plugin_base::s_paused = t;
+    }
+}
+
+bool VideoCapture::video_plugin_base::is_base_paused()
+{
+    return video_plugin_base::s_paused;
+}
+
 void VideoCapture::video_plugin_base::start_profiling()
 {
     if (Video::vcGlobals::profiling_enabled)
@@ -256,7 +276,7 @@ void VideoCapture::video_plugin_base::start_profiling()
 long long VideoCapture::video_plugin_base::increment_one_frame()
 {
     long long lret = 0;
-    if (Video::vcGlobals::profiling_enabled && !get_interface_pointer()->ispaused()) lret = profiler_frame::increment_one_frame();
+    if (Video::vcGlobals::profiling_enabled) lret = profiler_frame::increment_one_frame();
     return lret;
 }
 

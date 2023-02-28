@@ -124,6 +124,8 @@ int main(int argc, const char *argv[])
     std::string fromFactory;
     try
     {
+        VideoCapture::video_plugin_base::set_base_paused(true);  // TODO: Check out this tweak more thoroughly
+
         std::stringstream sstrm;
         if ((ifptr = plugin_factory.create_factory(sstrm)) == nullptr)
         {
@@ -131,6 +133,7 @@ int main(int argc, const char *argv[])
             std::cerr << argv0 << ":  Could not load video capture plugin. Aborting..." << std::endl;
             return EXIT_FAILURE;
         }
+
         // If all goes well, the log lines reported from the plugin
         // factory will be written into the log file (the logger does
         // not yet exist at this point in time.
@@ -168,7 +171,7 @@ int main(int argc, const char *argv[])
     }
 
     ParseOutputString = std::string("\nCommand line parsing:\n") + lstrm.str();
-    // std::cerr << ParseOutputString << std::endl;
+std::cerr << ParseOutputString << std::endl;
     delayedLinesForLogger.push_back(ParseOutputString);
 
     // if the -h flag was explicitly invoked, exit after displaying the information
@@ -187,7 +190,7 @@ int main(int argc, const char *argv[])
     setup_video_capture_logger(command_line_string, delayedLinesForLogger);
     std::shared_ptr<Log::Logger> uloggerp = Util::UtilLogger::getLoggerPtr();
 
-    if (vcGlobals::log_initialization_info)
+    // TODO: This is going to the log in either case:  if (vcGlobals::log_initialization_info)
     {
         // Logger lines from the plugin factory up above
         uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory;
@@ -233,6 +236,7 @@ int main(int argc, const char *argv[])
         uloggerp->debug() << argv0 << ":  kick-starting the video capture operations.";
 
         VideoCapture::video_plugin_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
+        VideoCapture::video_plugin_base::set_base_paused(false);
 
         // Start the test for suspend/resume (-test-suspend-resume command line flag)
         if (vcGlobals::test_suspend_resume)
