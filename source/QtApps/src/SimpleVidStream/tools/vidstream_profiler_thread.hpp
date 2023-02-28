@@ -61,7 +61,6 @@ public:
         worker->moveToThread(&ProfilingWorkerThread);
         connect(&ProfilingWorkerThread, &QThread::finished, worker, &QObject::deleteLater);
         connect(this, &ProfilingController::operateProfilingStats, worker, &ProfilingWorker::runProfilingWork);
-        // connect(worker, &ProfilingWorker::postStats, this, &ProfilingController::update_stats_signal);
         connect(worker, &ProfilingWorker::postStats, this, &ProfilingController::handleWorkerResults);
         ProfilingWorkerThread.start();
     }

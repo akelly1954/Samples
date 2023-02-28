@@ -73,10 +73,8 @@ void MainWindow::setInitialState()
   ui->PauseButton->setDisabled(true);
   ui->StopButton->setEnabled(true);
 
-  // From Qt6 doc:     regexp: optional '-' followed by between 1 and 3 digits
-  // From Qt6 doc:     QRegularExpression rx("-?\\d{1,3}");
-
-  // Allow only numerics - optional space followed by at least 1 numeric char, at most 5 chars - 99999 max frame count
+  // Allow only numerics - optional single space followed by at least 1 numeric char,
+  // at most 5 chars - 99999 max frame count
   QRegularExpression rx(" ?\\d{1,5}");
   QValidator *validator = new QRegularExpressionValidator(rx, this);
 
@@ -91,7 +89,6 @@ void MainWindow::UpdateProfilerStats(long long nframes, double fps)
 
   QString fstr = " Frames requested: " + srequested + "       Streamed: " + QString::number(nframes) + "       FPS: " + QString::number(fps, 'f', 3);
   ui->TopBarLabel->setText(fstr);
-
 }
 
 void MainWindow::StartButtonClicked()
@@ -180,13 +177,20 @@ void MainWindow::onFrameCountLineEditReturnPressed()
     ui->FrameCountLineEdit->setText(" " + field + " frames");
 
   }
-  ui->FrameCountLineEdit->setDisabled(true);
+  // ui->FrameCountLineEdit->setDisabled(true);
   if (nframes == 0)
   {
     message = "Continuous video streaming selected.  Please Confirm.     ";
     msgBox.setText(message);
     msgBox.exec();
   }
+
+  // The line edit and start button have nothing else to do - remove them.
+  ui->horizontalLayout->removeWidget(ui->FrameCountLineEdit);
+  ui->FrameCountLineEdit->hide();
+  ui->horizontalLayout->removeWidget(ui->StartButton);
+  ui->StartButton->hide();
+  // not deleting the start button and line edit - deliberately.
 
   if (loggerp != nullptr) loggerp->debug() << "MainWindow: Framecount entered/StartButtonClicked: Setting the capture engine to RESUME";
   if (ifptr) ifptr->set_paused(false);
