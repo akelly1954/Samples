@@ -59,12 +59,14 @@ namespace VideoCapture {
         static long long increment_one_frame(void);
         static double frames_per_millisecond();
         static double frames_per_second();
-        static long long get_total_unpaused_num_frames();
+        static long long get_unpaused_num_frames();
+        static long long get_paused_num_frames();
+        static long long get_total_num_frames();
 
     public:
         static std::mutex stats_frames_mutex;
 
-        // this counts the number of frames streamed including
+        // this counts the number of frames streamed not including
         // the frames received while video streaming was paused.
         static long long stats_total_num_frames;
 

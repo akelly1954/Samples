@@ -72,7 +72,7 @@ void VideoCapture::video_profiler()
     Log::Logger logger = *(Util::UtilLogger::getLoggerPtr());
 
     int slp = Video::vcGlobals::profile_timeslice_ms;   //milliseconds
-    // TODO: Remove?   --    profiler_frame::initialize();
+    profiler_frame::initialize();
 
     logger.debug() << "video_profiler(): Profiler thread started...";
     logger.info() << "video_profiler(): Profiler thread: skipping first frame to establish a duration baseline.";
@@ -80,35 +80,43 @@ void VideoCapture::video_profiler()
     {
         std::lock_guard<std::mutex> lock(vidcap_profiler::profiler_mutex);
 
-        if (!vidcap_profiler::s_terminated)
+        if (false)       // TODO:  ????  !vidcap_profiler::s_terminated)
         {
             logger.debug() << "video_profiler(): waiting for main() to kick-start thread";
             vidcap_profiler::s_condvar.wait_for_ready();
             logger.debug() << "video_profiler(): kick-started. Continue processing.";
         }
+        std::cerr << "Not waiting on condition variable." << std::endl;
     }
 
     while (!vidcap_profiler::s_terminated)
     {
         // This covers the time period from before we actually start streaming.
         int ct = 1;
-        if ((profiler_frame::stats_total_num_frames + profiler_frame::stats_total_paused_num_frames) == 0)
+        if (profiler_frame::get_total_num_frames() != 0)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(slp/2));
+            break;
+        }
+        else
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(slp/4));
             if (((ct-1) % 10) == 0)  // do this every 10 loops (about 8 seconds currently)
             {
-                logger.debug() << "video_profiler(): Wait looping: " << (ct * slp / 2 / 100) << " seconds at a time for frames to start streaming.";
+                logger.debug() << "video_profiler(): Wait looping: " << (ct * slp / 4 / 100) << " seconds at a time for frames to start streaming.";
             }
             ct++;
             continue;
         }
+    }
 
+    while (!vidcap_profiler::s_terminated)
+    {
         if (Video::vcGlobals::profile_logprint_enabled)
         {
             logger.info() << "  ---  Profiler info...";
             logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
-            logger.info() << "Total number of frames received: " << profiler_frame::stats_total_num_frames;
-            logger.info() << "Number of frames received while paused: " << profiler_frame::stats_total_paused_num_frames;
+            logger.info() << "Total number of frames received: " << profiler_frame::get_total_num_frames();
+            logger.info() << "Number of frames received while paused: " << profiler_frame::get_paused_num_frames();
             logger.info() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
         }
 
@@ -150,9 +158,20 @@ void profiler_frame::initialize(void)
     profiler_frame::initialized = true;
 }
 
-long long profiler_frame::get_total_unpaused_num_frames()
+long long profiler_frame::get_unpaused_num_frames()
 {
-    return stats_total_num_frames - stats_total_paused_num_frames;
+    return stats_total_num_frames;
+}
+
+long long profiler_frame::get_paused_num_frames()
+{
+    return stats_total_paused_num_frames;
+}
+
+long long profiler_frame::get_total_num_frames()
+{
+    long long lret = profiler_frame::get_paused_num_frames() + profiler_frame::get_unpaused_num_frames();
+    return lret;
 }
 
 long long profiler_frame::increment_one_frame(void)
@@ -165,46 +184,42 @@ long long profiler_frame::increment_one_frame(void)
     {
         // make sure this is not locked already, otherwise - deadlock.
         profiler_frame::initialize();
-        return 0;
+        return profiler_frame::get_total_num_frames();;
     }
+
+    std::lock_guard<std::mutex> lock(stats_frames_mutex);
 
     if (VideoCapture::video_plugin_base::is_base_paused())
     {
-        std::lock_guard<std::mutex> lock(stats_frames_mutex);
-
         // if we're paused, there is no change to the stats.
         stats_total_paused_num_frames++;
-
-        // TODO: This calculation is just a placeholder.  It's incorrect of course.
-        stats_total_frame_duration_milliseconds =
-                duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
     }
     else
     {
-        std::lock_guard<std::mutex> lock(stats_frames_mutex);
-
         stats_total_num_frames++;
-
-        // TODO: This calculation is just a placeholder.  It's incorrect of course.
-        stats_total_frame_duration_milliseconds =
-                duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
     }
-    return profiler_frame::get_total_unpaused_num_frames();
+
+    stats_total_frame_duration_milliseconds =
+            duration_cast<milliseconds>(steady_clock::now() - vidcap_profiler::s_profiler_start_timepoint);
+
+    long long lret = profiler_frame::get_total_num_frames();
+    return lret;
 }
 
 double profiler_frame::frames_per_millisecond()
 {
-    double ret;
+    double ret = 0.0;
     std::lock_guard<std::mutex> lock(stats_frames_mutex);
 
-    if (stats_total_frame_duration_milliseconds.count() == 0)  return 0.0;
+    if (stats_total_frame_duration_milliseconds.count() == 0)  return 0.0;  // no divide by 0
 
-    return static_cast<double>(profiler_frame::get_total_unpaused_num_frames()) /
-               static_cast<double>(stats_total_frame_duration_milliseconds.count());
+    return static_cast<double>(profiler_frame::get_total_num_frames()) /
+                                    static_cast<double>(stats_total_frame_duration_milliseconds.count());
 }
 
 double profiler_frame::frames_per_second()
 {
+    // DO NOT LOCK HERE (see frames_per_millisecond() above...)
     return frames_per_millisecond() * 1000.0;
 }
 

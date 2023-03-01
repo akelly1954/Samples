@@ -169,10 +169,11 @@ int main(int argc, const char *argv[])
         }
         return EXIT_SUCCESS;
     }
-
     ParseOutputString = std::string("\nCommand line parsing:\n") + lstrm.str();
-std::cerr << ParseOutputString << std::endl;
-    delayedLinesForLogger.push_back(ParseOutputString);
+    std::cerr << ParseOutputString << std::endl;
+
+    // the above goes into the log file regardless of --loginit
+    //                  delayedLinesForLogger.push_back(ParseOutputString);
 
     // if the -h flag was explicitly invoked, exit after displaying the information
     if (cmdline.isHelp())
@@ -190,12 +191,14 @@ std::cerr << ParseOutputString << std::endl;
     setup_video_capture_logger(command_line_string, delayedLinesForLogger);
     std::shared_ptr<Log::Logger> uloggerp = Util::UtilLogger::getLoggerPtr();
 
-    // TODO: This is going to the log in either case:  if (vcGlobals::log_initialization_info)
-    {
-        // Logger lines from the plugin factory up above
-        uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory;
-    }
-    // DEBUG:  std::cerr << "\nFrom Plugin Factory: " << fromFactory << std::endl;
+    // TODO: This is going to the log regardless of --loginit:
+    //                      if (vcGlobals::log_initialization_info)
+
+    // DEBUG:  std::cerr << "\n\nFrom Plugin Factory: " << fromFactory << std::endl;
+
+    uloggerp->debug() << "\nFrom Plugin Factory:\n" << fromFactory;
+
+    uloggerp->debug() << "\n" << ParseOutputString;
 
     /////////////////
     // Finally, get to work
@@ -217,7 +220,6 @@ std::cerr << ParseOutputString << std::endl;
             profilingthread = std::thread(VideoCapture::video_profiler);
             uloggerp->debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
-            uloggerp->debug() << argv0 << ":  the video capture thread will kick-start the video_profiler operations.";
         }
 
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
@@ -237,6 +239,12 @@ std::cerr << ParseOutputString << std::endl;
 
         VideoCapture::video_plugin_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
         VideoCapture::video_plugin_base::set_base_paused(false);
+
+
+        ifptr->start_profiling();
+        uloggerp->debug() << argv0 << ":  kick-started the video_profiler operations.";
+
+
 
         // Start the test for suspend/resume (-test-suspend-resume command line flag)
         if (vcGlobals::test_suspend_resume)

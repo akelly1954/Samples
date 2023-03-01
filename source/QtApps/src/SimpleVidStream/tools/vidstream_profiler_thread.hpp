@@ -48,7 +48,7 @@ public slots:
     void runProfilingWork();
 
 signals:
-    void postStats(long long nframes, double fps);
+    void postStats(long long numPausedframes, long long numUnpausedframes, double fps);
 };
 
 class ProfilingController : public QObject
@@ -69,12 +69,12 @@ public:
         ProfilingWorkerThread.wait();
     }
 public slots:
-    void handleWorkerResults(long long nframes, double fps)
+    void handleWorkerResults(long long numPausedframes, long long numUnpausedframes, double fps)
     {
-      emit update_stats_signal(nframes, fps);
+      emit update_stats_signal(numPausedframes, numUnpausedframes, fps);
     }
 signals:
     void operateProfilingStats();
-    void update_stats_signal(long long, double);
+    void update_stats_signal(long long, long long, double);
 };
 

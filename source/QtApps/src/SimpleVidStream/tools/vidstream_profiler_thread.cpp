@@ -68,7 +68,9 @@ void ProfilingWorker::runProfilingWork()
           continue;
       }
 
-      emit postStats(VideoCapture::profiler_frame::stats_total_num_frames, VideoCapture::profiler_frame::frames_per_second());
+      emit postStats(VideoCapture::profiler_frame::get_paused_num_frames(),
+                     profiler_frame::get_unpaused_num_frames(),
+                     VideoCapture::profiler_frame::frames_per_second());
 
       std::this_thread::sleep_for(std::chrono::milliseconds(slp));
   }

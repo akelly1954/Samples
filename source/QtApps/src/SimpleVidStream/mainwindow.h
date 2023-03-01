@@ -51,7 +51,7 @@ private slots:
 
 public slots:
   void CallCloseEvent();
-  void UpdateProfilerStats(long long nframes, double fps);
+  void UpdateProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps);
 
 private:
   void makeConnections();

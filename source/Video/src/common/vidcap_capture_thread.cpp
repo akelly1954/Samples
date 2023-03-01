@@ -137,9 +137,6 @@ void VideoCapture::video_capture(std::string cmdline)
         throw std::runtime_error(str);
     }
 
-    // Start the video interface:
-    video_plugin_base::interface_ptr->initialize();
-
     loggerp->debug() << "video_capture: kick-starting the queue operations.";
     VideoCapture::video_capture_queue::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
 
@@ -178,7 +175,18 @@ void VideoCapture::video_capture(std::string cmdline)
         loggerp->debug() << "video_capture() thread: kick-starting the suspend_resume_tests operations.";
         suspend_resume_test::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
     }
+    // Start the video interface:
+    video_plugin_base::interface_ptr->initialize();
 
+#if 0
+    // TODO: This seems to be getting in the way.  May not wind up using it:
+    if (Video::vcGlobals::profiling_enabled)
+    {
+        loggerp->debug() << "VideoCapture::video_capture: kick-starting the video_profiler operations.";
+        video_plugin_base::interface_ptr->start_profiling();
+    }
+#endif // 0
+    video_plugin_base::set_base_paused(false);
     video_plugin_base::interface_ptr->run();
     vidcap_profiler::set_terminated(true);
 }

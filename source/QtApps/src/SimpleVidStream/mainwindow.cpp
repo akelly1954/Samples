@@ -82,12 +82,15 @@ void MainWindow::setInitialState()
   ui->FrameCountLineEdit->setValidator(validator);
 }
 
-void MainWindow::UpdateProfilerStats(long long nframes, double fps)
+void MainWindow::UpdateProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps)
 {
   size_t frames_requested = Video::vcGlobals::framecount;
   QString srequested = (frames_requested == 0? QString("Continuous") : QString::number(frames_requested));
 
-  QString fstr = " Frames requested: " + srequested + "       Streamed: " + QString::number(nframes) + "       FPS: " + QString::number(fps, 'f', 3);
+  QString fstr = " Frames requested: " + srequested +
+                 "      Paused frames: " + QString::number(numPausedframes) +
+                 "      Unpaused frames: " + QString::number(numUnpausedframes) +
+                 "      FPS: " + QString::number(fps, 'f', 3);
   ui->TopBarLabel->setText(fstr);
 }
 
