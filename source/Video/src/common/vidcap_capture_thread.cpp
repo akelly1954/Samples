@@ -56,6 +56,7 @@ VideoCapture::video_plugin_base* VideoCapture::video_plugin_base::interface_ptr 
 
 bool VideoCapture::video_plugin_base::s_terminated = false;
 bool VideoCapture::video_plugin_base::s_errorterminated = false;
+int VideoCapture::video_plugin_base::s_start_streaming_frame_count = -1;
 bool VideoCapture::video_plugin_base::s_paused = true;  // TODO: Change back to false?
 std::string VideoCapture::video_plugin_base::popen_process_string;
 
@@ -178,14 +179,6 @@ void VideoCapture::video_capture(std::string cmdline)
     // Start the video interface:
     video_plugin_base::interface_ptr->initialize();
 
-#if 0
-    // TODO: This seems to be getting in the way.  May not wind up using it:
-    if (Video::vcGlobals::profiling_enabled)
-    {
-        loggerp->debug() << "VideoCapture::video_capture: kick-starting the video_profiler operations.";
-        video_plugin_base::interface_ptr->start_profiling();
-    }
-#endif // 0
     video_plugin_base::set_base_paused(false);
     video_plugin_base::interface_ptr->run();
     vidcap_profiler::set_terminated(true);
@@ -265,6 +258,19 @@ void VideoCapture::video_plugin_base::set_base_paused(bool t)
         if (loggerp) loggerp->debug() << "Setting profiler base pause to " << Utility::stringify_bool(t);
         video_plugin_base::s_paused = t;
     }
+}
+
+void VideoCapture::video_plugin_base::base_start_streaming(int framecount)
+{
+    using namespace VideoCapture;
+    // using Util::Utility;
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+    std::lock_guard<std::mutex> lock(video_plugin_base::p_video_capture_mutex);
+
+    Video::vcGlobals::set_framecount(framecount);
+    if (loggerp) loggerp->debug() << "Setting base start_streaming to " << framecount;
+    video_plugin_base::s_start_streaming_frame_count = framecount;
 }
 
 bool VideoCapture::video_plugin_base::is_base_paused()

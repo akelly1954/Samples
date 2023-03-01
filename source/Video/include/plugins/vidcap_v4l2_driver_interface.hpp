@@ -98,6 +98,7 @@ namespace VideoCapture
 
         virtual bool probe_pixel_format_caps(std::map<std::string,std::string>& pixformat_map);
         virtual std::string get_popen_process_string()      { return video_plugin_base::popen_process_string; };
+        virtual void start_streaming(int framecount = 0)    { video_plugin_base::base_start_streaming(framecount); };
         virtual bool isterminated(void)                     { return video_plugin_base::s_terminated; };
         virtual void set_error_terminated (bool t)          { video_plugin_base::s_errorterminated = t; set_terminated(t); };
         virtual bool iserror_terminated(void)               { return video_plugin_base::s_errorterminated; };

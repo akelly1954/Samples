@@ -31,7 +31,7 @@ const char * NonQtUtil::nqUtil::Argv[] ={
       "SimpleVidStream",
       "-lg",
       "DBUG",
-      "-loginit",
+      // "-loginit",
       "-dr",
       "-fc",
       "0",

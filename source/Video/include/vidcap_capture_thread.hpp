@@ -83,13 +83,17 @@ namespace VideoCapture {
         virtual void set_paused(bool t) = 0;
         virtual bool ispaused(void) = 0;
         virtual std::string get_popen_process_string() = 0;
+        virtual void start_streaming(int framecount = 0) = 0;  // framecout 0 means continuous streaming
         void set_terminated(bool t);    // Not virtual - meant to operate on the base object only
 
-        // After initialization this method should not be used.  The virtual set_paused()
+        // After initialization these methods should not be used.  The virtual versions
         // would need to be called instead.  The reason is that during initialization, the
-        // plugin that instantiates the child set_paused() is not necessarily available.
-        static void set_base_paused(bool t);   // Not virtual - meant to operate on the base object only
-        static bool is_base_paused();          // Not virtual - meant to operate on the base object only
+        // plugin that instantiates the virtual set_paused() for example, is not necessarily available.
+
+        // Not virtual - meant to operate on the base object only
+        static void base_start_streaming(int framecount);
+        static void set_base_paused(bool t);   // same (not virtual)
+        static bool is_base_paused();          // same (not virtual)
 
         //////////////////////////////////////////////////////////////////////////////////
         // Methods that use this base class to get things done in other threads
@@ -105,12 +109,12 @@ namespace VideoCapture {
         static std::mutex p_video_capture_mutex;
 
     protected:
-        static bool s_paused;  // TODO: Uncomment the one below and remove this
+        static bool s_paused;
 
     public:
         static bool s_terminated;
         static bool s_errorterminated;
-        // TODO:  static bool s_paused;
+        static int s_start_streaming_frame_count;
         static std::string popen_process_string;
     };
 

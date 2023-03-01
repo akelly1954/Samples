@@ -64,7 +64,12 @@ void MainWindow::makeConnections()
   connect(ui->PauseButton, &QPushButton::clicked, this, &MainWindow::PauseButtonClicked);
   connect(ui->StopButton, &QPushButton::clicked, this, &MainWindow::StopButtonClicked);
   connect(ui->FrameCountLineEdit, &QLineEdit::returnPressed, this, &MainWindow::onFrameCountLineEditReturnPressed);
-  connect(&profctl, &ProfilingController::update_stats_signal, this, &MainWindow::UpdateProfilerStats);
+  connect(&profctl, &ProfilingController::update_stats_signal, this, &MainWindow::NoOpProfilerStats);
+
+  // Soon after start, the ProfilingController::update_stats_signal will be disconnected:
+  // From Qt6 doc:  Disconnect everything connected to a specific signal:
+  // disconnect(myObject, &MyObject::mySignal(), nullptr, nullptr);
+  // see below...
 }
 
 void MainWindow::setInitialState()
@@ -80,6 +85,19 @@ void MainWindow::setInitialState()
 
   // ensure that ony numbers go in the lne edit field.
   ui->FrameCountLineEdit->setValidator(validator);
+}
+
+void MainWindow::NoOpProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps)
+{
+  static int ct = 0;
+  std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
+
+  if ((ct++ % 10) == 0)
+  {
+    if (loggerp != nullptr) loggerp->debug() <<
+                      "MainWindow::NoOpProfilerStats: Got paused frame count = " << numPausedframes <<
+                      ", Unpaused: " << numUnpausedframes << ", FPS = "<< fps;
+  }
 }
 
 void MainWindow::UpdateProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps)
@@ -180,7 +198,7 @@ void MainWindow::onFrameCountLineEditReturnPressed()
     ui->FrameCountLineEdit->setText(" " + field + " frames");
 
   }
-  // ui->FrameCountLineEdit->setDisabled(true);
+
   if (nframes == 0)
   {
     message = "Continuous video streaming selected.  Please Confirm.     ";
@@ -201,6 +219,14 @@ void MainWindow::onFrameCountLineEditReturnPressed()
   ui->PauseButton->setEnabled(true);
   PauseButtonClicked();
   ui->StartButton->setDisabled(true);
+
+  VideoCapture::video_plugin_base::base_start_streaming(Video::vcGlobals::framecount);
+
+  // This disconnect relies on having only one connection from this signal.
+  disconnect(&profctl, &ProfilingController::update_stats_signal, nullptr, nullptr);
+
+  // Create a new connection
+  connect(&profctl, &ProfilingController::update_stats_signal, this, &MainWindow::UpdateProfilerStats);
 }
 
 

@@ -388,14 +388,12 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
 {
     int errnocopy = 0;
 
-    if (ispaused()) loggerp->debug() << "vidcap_v4l2_driver_interface::v4l2if_mainloop: Waiting for RESUME";
-    while(ispaused())
+    for (int count = 0; video_plugin_base::s_start_streaming_frame_count == -1; count++)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        if ((count % 10) == 0) loggerp->debug() << "vidcap_v4l2_driver_interface::v4l2if_mainloop: Waiting for start-streaming call";
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
-    // TODO: Improve mechanism so that framecount changes past this point
-    // actually take effect.
     static int count = Video::vcGlobals::framecount;
     loggerp->debug() << "vidcap_v4l2_driver_interface::v4l2if_mainloop: Frame count is " << count;
 

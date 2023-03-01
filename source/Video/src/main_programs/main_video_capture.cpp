@@ -238,13 +238,11 @@ int main(int argc, const char *argv[])
         uloggerp->debug() << argv0 << ":  kick-starting the video capture operations.";
 
         VideoCapture::video_plugin_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
-        VideoCapture::video_plugin_base::set_base_paused(false);
-
-
+        ifptr->start_streaming(vcGlobals::framecount);
+        uloggerp->debug() << argv0 << ":  sent start_streaming indicator to driver.";
+        ifptr->set_paused(false);
         ifptr->start_profiling();
         uloggerp->debug() << argv0 << ":  kick-started the video_profiler operations.";
-
-
 
         // Start the test for suspend/resume (-test-suspend-resume command line flag)
         if (vcGlobals::test_suspend_resume)
