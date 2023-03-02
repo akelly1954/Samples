@@ -129,11 +129,12 @@ void VideoCapture::video_profiler()
 ///////////////////////////////////////////////////////////////////
 // Class profiler_frame members
 ///////////////////////////////////////////////////////////////////
-void profiler_frame::initialize(void)
+// the forceit param initializes a subsequent time if needed.
+void profiler_frame::initialize(bool forceit)
 {
     using namespace std::chrono;
 
-    if (profiler_frame::initialized)
+    if (!forceit || profiler_frame::initialized)
     {
         return;
     }

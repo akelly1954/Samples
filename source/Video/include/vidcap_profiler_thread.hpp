@@ -55,7 +55,8 @@ namespace VideoCapture {
     class profiler_frame
     {
     public:
-        static void initialize(void);
+        // the forceit param initializes a subsequent time if needed.
+        static void initialize(bool forceit = false);
         static long long increment_one_frame(void);
         static double frames_per_millisecond();
         static double frames_per_second();

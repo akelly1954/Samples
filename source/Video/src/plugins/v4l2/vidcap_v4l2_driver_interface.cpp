@@ -397,6 +397,7 @@ bool vidcap_v4l2_driver_interface::v4l2if_mainloop(void)
     static int count = Video::vcGlobals::framecount;
     loggerp->debug() << "vidcap_v4l2_driver_interface::v4l2if_mainloop: Frame count is " << count;
 
+    profiler_frame::initialize(true);  // resets the counters in the profiler (num frames, duration, etc)
 
     // Loop while not finished, and original int_frame_count was 0, or counter is not done counting
     // (Having a null finished callback() is an error checked for earlier).
