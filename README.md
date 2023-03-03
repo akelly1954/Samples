@@ -47,13 +47,14 @@ Updating README files and doing some cleanup. It will be done when it's done.
      
 Developing a video streaming app in Qt6 (**SimpleVidStream**) relying on the video capture project. 
 For now this is merely a sandbox for ideas and trying things out in the **dev** branch.  But it's beginning
-to look like a real app. Work in progress - please stay tuned.     
+to look like a real app. Work in progress - please stay tuned. 
+
+As a sidenote, to see how that project (**SimpleVidStream**) is progressing, see *.../source/QtApps/src/SimpleVidStream*. 
+The project is built by **QtCreator** with **cmake** (using **ninja**, not **make**) and does not participate in the 
+complete build of the **Samples** project.  To build it, you have to go to the above directory, and run **qtcreator** 
+(after Qt6 and all other requirements have been installed).  Currently the app looks great, and is fully functional except for... actually showing the streamed video.  That's the part I'm working on right now (3/2/2023).    
      
-It's become obvious that we're losing frame-rate performance in the video capture 
-project as a result of writing frames to a file and/or to an external process from
-the very same thread that's picking off shared_ptr's from the video frames in the
-raw video queue thread. The actual I/O (writing of buffers) needs to be moved to two different 
-threads.  That's the next thing on the todo list.       
+~~It's become obvious that we're losing frame-rate performance in the video capture project as a result of writing frames to a file and/or to an external process from the very same thread that's picking off shared_ptr's from the video frames in the raw video queue thread. The actual I/O (writing of buffers) needs to be moved to two different threads. That's the next thing on the todo list.~~   Or...  maybe not so obvious.  Turns out that there were a few bugs in the profiling mechanism that were the actual cause for the decay in performance reported by the profiling mechanism. Those bugs are now fixed, and performance is good.  However, it might actually be a good idea to split out two additional threads regardless.  But not at a higher priority than other items on the todo  list.     
       
       
 **Done with the following projects:**     
@@ -88,7 +89,7 @@ This is controlled by the JSON config file (*video_capture.json*). Highly recomm
     
 1. Further development of the video capture plugin interface documentation - [source/Video/src/plugins/README.md](source/Video/src/plugins/README.md).  The document covers just about everything (Jan 2023), but will be fleshed out with more details in the future.     
      
-2. Add a Qt5 program that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
+2. Add a Qt5 program (ongoing - now Qt6) that will display grabbed frames from either video interface (v4l2 or opencv), change dynamic parameters in the **main_video_capture** interface and observe changes in performance. This will include writing out new JSON files to take snapshots of configuration.    
      
 The **README** files are still lagging behind reality by a bit.     
      
