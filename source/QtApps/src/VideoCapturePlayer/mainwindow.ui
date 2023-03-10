@@ -232,29 +232,10 @@
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="videoLayout" stretch="0">
-     <item>
-      <widget class="VideoWidget" name="genericQWidget" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>1</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-     </item>
-    </layout>
+    <layout class="QVBoxLayout" name="videoLayout" stretch=""/>
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>VideoWidget</class>
-   <extends>QWidget</extends>
-   <header>videowidget.hpp</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>

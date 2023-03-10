@@ -61,9 +61,6 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
-        videowidget.ui
-        videowidget.hpp
-        videowidget.cpp
         protovideoplayer.hpp
         protovideoplayer.cpp
         tools/control_main.cpp
@@ -81,6 +78,9 @@ set(PROJECT_SOURCES
         resources.qrc
         video_capture_player.json
 )
+# videowidget.ui
+# videowidget.hpp
+# videowidget.cpp
 # video_stream_buffers.hpp
 # video_stream_buffers.cpp
 
