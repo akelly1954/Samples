@@ -31,6 +31,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="accessibleName">
+   <string>VideoCapturePlayer</string>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
    <property name="leftMargin">
     <number>0</number>

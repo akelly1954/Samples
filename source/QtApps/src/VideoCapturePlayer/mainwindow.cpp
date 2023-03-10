@@ -43,9 +43,11 @@ MainWindow::MainWindow(std::shared_ptr<Log::Logger> loggerp, QWidget *parent)
     // , streamctl(ui)
 {
     ui->setupUi(this);
+    player = new VideoPlayer(this, ui);
     makeConnections();
     setInitialState();
     profctl.operateProfilingStats();
+
     // VidstreamController::setupVideoPlayer(ui);
     // streamctl.operateVidstreamThread();
 }

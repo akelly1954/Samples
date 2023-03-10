@@ -64,6 +64,8 @@ set(PROJECT_SOURCES
         videowidget.ui
         videowidget.hpp
         videowidget.cpp
+        protovideoplayer.hpp
+        protovideoplayer.cpp
         tools/control_main.cpp
         tools/control_main.hpp
         tools/logger_tools.hpp

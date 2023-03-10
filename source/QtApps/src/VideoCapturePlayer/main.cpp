@@ -38,7 +38,8 @@
 #include <QtCore/QCommandLineParser>
 #include <QtCore/QDir>
 #include <QtCore/QUrl>
-#include <QtWidgets/QApplication>
+#include <QApplication>
+// #include <QtWidgets/QApplication>
 
 void setupQApplication(QApplication *app)
 {
@@ -63,6 +64,7 @@ int main(int argc, char *argv[])
     // as possible so as to become THE main thread of the app (since we
     // have other QApplication-derived objects defined in other threads).
     QApplication a(argc, argv);
+    setupQApplication(&a);
 
     nqUtil::isControlMainFinished = false;
 

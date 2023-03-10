@@ -26,13 +26,17 @@
 
 #include <./ui_mainwindow.h>
 #include <QWidget>
-#include <QtWidgets/QApplication>
+#include <QApplication>
+// #include <QtWidgets/QApplication>
 #include <QLineEdit>
 #include <QRegularExpressionValidator>
 #include <vidstream_profiler_thread.hpp>
 // #include <video_stream_buffers.hpp>
+#include <protovideoplayer.hpp>
 #include <MainLogger.hpp>
 #include <memory>
+
+class VideoPlayer;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -68,5 +72,6 @@ private:
   Ui::MainWindow *ui;
   std::shared_ptr<Log::Logger> uloggerp;
   ProfilingController profctl;
+  VideoPlayer *player;
   // VidstreamController streamctl;
 };
