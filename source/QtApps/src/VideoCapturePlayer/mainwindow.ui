@@ -232,7 +232,11 @@
     </layout>
    </item>
    <item>
-    <layout class="QVBoxLayout" name="videoLayout" stretch=""/>
+    <layout class="QVBoxLayout" name="videoLayout" stretch="">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+    </layout>
    </item>
   </layout>
  </widget>
