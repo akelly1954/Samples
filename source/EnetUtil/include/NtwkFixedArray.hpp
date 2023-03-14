@@ -93,7 +93,7 @@ namespace EnetUtil {
     private:
         // Not allowed:
         fixed_size_array(fixed_size_array<T,N> &&) = delete;            // Not movable
-        fixed_size_array &operator=(fixed_size_array<T,N> &&) = delete;    // Not movable
+        fixed_size_array &operator=(fixed_size_array<T,N> &&) = delete; // Not movable
 
     private:
         // private in order to prevent make_shared<> from being called
@@ -143,7 +143,7 @@ namespace EnetUtil {
         // The first time this object is constructed in order to obtain a shared_ptr<> for a brand
         // new managed object, the ::create() function MUST be called.  All subsequent shared_ptr<>'s
         // that are to be made for this instance of the object, MUST be obtained by calling the
-        // ::get_shared_ptr() member function.  So, call ::create once, and then ::get_shared_ptr()
+        // ::get_shared_ptr() member function.  So, call ::create() once, and then ::get_shared_ptr()
         // as many times as needed.
         //
         // See also private constructors above (placed there to prevent make_shared<> from being called.

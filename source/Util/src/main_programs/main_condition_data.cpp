@@ -90,7 +90,7 @@
 void printdata(const std::string& label, Util::data_item_container<u_int8_t> sd)
 {
     std::cout << "Contents of " << label << ": " << std::endl;
-    if (! sd.isValid())
+    if (! sd.is_valid())
     {
         std::cout << "Parameter " << label << " is invalid (empty)." << std::endl;
         return;
@@ -110,7 +110,7 @@ void initializeGenericData()
 {
     using namespace Util;
 
-    data_item_container<u_int8_t> somedata(2*1024);
+    data_item_container<uint8_t> somedata(2*1024);
 
     u_int8_t uint8ctr = 0;
     for (auto itr = somedata._begin(); itr != somedata._end(); itr++)
