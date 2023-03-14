@@ -296,7 +296,7 @@ long long VideoCapture::video_plugin_base::increment_one_frame()
 
 void VideoCapture::video_plugin_base::add_buffer_to_raw_queue(void *p, size_t bsize)
 {
-    VideoCapture::video_capture_queue::video_capture_queue::add_buffer_to_raw_queue(p, bsize);
+    VideoCapture::video_capture_queue::add_buffer_to_raw_queue(p, bsize);
 }
 
 

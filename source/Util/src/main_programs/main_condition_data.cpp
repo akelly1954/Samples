@@ -1,22 +1,4 @@
 
-// "g++ --std=c++1z -pthread program.cpp -lpthread -lstdc++fs -L /path/where/libUtil.so/resides/"
-
-#include <thread>
-#include <vector>
-#include <utility>
-#include <algorithm>
-#include <mutex>
-#include <string>
-#include <sstream>
-#include <ostream>
-#include <iostream>
-#include <chrono>
-#include <stdlib.h>
-#include <condition_data.hpp>
-#include <Utility.hpp>
-#include <MainLogger.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -40,6 +22,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
+
+#include <thread>
+#include <vector>
+#include <utility>
+#include <algorithm>
+#include <mutex>
+#include <string>
+#include <sstream>
+#include <ostream>
+#include <iostream>
+#include <chrono>
+#include <stdlib.h>
+#include <condition_data.hpp>
+#include <Utility.hpp>
+#include <MainLogger.hpp>
+#include <LoggerCpp/LoggerCpp.h>
 
 // This program runs N (default is 20) concurrent threads, where N is the single command
 // line parameter.  All threads are synchronized by a single condition_variable, which
@@ -80,6 +78,67 @@
 //
 // YMMV.
 //
+
+///////////////////////////////////////////////////////////////////
+// Start of hijacked section (to test data_item_container)
+// This might become a separate main program - just not this minute...
+// (March 2023)
+
+#include <sys/types.h>
+#include <generic_data.hpp>
+
+void printdata(const std::string& label, Util::data_item_container<u_int8_t> sd)
+{
+    std::cout << "Contents of " << label << ": " << std::endl;
+    if (! sd.isValid())
+    {
+        std::cout << "Parameter " << label << " is invalid (empty)." << std::endl;
+        return;
+    }
+
+    size_t member = 0;
+    for (auto itr = sd._begin(); itr != sd._end(); itr++)
+    {
+        std::cout << "[" << member << "]=" << std::to_string(*itr) << "  ";
+        member++;
+    }
+    std::cout << std::endl;
+}
+
+
+void initializeGenericData()
+{
+    using namespace Util;
+
+    data_item_container<u_int8_t> somedata(2*1024);
+
+    u_int8_t uint8ctr = 0;
+    for (auto itr = somedata._begin(); itr != somedata._end(); itr++)
+    {
+        if ((uint8ctr % 0xff) == 0) uint8ctr = 0;
+        *itr = uint8ctr;
+        uint8ctr++;
+    }
+
+    printdata("initial somedata", somedata);
+
+    data_item_container<u_int8_t>moved_data = std::move(somedata);
+    printdata("moved_data", moved_data);
+
+    std::cout << "\n\n====================================\n\n" << std::endl;
+
+    data_item_container<u_int8_t>copied_data(moved_data);
+    printdata("copied_data", copied_data);
+
+    std::cout << "\n\n====================================\n\n" << std::endl;
+
+    printdata("invalid_somedata", somedata);
+
+    std::cout << "\n\n====================================\n\n" << std::endl;
+
+}
+// End of hijacked section (to test data_item_container)
+///////////////////////////////////////////////////////////////////
 
 void Usage(std::ostream& strm, std::string command)
 {
@@ -155,6 +214,12 @@ int main(int argc, const char *argv[])
     }
 
     std::cerr << "Number of threads chosen: " << numthreads << std::endl;
+
+    // Hijacked this program to also check out the generic data object.
+    // uncomment the next line if you want to see lots of output...
+    //
+    // initializeGenericData();
+    //
 
     initializeSleeptimes(numthreads, sleeptimes);
 

@@ -874,7 +874,8 @@ bool vidcap_v4l2_driver_interface::v4l2if_init_device(void)
         CLEAR(fmt);
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if (Video::vcGlobals::pixel_fmt == Video::pxl_formats::h264) {
+        if (Video::vcGlobals::pixel_fmt == Video::pxl_formats::h264)
+        {
             fmt.fmt.pix.width       = 1920;
             fmt.fmt.pix.height      = 1080;
             fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_H264;

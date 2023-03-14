@@ -1,28 +1,30 @@
 
 # Welcome.
 
-This project includes new software I've developed in the past year (since Jan 2022), and some newly rewritten older code.     
+This project includes new software I've developed in the past year (since Jan 2022), as well as some newly rewritten older code 
+from prehistoric times).     
       
-Whereas my original intent was to release the project into the Github mainstream, I now realize, a year later,
+Whereas my original intent was to release the project into the Github mainstream, I now realize, a year++ later,
 that I have no intention of releasing any of it.  I mostly use Github to keep track of development, and as 
 backup for those times when I mess up and need to push "reset".  You are welcome to view, copy, or clone the
 software as you need to.  Feedback/questions are welcome - email **andrew@akelly.com**.  I do not accept
-collaborators for the repository, therefore your interactions with it would be limited.     
+collaborators for the repository, therefore your interactions with it would be limited ("look, copy, use, but no touching...").     
      
 I do hope that people who view this can use some of the ideas and code for their benefit.  The code I write is
-all licensed under the MIT (very very permissive) license, and the only thing to check is for 3rd party software
-used (logger, json parsing, etc) which might have a different license.  It's all very clearly documented in the 
-source tree as well as the code.     
+all licensed under the **MIT** (very very permissive) license, and the only thing to check is for 3rd party software
+used (logger, json parsing, etc) which might have a different license.  Now that some **Qt** (version 6) is being 
+used, the appropriate Qt Copyright license should be understood and respected as well.  It's all very clearly documented in the 
+source tree as well as embedded in various files in the code.     
      
 Full disclosure for those who are looking for how to do things in a specific language and/or operating system: 
 I am not an expert with Java, Python, Perl, .NET, current embedded toolsets, nor cloud based infrastructures that 
-help large development teams for large corporate technical needs that one person (me) cannot possibly deal with. 
-And although I'm great with C++ in general, not so much with Windows infrastructure and tools (although I do like 
-working with Visual C++).   
+help development teams for large-scale corporate technical needs that one person (me) cannot possibly deal with. 
+And although I'm great with C++ and Linux/Unix technologies  in general, 
+not so much with Windows infrastructure and tools (although I do like working with Visual C++).   
     
-Most of what you find here is Linux/Unix based, using Eclipse, CMake, and the gnu toolchain (g++ etc) for development. 
-Having boasted more than once that I could bake a cake using Eclipse if I had to, it is not actually necessary for the developer. 
-The key with this code is CMake, where using the "-G" flag you can specify which compiler/toolset to use.   If you do that, 
+Most of what you find here is Linux/Unix based, using Eclipse, CMake, and the **gnu** toolchain (g++ etc) for development. 
+Having boasted more than once that I could bake a cake using Eclipse if I had to, it is not actually necessary for all developers. 
+The key with this code is **CMake**, where using the "-G" flag you can specify which compiler/toolset to use.   If you do that, 
 there are some shell scripts that would have to be modified as well (look for scripts whose name ends with ...linux-build.bash, 
 as well as source/Samples/shell_env/).
     
@@ -37,15 +39,19 @@ others might consider to be "logical".  I like to be creative, and that inspirat
 
 There's a section below which outlines what's going on right now, and what has been completed recently. 
 These are speculations about the future which may not turn out to be true to reality.  These are definitely
-not promises or commitments.   
+not promises nor commitments.   
     
 There are other README files listed below as well. Please have fun with it all.     
     
 ## Going on now:   
 
 Updating README files and doing some cleanup. It will be done when it's done.    
+
+**Ongoing now:**  Started developing a new data container tool and objects.  Currently I'm just checking in *generic_data.hpp* (in the **Util** project.  This file currently houses *class data_item_container* which is the object with which I plan to replace the set of (std::array<>) objects currently used by the video capture program as well as related plugins, and UI program (see below).  This means, among other things, that I'm done playing aound with **std::array<>** for the time being.     
+      
+And still...     
      
-Developing a video streaming app in Qt6 (**VideoCapturePlayer**) relying on the video capture project. 
+...developing a video streaming app in Qt6 (**VideoCapturePlayer**) relying on the video capture project. 
 For now this is merely a sandbox for ideas and trying things out in the **dev** branch.  But it's beginning
 to look like a real app. Work in progress - please stay tuned. 
 

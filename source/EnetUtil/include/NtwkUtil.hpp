@@ -45,6 +45,7 @@ static const size_t NtwkUtilTinyBufferSize = 256;
 static const size_t NtwkUtilSmallBufferSize = 1024;
 static const size_t NtwkUtilRegularBufferSize = 4096;
 static const size_t NtwkUtilLargeBufferSize = 8192;
+static const size_t NtwkUtilVeryLargeBufferSize = 1024*64;
 static const size_t NtwkUtilHugeBufferSize = 1024*250;
 
 // NtwkUtilBufferSize - is the fixed size of the std::array<> - baked into the program -
@@ -65,7 +66,7 @@ static const size_t NtwkUtilHugeBufferSize = 1024*250;
 // TODO: Note: The fixed_array and related objects are currently specialized to the data
 // object being a single byte size.  This needs to be worked in the code to generalize it.
 
-static const size_t NtwkUtilBufferSize = NtwkUtilLargeBufferSize;
+static const size_t NtwkUtilBufferSize = NtwkUtilVeryLargeBufferSize;
 ///////  Use:       static const size_t NtwkUtilBufferSize = NtwkUtilLargeBufferSize;
 //////   Or...      static const size_t NtwkUtilBufferSize = NtwkUtilRegularBufferSize;
 //////      or...   static const size_t NtwkUtilBufferSize = NtwkUtilNanoBufferSize;

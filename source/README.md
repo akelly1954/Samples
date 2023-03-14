@@ -25,19 +25,23 @@ without affecting any source files.
 To clean everything, simply rerun the **base-linux-build.bash** script, which first removes the **../build/** 
 directory and its contents before (re)building everything.  
 
-A word about **eclipse**... it does not handle changes to any of its configuration files (CMakeLists.txt, 
+**CAVEAT:**  You can almost completely ignore all I have to say about **eclipse** in the following couple of paragraphs, 
+since there have been **lots** of improvements in how **eclipse** handles changes to its configuration.  It's still quirky (read buggy) 
+at times, but it's much much better now.      
+     
+A (now tentative) word about **eclipse**... it does not handle changes to any of its configuration files (CMakeLists.txt, 
 \*.cmake, etc) while it is running very well.  If you have to modify these type of files 
-(as you do when running any of the ...build.bash scripts,
-you might want to do it from the command line without Eclipse running,
+(as you do when running any of the ...build.bash scripts, you might want to do it from the command line without Eclipse running,
 as it may get confused and ask you quite a few questions (about refreshing its files), and then try to recreate
 its environment (which at least at this time it does not do very well). If this happens, simply close all editor windows
-within eclipse, and shut it down.  Then rerun the **base-linux-build.bash** script again (and don't do it again...)
-
+within eclipse, and shut it down.  Then rerun the **base-linux-build.bash** script again.    
+     
 The other thing about **eclipse**, is that when it comes up, it takes a while for the indexing to do its work.  This means, 
 for example, that when you hover with the mouse over an object name in the source, it may tell you that it does not recognize it
-even though 5 minutes later, it will.  It's just the way it is (for now).
-
-The various other directories that are base directories for the various projects included under **source**, each has its own **linux-build.bash** script which builds that particular project.  
+even though 5 minutes later, it will.  It's just the way it is (for now).  (**Note:** this has also improved, but it still remains a 
+mystery to me why it indexes some files, and not others, as well the timing of such index updates.  This is still an annoyance (to me) but refreshing the files, and then rebuilding the index usually does the trick.     
+      
+The various other directories that are base directories for the various projects included under **source**, each has its own **linux-build.bash** script which builds that particular project (with exception of the **QtApps** directory).  
 
 These sources have been built and tested on Debian 11 (bullseye), with 
 Eclipse version 4.21 (and later with 4.22),
@@ -70,15 +74,16 @@ Make sure that in linux, you have the LD_LIBRARY_PATH variable include either **
 
 ## So The Thing With Eclipse ##
 
-Earlier in my career I spent a few choice months trying to get CMake, Qt, Visual C++, and Eclipse (using either/or Windows or Linux) to play together in some sane fashion.  As those months progressed, I slowly came to the realization that the technology was simply not there yet. Admittedly this took place almost twenty years ago, and I'm well aware of how much further along all of these technologies have progressed.  But it's still not there.  This is not a rant, so I'm not getting into details.
+Earlier in my career I spent a few choice months trying to get CMake, Qt, Visual C++, and Eclipse (using either/or Windows or Linux) to play together in some sane fashion.  As those months progressed, I slowly came to the realization that the technology was simply not there yet. Admittedly this took place almost twenty years ago, and I'm well aware of how much further along all of these technologies have progressed.  But it's still not all quite there.  This is not a rant, so I'm not getting into details.
 
-I love working with Visual Studio, I love working with Qt designer and the weird and wonderful build environment they have. I love working with Eclipse (my favorite IDE).  Just not all together.  
+I love working with Visual Studio, I love working with Qt designer, qtcreator, and the weird and wonderful build environment they have. I love working with Eclipse (my favorite IDE).  Just not all together.      
+      
+**Later update:** as of Qt 6.2 (the version I'm currently using on Linux) I've noticed vast improvements in how **qtcreator** handles the CMake build environment -- which is the main reason why I'm trying out using **qtcreator** instead of Eclipse for the Qt apps.  So far, at the level of projects I"m dealing with, it does a superb job with CMake (currently seems to me to be "better" than Eclipse). However, none of the above is objective.  I fall in and out of love with technology on a dime, and fairly frequently at that.      
 
-Focusing on Eclipse running on Linux here, my solution to this challenge was to use CMake as the primary "build tool", with Unix Makefiles on the Linux side.   
+Focusing on Eclipse running on Linux here, my solution to the challenge has been to use CMake as the primary "build tool", with Unix Makefiles on the Linux side, and at this time, it is the "glue" I use for setting up the **qtcreator** projects I'm creating.  Stay tuned...  
 
-My approach is to drive the "heavy" build tasks from shell scripts (bash), and get CMake to create both the Linux and Visual Studio solutions.  Hence the **\*...linux-build.sh** scripts you will find here - that's where I typically solve problems (under Linux).  
-
-This has several consequences, that limit how much you'd want to do from within Eclipse vs. by using shell scripts.  
+My approach is to drive the "heavy" build tasks from shell scripts (bash), and get CMake to create both the Linux and Visual Studio solutions.  Hence the **...linux-build.sh** scripts you will find here - that's where I typically solve problems (under Linux). 
+Again - currently, the **QtApps** projects are the exception, but we shall see.     
 
 
 ### Consequences for the workflow: ###
@@ -87,8 +92,8 @@ Don't use Eclipse for modifying the CMake files in these projects, including add
 
 That's about the only limitation on using Eclipse in this workflow.
 
-Editing files, adding .cpp and/or .h\* files to existing source directories, rebuilding, installing, running the debugger - all work as they should.  Until you have to modify a CMakeLists.txt file or change some configuration aspect in a .cmake file (in the **cmake/** directory). 
-
+Editing files, adding .cpp and/or .h\* files to existing source directories, rebuilding, installing, running the debugger - all work as they should.  Until you have to modify a CMakeLists.txt file or change some configuration aspect in a .cmake file (in the **cmake/** directory). With Eclipse, you have to add the source files directly into the sources in the Ecplise Explorer tab, by right-clicking on the directory name you want the file to reside in, and then choosing **"New"** on the drop-down menu that shows up.    
+     
 But if you don't need to do that, you can save all your files, and, do the following:
 
 In the Eclipse Project Explorer pane, under the Samples project, expand the **sample-Debug@build** item, and then expand the **Build Targets** item. You can right-click on any of - "all", "clean", "install", "install/local", or "install/strip" and choose **Build Target** option in the drop-down menu that appears (when you right-click).  I haven't used any of the other options that are shown, so I don't have much insight as to what would happen if you picked them.

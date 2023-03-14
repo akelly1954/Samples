@@ -1,17 +1,5 @@
 #pragma once
 
-#include <circular_buffer.hpp>
-#include <NtwkUtil.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <mutex>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <memory>
-#include <string>
-#include <vector>
-#include <mutex>
-#include <assert.h>
-
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -35,6 +23,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
+
+#include <circular_buffer.hpp>
+#include <NtwkUtil.hpp>
+#include <LoggerCpp/LoggerCpp.h>
+#include <mutex>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <memory>
+#include <string>
+#include <vector>
+#include <mutex>
+#include <assert.h>
 
 namespace EnetUtil {
 
@@ -146,7 +146,7 @@ namespace EnetUtil {
         // ::get_shared_ptr() member function.  So, call ::create once, and then ::get_shared_ptr()
         // as many times as needed.
         //
-        // See also private contstuctors above (placed there to prevent make_shared<> from being called.
+        // See also private constructors above (placed there to prevent make_shared<> from being called.
 
         // Use this version of ::create() for an array which has a specific number of elements (1234)
         // in place of a constructor like so:
