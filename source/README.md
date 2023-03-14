@@ -39,7 +39,7 @@ within eclipse, and shut it down.  Then rerun the **base-linux-build.bash** scri
 The other thing about **eclipse**, is that when it comes up, it takes a while for the indexing to do its work.  This means, 
 for example, that when you hover with the mouse over an object name in the source, it may tell you that it does not recognize it
 even though 5 minutes later, it will.  It's just the way it is (for now).  (**Note:** this has also improved, but it still remains a 
-mystery to me why it indexes some files, and not others, as well the timing of such index updates.  This is still an annoyance (to me) but refreshing the files, and then rebuilding the index usually does the trick.     
+mystery to me why it indexes some files, and not others, as well the timing of such index updates.  This is still an annoyance (to me) but refreshing the files, and then rebuilding the index usually does the trick).     
       
 The various other directories that are base directories for the various projects included under **source**, each has its own **linux-build.bash** script which builds that particular project (with exception of the **QtApps** directory).  
 
@@ -88,9 +88,9 @@ Again - currently, the **QtApps** projects are the exception, but we shall see.
 
 ### Consequences for the workflow: ###
 
-Don't use Eclipse for modifying the CMake files in these projects, including adding new directories/projects.   Exit eclipse, and when you're ready, run the **base-linux-build.bash** script from the directory where it resides (**...Samples/source**).
+With these projects, don't use Eclipse for modifying the CMake files in these projects, including adding new directories/projects.   Exit eclipse, and when you're ready, run the **base-linux-build.bash** script from the directory where it resides (**...Samples/source**).
 
-That's about the only limitation on using Eclipse in this workflow.
+That's about the only limitation I introduced on using Eclipse in this workflow.
 
 Editing files, adding .cpp and/or .h\* files to existing source directories, rebuilding, installing, running the debugger - all work as they should.  Until you have to modify a CMakeLists.txt file or change some configuration aspect in a .cmake file (in the **cmake/** directory). With Eclipse, you have to add the source files directly into the sources in the Ecplise Explorer tab, by right-clicking on the directory name you want the file to reside in, and then choosing **"New"** on the drop-down menu that shows up.    
      
