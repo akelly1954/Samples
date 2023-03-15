@@ -38,58 +38,25 @@
 #include <Utility.hpp>
 #include <MainLogger.hpp>
 #include <LoggerCpp/LoggerCpp.h>
-
-// This program runs N (default is 20) concurrent threads, where N is the single command
-// line parameter.  All threads are synchronized by a single condition_variable, which
-// is also used to communicate a data object (std::pair<int,string>) to the next
-// thread which will be allowed to run. Each thread logs the data it receives from
-// within the thread.  (See also NOTE FROM THE AUTHOR below).
-//
-// Before each thread is started, a logger object is instantiated for it, using the
-// main logger object instantiated in main().  The end result is that what is logged
-// from within the thread is appended to the one log file created by the run.
-//
-// Console output is disabled - if 10,000 threads are each appending output to
-// the output, it messes up the output stream and loses data (which makes sense).
-// This would also slow things so much as to invalidate the purpose of the program.
-//
-// Also disabled is the rotation of log files.  Each run recreates the single log
-// file.
-//
-// To run this program use:
-//
-//         main_condition_data [num_threads]
-//
-// The main output is placed in the file "main_condition_data_log.txt" (and a few lines
-// containing information are displayed to stdout on the console as the program runs).
-//
-// If num_threads is specified, it has to be numerical and greater than 0. If not, it
-// defaults to 20.
-//
-// FOR A SAMPLE RUN SHOWING THE RESULTS SEE THE #ifdef'ed SECTION AT THE VERY END OF THIS FILE
-//
-// NOTE FROM THE AUTHOR:  I got the program to fail on a std::bad_alloc at somewhere between
-// 30,000 and 40,000 threads running at the same time (succeeded at 30,000, failed on 40,000).
-// There was NO data loss at all at 30,000 (no broken lines in the log file, all content
-// in each line was present).
-//
-// This result is very specific to the system that was used of course (8 core i7 cpu, 32Gb mem,
-// Debian 11 linux).
-//
-// YMMV.
-//
-
-///////////////////////////////////////////////////////////////////
-// Start of hijacked section (to test data_item_container)
-// This might become a separate main program - just not this minute...
-// (March 2023)
-
 #include <sys/types.h>
 #include <generic_data.hpp>
 
+// This becomes the basis for all other data items
+static Util::data_item_container<uint8_t> reference_item;
+
+const char *logChannelName = "util_combo_objects";
+
+void printHeader(const std::string& label)
+{
+    std::cout << std::endl;
+    std::cout << "------------------------------------------------------------------" << std::endl;
+    std::cout << "|   " << label << std::endl;
+    std::cout << "------------------------------------------------------------------" << std::endl;
+}
+
 void printdata(const std::string& label, Util::data_item_container<u_int8_t> sd)
 {
-    std::cout << "Contents of " << label << ": " << std::endl;
+    std::cout << "\nContents of " << label << ": " << std::endl;
     if (! sd.is_valid())
     {
         std::cout << "Parameter " << label << " is invalid (empty)." << std::endl;
@@ -106,53 +73,71 @@ void printdata(const std::string& label, Util::data_item_container<u_int8_t> sd)
 }
 
 
-void initializeGenericData()
+void initializeDataItem(Util::data_item_container<uint8_t>& ditem, uint8_t ival = 0 )
 {
     using namespace Util;
 
-    data_item_container<uint8_t> somedata(2*1024);
-
-    u_int8_t uint8ctr = 0;
-    for (auto itr = somedata._begin(); itr != somedata._end(); itr++)
+    u_int8_t uint8ctr = ival;
+    for (auto itr = ditem._begin(); itr != ditem._end(); itr++)
     {
-        if ((uint8ctr % 0xff) == 0) uint8ctr = 0;
+        if ((uint8ctr % 50) == 0) uint8ctr = 0;
         *itr = uint8ctr;
         uint8ctr++;
     }
+}
+
+// the parameter somedata becomes a copy of the original (not reference)
+void checkDataItem(Util::data_item_container<uint8_t> somedata)
+{
+    using namespace Util;
 
     printdata("initial somedata", somedata);
+    std::cout << "\n====================================" << std::endl;
 
     data_item_container<u_int8_t>moved_data = std::move(somedata);
     printdata("moved_data", moved_data);
 
-    std::cout << "\n\n====================================\n\n" << std::endl;
+    std::cout << "\n====================================" << std::endl;
 
     data_item_container<u_int8_t>copied_data(moved_data);
     printdata("copied_data", copied_data);
 
-    std::cout << "\n\n====================================\n\n" << std::endl;
+    std::cout << "\n====================================" << std::endl;
 
     printdata("invalid_somedata", somedata);
 
-    std::cout << "\n\n====================================\n\n" << std::endl;
+    std::cout << "\n====================================" << std::endl;
 
 }
-// End of hijacked section (to test data_item_container)
-///////////////////////////////////////////////////////////////////
+
+void checkDataItem(Util::shared_ptr_uint8_data_t some_shared_data)
+{
+    using namespace Util;
+
+    std::cout << "shared_ptr use count = " << some_shared_data.use_count() << std::endl;
+    std::cout << "shared data elements = " << some_shared_data->num_items() << std::endl;
+    std::cout << "shared data object is valid: " << Utility::stringify_bool(some_shared_data->is_valid()) << std::endl;
+
+    checkDataItem(*some_shared_data->get_data_item_container());
+
+    // THIS PRODUCES A COMPILE ERROR (use of deleted function) - which is deliberate.
+    // shared_ptr_uint8_data_t illegal_sp;
+    // *illegal_sp = std::move(*some_shared_data);
+}
 
 void Usage(std::ostream& strm, std::string command)
 {
-    strm << "Usage:    " << command << " num_threads num_data_items\n\n" << std::endl;
+    strm << "\nUsage:    " << command << " --help\n" << std::endl;
+    strm << "Or: " << std::endl;
+    strm << "\n          " << command << " num_data_items\n" << std::endl;
 }
 
-// Returns the number of threads requested, and fills in
-// nthreads and nsize.  Returns false if no parameters
-// or if error.  Returns true if all is ok.
-bool parse(int argc, const char *argv[], int& num_threads, int& num_data_items)
+bool parse(int argc, const char *argv[], int& num_data_items)
 {
     // If no parameters were supplied.
     if (argc == 1)
     {
+        std::cerr << "\nError: missing num_data_items parameter.\n" << std::endl;
         Usage(std::cerr, argv[0]);
         return false;
     }
@@ -163,14 +148,7 @@ bool parse(int argc, const char *argv[], int& num_threads, int& num_data_items)
         Usage(std::cerr, argv[0]);
         return false;
     }
-    if (argv[2] == nullptr)
-    {
-        std::cerr << "Error: missing num_data_items parameter.\n" << std::endl;
-        Usage(std::cerr, argv[0]);
-        return false;
-    }
-    num_threads = strtol(argv[1], NULL, 10);
-    num_data_items = strtol(argv[2], NULL, 10);
+    num_data_items = strtol(argv[1], NULL, 10);
     return true;
 }
 
@@ -186,39 +164,30 @@ void initializeSleeptimes(int numthreads, std::vector<int>& sleeptimes)
     }
 }
 
-// All threads, including main, output to this channel
-const char *logChannelName = "main_util_combo_objects";
-
 int main(int argc, const char *argv[])
 {
     using namespace Util;
 
-    int numthreads = 0;
     int num_data_items = 0;
 
-    if (!parse(argc, argv, numthreads, num_data_items))
+    if (!parse(argc, argv, num_data_items))
     {
         return EXIT_FAILURE;
     }
     // DEBUG
-    std::cerr << "Parse returned: num_threads = " << numthreads
-              << ", num_data_elements = " << num_data_items << std::endl;
+    std::cerr << "Parsed command line: num_data_elements = " << num_data_items << std::endl;
+
+    std::string logfilename(logChannelName);
+    logfilename += "_log.txt";
 
     Log::Config::Vector configList;
-    Util::MainLogger::initializeLogManager(configList, Log::Log::Level::eDebug, "main_util_combo_objects_log.txt",
+    Util::MainLogger::initializeLogManager(configList, Log::Log::Level::eDebug, logfilename,
                                            MainLogger::disableConsole, MainLogger::enableLogFile);
     MainLogger::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
 
     logger.debug() << "Started main_util_combo_objects...";
 
-    // Terminate the Log Manager (destroy the Output objects)
-    Log::Manager::terminate();
-
-    return EXIT_SUCCESS;
-}
-
-#if 0
     // Static global data on the heap.
     // This is the single condition_data object ruling the various running threads
     Util::condition_data<threadData> condvar(threadData(-1, std::string("Initial - this is not from a thread")));
@@ -229,23 +198,56 @@ int main(int argc, const char *argv[])
     // vector container stores threads
     std::vector<std::thread> workers;
 
-    if (numthreads == -1)
+    if (num_data_items < 0)
     {
+        std::cerr << "\nError: num_data_items has to be 0 or a positive number.\n" << std::endl;
         Usage(std::cerr, argv[0]);
         return 1;
     }
-    else if(numthreads == 0)
-    {
-        numthreads = 20;
-    }
 
-    std::cerr << "Number of threads chosen: " << numthreads << std::endl;
+    std::cerr << "Number of data items chosen: " << num_data_items << std::endl;
 
-    // Hijacked this program to also check out the generic data object.
-    // uncomment the next line if you want to see lots of output...
-    //
-    // initializeGenericData();
-    //
+//////////////////////////////////////////////////////////
+
+    reference_item = *(new data_item_container<uint8_t>(num_data_items));
+    initializeDataItem(reference_item, 0);
+
+    printHeader("Checking reference item");
+    checkDataItem(reference_item);
+
+    // shared_data_items<uint8_t> sp_reference = shared_data_items<uint8_t>::create(num_data_items);
+    shared_ptr_uint8_data_t sp_reference = shared_uint8_data_t::create(num_data_items);
+    shared_ptr_uint8_data_t sp_reference2 = sp_reference->get_shared_ptr();
+    shared_ptr_uint8_data_t sp_reference3 = sp_reference->get_shared_ptr();
+
+    printHeader("Checking create(size_t) - shared_ptr to Util::shared_data_items<uint8_t> sp_reference");
+    checkDataItem(sp_reference);
+    checkDataItem(sp_reference2);
+    checkDataItem(sp_reference3);
+
+    printHeader("Checking create(copy object) - shared_ptr to Util::shared_data_items<uint8_t> sp_reference");
+    shared_ptr_uint8_data_t sp_alt_reference = shared_uint8_data_t::create(*sp_reference3);
+    checkDataItem(sp_alt_reference);
+
+    printHeader("Checking create(iterator range) - shared_ptr to Util::shared_data_items<uint8_t> sp_reference");
+    shared_ptr_uint8_data_t sp_alt_reference2 = shared_uint8_data_t::create(sp_alt_reference->_begin(), sp_alt_reference->num_items());
+    checkDataItem(sp_alt_reference2);
+
+
+/////////////////////////////////////////////////////////
+#if 0
+                  THIS IS WORK IN PROGRESS - NOT DONE YET
+#endif
+/////////////////////////////////////////////////////////
+
+    // Terminate the Log Manager (destroy the Output objects)
+    Log::Manager::terminate();
+
+    return EXIT_SUCCESS;
+}
+
+#if 0
+                    THIS IS WORK IN PROGRESS - NOT DONE YET
 
     initializeSleeptimes(numthreads, sleeptimes);
 
@@ -254,7 +256,7 @@ int main(int argc, const char *argv[])
     // does all the work for each thread.
     for (int i = 1; i <= numthreads; i++)
     {
-        // Create a Logger object, using a "main_condition_data_log" Channel
+        // Create a Logger object, using a "main_util_combo_objects_log" Channel
         // This is still running in the main thread - just before the new
         // thread is created
         Log::Logger logger(logChannelName);
@@ -314,51 +316,5 @@ int main(int argc, const char *argv[])
     return 0;
 }
 #endif // 0
-
-#ifdef SAMPLE_RUN
-/*
-#
-# By default, the output is sorted chronologically (when each thread finishes its work).
-#
-# To sort the output in main_condition_data_log.txt by the thread number:
-#         sort -k6 -n main_condition_data_log.txt
-#
-# To sort the output in main_condition_data_log.txt by the milliseconds' delay:
-#         sort -k8 -n main_condition_data_log.txt
-#
-# To sort the output in main_condition_data_log.txt by the previous thread number from the condition variable:
-#         sort -k13 -n main_condition_data_log.txt
-#
-# SAMPLE RUN:
-$
-$ cd /path/to/build/localrun
-$
-$ LD_LIBRARY_PATH=".:" ./main_condition_data 10
-Number of threads chosen: 10
-main thread: Sending ready message to all threads
-Last condition thread done
-
-
-$ cat main_condition_data_log.txt
-2022-02-13 07:51:03.982  main_condition_data_log NOTE thread 1 slept 56 msec -- from thread 0 = "Initial - this is not from a thread...
-2022-02-13 07:51:03.996  main_condition_data_log NOTE thread 9 slept 70 msec -- from thread 1 = "thread 1 slept 56 msec -- from thread 0 = "Initial - this is not from a th...
-2022-02-13 07:51:03.997  main_condition_data_log NOTE thread 4 slept 71 msec -- from thread 9 = "thread 9 slept 70 msec -- from thread 1 = "thread 1 slept 56 msec -- from ...
-2022-02-13 07:51:04.030  main_condition_data_log NOTE thread 6 slept 104 msec -- from thread 4 = "thread 4 slept 71 msec -- from thread 9 = "thread 9 slept 70 msec -- from ...
-2022-02-13 07:51:04.141  main_condition_data_log NOTE thread 2 slept 216 msec -- from thread 6 = "thread 6 slept 104 msec -- from thread 4 = "thread 4 slept 71 msec -- from...
-2022-02-13 07:51:04.160  main_condition_data_log NOTE thread 3 slept 235 msec -- from thread 2 = "thread 2 slept 216 msec -- from thread 6 = "thread 6 slept 104 msec -- fro...
-2022-02-13 07:51:04.168  main_condition_data_log NOTE thread 7 slept 242 msec -- from thread 3 = "thread 3 slept 235 msec -- from thread 2 = "thread 2 slept 216 msec -- fro...
-2022-02-13 07:51:04.173  main_condition_data_log NOTE thread 0 slept 248 msec -- from thread 7 = "thread 7 slept 242 msec -- from thread 3 = "thread 3 slept 235 msec -- fro...
-2022-02-13 07:51:04.194  main_condition_data_log NOTE thread 5 slept 268 msec -- from thread 0 = "thread 0 slept 248 msec -- from thread 7 = "thread 7 slept 242 msec -- fro...
-2022-02-13 07:51:04.200  main_condition_data_log NOTE thread 8 slept 274 msec -- from thread 5 = "thread 5 slept 268 msec -- from thread 0 = "thread 0 slept 248 msec -- fro...
-
-$
-*/
-
-#endif //  SAMPLE_RUN
-
-
-
-
-
 
 

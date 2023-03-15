@@ -45,11 +45,32 @@ There are other README files listed below as well. Please have fun with it all.
     
 ## Going on now:   
 
-Updating README files and doing some cleanup. It will be done when it's done.    
+**Ongoing task:** Updating README files and doing some cleanup. It will be done when it's done.   
 
-**Ongoing now:**  Started developing a new data container tool and objects.  Currently I'm just checking in *generic_data.hpp* (in the **Util** project.  This file currently houses *class data_item_container* which is the object with which I plan to replace the set of (std::array<>) objects currently used by the video capture program as well as related plugins, and UI program (see below).  This means, among other things, that I'm done playing aound with **std::array<>** for the time being.     
+**Up and coming task:** migrate the video capture objects (all the way to the Qt apps) to use the new data containers described below instead of the std::array<> based objects the video capture objects are currently using.  I will 
+probably do this before going back to finish the Qt project (**VideoCapturePlayer**) described further down.    
+
+**Ongoing now:**  Developing a new data container tool and objects.  The file *generic_data.hpp* (in the **Util** project) includes the *data_item_container* object as well as the *shared_data_items* object.     
+    
+Both objects are template based, where typename T is the underlying type of the data. Although both objects are 
+currently used with T = uint8_t (unsigned char) outside of the class definitions and declarations, the T type can be anything that complies with common std:: and STL requirements (int32_t, double, class whatever, etc).    
+
+The *data_item_container* object holds a sequence of "typename T" items.  The object handles creation, assignment, 
+copy and move semantics, deletion, and access (to each element).
+
+The *shared_data_items* object encapsulates (as opposed to "derives from") a *data_item_container* object, 
+and exposes most of *data_item_container*'s capablities and data to the outside world.  In addition, it derives 
+from **std::enable_shared_from_this<>**, and thus it manages the creation of **std::shared_ptr<>**'s to the 
+object as well as all other reasonable capabilities (see the source).  (**Note:** the *shared_data_items* object 
+currently disallows **move semantics** altogether (even though the *data_item_container* does not).  These will be implemented later if appropriate). 
+
+**Note:** this also is a good example of
+how to use the std:: **shared_from_this** construct properly (i.e. avoid having a dangling copy of the shared_ptr<>  which is not included in the reference count in the shared_ptr<> upon deletion).    
+
+The basic test for these objects is in **source/Util/src/main/programs/main_util_combo_objects.cpp**.  It tests all 
+the basic objects' creation and capabilities, but still TODO: test multi-threaded operation. 
       
-And still...     
+**And still...**     
      
 ...developing a video streaming app in Qt6 (**VideoCapturePlayer**) relying on the video capture project. 
 For now this is merely a sandbox for ideas and trying things out in the **dev** branch.  But it's beginning

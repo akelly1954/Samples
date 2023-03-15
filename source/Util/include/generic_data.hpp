@@ -178,7 +178,9 @@ private:
 ////////////////////////////////////////////////////////////////////////////
 
 template<typename T> class shared_data_items;   // forward declaration
-typedef Util::shared_data_items<uint8_t> shared_uint8_data;
+
+typedef     Util::shared_data_items<uint8_t>          shared_uint8_data_t;
+typedef     std::shared_ptr<shared_uint8_data_t>      shared_ptr_uint8_data_t;
 
 // data_item_container
 template<typename T>
@@ -186,6 +188,11 @@ class shared_data_items : public std::enable_shared_from_this<shared_data_items<
 {
 public:
     // constructors and destructor are defined further down below
+    data_item_container<T> * get_data_item_container(void)
+    {
+        return p_shared_data;
+    }
+
     T* data(void)
     {
         if(p_shared_data) return p_shared_data->data();
@@ -274,7 +281,7 @@ private:
         std::lock_guard<std::mutex> lock(m_mutex);
 
         // this data_item_container constructor copies the data:
-        p_shared_data = new data_item_container<T>(obj);
+        p_shared_data = new data_item_container<T>(*obj.get_data_item_container());
     }
 
     // private in order to prevent make_shared<> from being called
@@ -315,7 +322,7 @@ public:
     // This method HAS to be called the first time the object is created (instead of
     // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
     // get_shared_ptr() method declared/defined below.
-    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(size_t numitems = 0)
+    [[nodiscard]] static std::shared_ptr<Util::shared_data_items<T>> create(size_t numitems = 0)
     {
         return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(numitems));
     }
@@ -323,7 +330,7 @@ public:
     // This method HAS to be called the first time the object is created (instead of
     // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
     // get_shared_ptr() method declared/defined below.
-    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(shared_data_items<T>& obj)
+    [[nodiscard]] static std::shared_ptr<Util::shared_data_items<T>> create(shared_data_items<T>& obj)
     {
         return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(obj));
     }
@@ -331,7 +338,7 @@ public:
     // This method HAS to be called the first time the object is created (instead of
     // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
     // get_shared_ptr() method declared/defined below.
-    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(data_item_container<T>& dobj)
+    [[nodiscard]] static std::shared_ptr<Util::shared_data_items<T>> create(data_item_container<T>& dobj)
     {
         return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(dobj));
     }
@@ -339,7 +346,7 @@ public:
     // This method HAS to be called the first time the object is created (instead of
     // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
     // get_shared_ptr() method declared/defined below.
-    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(T *databuffer, size_t nelements)
+    [[nodiscard]] static std::shared_ptr<Util::shared_data_items<T>> create(T *databuffer, size_t nelements)
     {
         return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(databuffer, nelements));
     }
