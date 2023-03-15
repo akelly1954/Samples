@@ -128,6 +128,20 @@ target_link_libraries( main_condition_data
                      )
 install(TARGETS main_condition_data DESTINATION localrun)
 
+#
+# main_util_combo_objects
+#
+set (main_util_combo_objects "main_util_combo_objects${DBG}")
+add_executable (main_util_combo_objects src/main_programs/main_util_combo_objects.cpp)
+target_link_libraries( main_util_combo_objects 
+                            ${Util_LIB}
+                            ${LoggerCpp_LIB}
+                            ${JsonCpp_LIB}
+                            ${CMAKE_THREAD_LIBS_INIT} 
+                            ${LINKOPTIONS}
+                     )
+install(TARGETS main_util_combo_objects DESTINATION localrun)
+
 # Dependencies
 add_dependencies (main_circular_buffer ${Util})
 add_dependencies (main_LoggerCpp_main_example ${Util})
@@ -135,3 +149,4 @@ add_dependencies (main_UtilLogger_example ${Util})
 add_dependencies (main_jsoncpp_samplecfg ${Util})
 add_dependencies (main_commandline ${Util})
 add_dependencies (main_condition_data ${Util})
+add_dependencies (main_util_combo_objects ${Util})

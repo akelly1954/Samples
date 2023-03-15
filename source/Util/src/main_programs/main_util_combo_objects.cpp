@@ -79,31 +79,99 @@
 // YMMV.
 //
 
+///////////////////////////////////////////////////////////////////
+// Start of hijacked section (to test data_item_container)
+// This might become a separate main program - just not this minute...
+// (March 2023)
+
+#include <sys/types.h>
+#include <generic_data.hpp>
+
+void printdata(const std::string& label, Util::data_item_container<u_int8_t> sd)
+{
+    std::cout << "Contents of " << label << ": " << std::endl;
+    if (! sd.is_valid())
+    {
+        std::cout << "Parameter " << label << " is invalid (empty)." << std::endl;
+        return;
+    }
+
+    size_t member = 0;
+    for (auto itr = sd._begin(); itr != sd._end(); itr++)
+    {
+        std::cout << "[" << member << "]=" << std::to_string(*itr) << "  ";
+        member++;
+    }
+    std::cout << std::endl;
+}
+
+
+void initializeGenericData()
+{
+    using namespace Util;
+
+    data_item_container<uint8_t> somedata(2*1024);
+
+    u_int8_t uint8ctr = 0;
+    for (auto itr = somedata._begin(); itr != somedata._end(); itr++)
+    {
+        if ((uint8ctr % 0xff) == 0) uint8ctr = 0;
+        *itr = uint8ctr;
+        uint8ctr++;
+    }
+
+    printdata("initial somedata", somedata);
+
+    data_item_container<u_int8_t>moved_data = std::move(somedata);
+    printdata("moved_data", moved_data);
+
+    std::cout << "\n\n====================================\n\n" << std::endl;
+
+    data_item_container<u_int8_t>copied_data(moved_data);
+    printdata("copied_data", copied_data);
+
+    std::cout << "\n\n====================================\n\n" << std::endl;
+
+    printdata("invalid_somedata", somedata);
+
+    std::cout << "\n\n====================================\n\n" << std::endl;
+
+}
+// End of hijacked section (to test data_item_container)
+///////////////////////////////////////////////////////////////////
 
 void Usage(std::ostream& strm, std::string command)
 {
-    strm << "Usage:    " << command << " [ num_threads ]\n\n" <<
-                 "If num_threads is specified, it has to be numerical and greater than 0. ]\n" <<
-                 "If it is not specified, it defaults to 20.\n" << std::endl;
+    strm << "Usage:    " << command << " num_threads num_data_items\n\n" << std::endl;
 }
 
-// Returns the number of threads requested, or 0 if no parameters.
-// Returns -1 if Usage() (help) was requested.
-int parse(int argc, const char *argv[])
+// Returns the number of threads requested, and fills in
+// nthreads and nsize.  Returns false if no parameters
+// or if error.  Returns true if all is ok.
+bool parse(int argc, const char *argv[], int& num_threads, int& num_data_items)
 {
     // If no parameters were supplied.
     if (argc == 1)
     {
-        return 0;
+        Usage(std::cerr, argv[0]);
+        return false;
     }
     else if (std::string(argv[1]) == "--help" ||
                std::string(argv[1]) == "-h" ||
                std::string(argv[1]) == "help")
     {
         Usage(std::cerr, argv[0]);
-        return -1;
+        return false;
     }
-    return strtol(argv[1], NULL, 10);
+    if (argv[2] == nullptr)
+    {
+        std::cerr << "Error: missing num_data_items parameter.\n" << std::endl;
+        Usage(std::cerr, argv[0]);
+        return false;
+    }
+    num_threads = strtol(argv[1], NULL, 10);
+    num_data_items = strtol(argv[2], NULL, 10);
+    return true;
 }
 
 // The unit of data passed around for each thread
@@ -119,20 +187,38 @@ void initializeSleeptimes(int numthreads, std::vector<int>& sleeptimes)
 }
 
 // All threads, including main, output to this channel
-const char *logChannelName = "main_condition_data";
+const char *logChannelName = "main_util_combo_objects";
 
 int main(int argc, const char *argv[])
 {
     using namespace Util;
 
-    int numthreads = parse(argc, argv);
-    // DEBUG   std::cerr << "Parse returned: " << numthreads << std::endl;
+    int numthreads = 0;
+    int num_data_items = 0;
+
+    if (!parse(argc, argv, numthreads, num_data_items))
+    {
+        return EXIT_FAILURE;
+    }
+    // DEBUG
+    std::cerr << "Parse returned: num_threads = " << numthreads
+              << ", num_data_elements = " << num_data_items << std::endl;
 
     Log::Config::Vector configList;
-    Util::MainLogger::initializeLogManager(configList, Log::Log::Level::eNotice, "main_condition_data_log.txt", MainLogger::disableConsole, MainLogger::enableLogFile);
+    Util::MainLogger::initializeLogManager(configList, Log::Log::Level::eDebug, "main_util_combo_objects_log.txt",
+                                           MainLogger::disableConsole, MainLogger::enableLogFile);
     MainLogger::configureLogManager( configList, logChannelName );
     Log::Logger logger(logChannelName);
 
+    logger.debug() << "Started main_util_combo_objects...";
+
+    // Terminate the Log Manager (destroy the Output objects)
+    Log::Manager::terminate();
+
+    return EXIT_SUCCESS;
+}
+
+#if 0
     // Static global data on the heap.
     // This is the single condition_data object ruling the various running threads
     Util::condition_data<threadData> condvar(threadData(-1, std::string("Initial - this is not from a thread")));
@@ -154,6 +240,12 @@ int main(int argc, const char *argv[])
     }
 
     std::cerr << "Number of threads chosen: " << numthreads << std::endl;
+
+    // Hijacked this program to also check out the generic data object.
+    // uncomment the next line if you want to see lots of output...
+    //
+    // initializeGenericData();
+    //
 
     initializeSleeptimes(numthreads, sleeptimes);
 
@@ -221,6 +313,7 @@ int main(int argc, const char *argv[])
 
     return 0;
 }
+#endif // 0
 
 #ifdef SAMPLE_RUN
 /*
@@ -262,6 +355,10 @@ $
 */
 
 #endif //  SAMPLE_RUN
+
+
+
+
 
 
 
