@@ -182,7 +182,7 @@ typedef Util::shared_data_items<uint8_t> shared_uint8_data;
 
 // data_item_container
 template<typename T>
-class shared_data_items : public std::enable_shared_from_this<data_item_container<T>>
+class shared_data_items : public std::enable_shared_from_this<shared_data_items<T>>
 {
 public:
     // constructors and destructor are defined further down below
@@ -241,7 +241,7 @@ public:
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    // The following sections mostly involve creation, construction, and deletion.
+    // The following sections mostly involve creation and construction, and deletion.
     // First, the "private" sections (methods that are disallowed, as well as
     // methods that are prevented from being called by std::make_shared<>):
     ////////////////////////////////////////////////////////////////////////////
@@ -253,7 +253,7 @@ private:
 
 private:
     // private in order to prevent make_shared<> from being called
-    // (see static create() functions below).
+    // (see create() functions below).
     // This private constructor creates either an empty (and invalid)
     // object, or a valid one, with at least one T object.
     shared_data_items(size_t numitems = 0)
@@ -267,33 +267,123 @@ private:
     }
 
     // private in order to prevent make_shared<> from being called
-    // (see static create() functions below)
+    // (see create() functions below)
     shared_data_items(shared_data_items<T>& obj)        // Copy constructor
         : p_shared_data(nullptr)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        if (p_shared_data) delete p_shared_data;
-        p_shared_data = new data_item_container<T>(obj.num_items());
-        *p_shared_data = obj;
+        // this data_item_container constructor copies the data:
+        p_shared_data = new data_item_container<T>(obj);
     }
 
     // private in order to prevent make_shared<> from being called
-    // (see static create() functions below)
+    // (see create() functions below)
     shared_data_items(data_item_container<T>& dobj)
         : p_shared_data(nullptr)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        // this data_item_container constructor copies the data:
         p_shared_data = new data_item_container<T>(dobj);
     }
 
     // private in order to prevent make_shared<> from being called
-    // (see static create() functions below)
+    // (see create() functions below)
     shared_data_items(T *databuffer, size_t nelements)
         : p_shared_data(nullptr)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        // this data_item_container constructor copies the data:
         p_shared_data = new data_item_container<T>(databuffer, nelements);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // The following is the "public" section of object creation, construction, and deletion.
+    ////////////////////////////////////////////////////////////////////////////
+
+public:
+    // The first time this object is constructed in order to obtain a shared_ptr<> for a brand
+    // new managed object, the ::create() function MUST be called.  All subsequent shared_ptr<>'s
+    // that are to be made for this instance of the object, MUST be obtained by calling the
+    // ::get_shared_ptr() member function.  So - call ::create() once, and then ::get_shared_ptr()
+    // as many times as needed to obtain a shared_ptr<> for this object.
+    //
+    // See also private constructors above (placed there to prevent make_shared<> from being called.
+
+    // This method HAS to be called the first time the object is created (instead of
+    // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
+    // get_shared_ptr() method declared/defined below.
+    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(size_t numitems = 0)
+    {
+        return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(numitems));
+    }
+
+    // This method HAS to be called the first time the object is created (instead of
+    // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
+    // get_shared_ptr() method declared/defined below.
+    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(shared_data_items<T>& obj)
+    {
+        return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(obj));
+    }
+
+    // This method HAS to be called the first time the object is created (instead of
+    // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
+    // get_shared_ptr() method declared/defined below.
+    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(data_item_container<T>& dobj)
+    {
+        return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(dobj));
+    }
+
+    // This method HAS to be called the first time the object is created (instead of
+    // the equivalent constructor). Subsequent shared_ptr<>'s can be had by calling the
+    // get_shared_ptr() method declared/defined below.
+    [[nodiscard]] std::shared_ptr<Util::shared_data_items<T>> create(T *databuffer, size_t nelements)
+    {
+        return std::shared_ptr<Util::shared_data_items<T>>(new Util::shared_data_items<T>(databuffer, nelements));
+    }
+
+public:
+    // Destructor
+    virtual ~shared_data_items()
+    {
+        if (p_shared_data != nullptr) delete p_shared_data;
+    }
+
+    // copy assignment operator of the encapsulating object
+    shared_data_items<T>& operator=(shared_data_items<T>& obj)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        if (p_shared_data) delete p_shared_data;
+
+        // this data_item_container constructor copies the data:
+        p_shared_data = new data_item_container<T>(obj);
+        return *this;
+    }
+
+    // copy assignment operator of the embedded data item
+    shared_data_items<T>& operator=(data_item_container<T>& dobj)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        if (p_shared_data) delete p_shared_data;
+
+        // this data_item_container constructor copies the data:
+        p_shared_data = new data_item_container<T>(dobj);
+        return *this;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // END OF THE "public" section of object creation, construction, and deletion.
+    ////////////////////////////////////////////////////////////////////////////
+
+    // And finally, get a shared_ptr<> to this object...
+    std::shared_ptr<Util::shared_data_items<T>> get_shared_ptr(void)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return this->shared_from_this();
     }
 
 private:
