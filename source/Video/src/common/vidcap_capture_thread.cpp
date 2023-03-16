@@ -29,7 +29,6 @@
 #include <suspend_resume_test_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
 #include <vidcap_plugin_factory.hpp>
 #include <ConfigSingleton.hpp>
 #include <MainLogger.hpp>

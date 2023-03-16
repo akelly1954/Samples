@@ -29,8 +29,6 @@
 #include <video_capture_globals.hpp>
 #include <ConfigSingleton.hpp>
 #include <Utility.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
 #include <MainLogger.hpp>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,8 +55,7 @@ using namespace VideoCapture;
 std::mutex video_capture_queue::capture_queue_mutex;
 bool video_capture_queue::s_terminated = false;
 Util::condition_data<int> video_capture_queue::s_condvar(0);
-Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>>
-                                                                            video_capture_queue::s_ringbuf(100);
+Util::circular_buffer<Util::shared_ptr_uint8_data_t> video_capture_queue::s_ringbuf(100);
 
 void VideoCapture::raw_buffer_queue_handler()
 {
@@ -133,7 +130,7 @@ void VideoCapture::raw_buffer_queue_handler()
             if (Video::vcGlobals::write_frames_to_file)
             {
                 size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
-                assert (nbytes == sp_frame->num_valid_elements());
+                assert (nbytes == sp_frame->num_items());
 
                 //////////////////////////////////////////////////////////////////////
                 // Used in the code for DEBUG purposes only to simulate a heavy load.
@@ -145,7 +142,7 @@ void VideoCapture::raw_buffer_queue_handler()
             if (Video::vcGlobals::write_frames_to_process)
             {
                 size_t nbytes = VideoCapture::write_frame_to_process(processstream, sp_frame);
-                assert (nbytes == sp_frame->num_valid_elements());
+                assert (nbytes == sp_frame->num_items());
 
                 //////////////////////////////////////////////////////////////////////
                 // Used in the code for DEBUG purposes only to simulate a heavy load.
@@ -162,11 +159,11 @@ void VideoCapture::raw_buffer_queue_handler()
     while (!video_capture_queue::s_ringbuf.empty())
     {
         auto sp_frame = video_capture_queue::s_ringbuf.get();
-        loggerp->debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_valid_elements() << " bytes ";
+        loggerp->debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_items() << " bytes ";
         if (Video::vcGlobals::write_frames_to_file)
         {
             size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
-            assert (nbytes == sp_frame->num_valid_elements());
+            assert (nbytes == sp_frame->num_items());
 
             //////////////////////////////////////////////////////////////////////
             // Used in the code for DEBUG purposes only to simulate a heavy load.
@@ -178,7 +175,7 @@ void VideoCapture::raw_buffer_queue_handler()
         if (Video::vcGlobals::write_frames_to_process)
         {
             size_t nbytes = VideoCapture::write_frame_to_process(processstream, sp_frame);
-            assert (nbytes == sp_frame->num_valid_elements());
+            assert (nbytes == sp_frame->num_items());
 
             //////////////////////////////////////////////////////////////////////
             // Used in the code for DEBUG purposes only to simulate a heavy load.
@@ -223,26 +220,13 @@ void video_capture_queue::set_terminated(bool t)
 // It's called from the specific video raw capture driver on its thread.
 void video_capture_queue::add_buffer_to_raw_queue(void *p, size_t bsize)
 {
+    using namespace Util;
+
     if (p != NULL)
     {
-        size_t bytesleft = bsize;
-        uint8_t *startdata = static_cast<uint8_t*>(p);
-        size_t nextsize = 0;
-
-        while (bytesleft > 0)
-        {
-            nextsize = bytesleft > EnetUtil::NtwkUtilBufferSize? EnetUtil::NtwkUtilBufferSize : bytesleft;
-
-            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp =
-                        EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>::create(startdata, nextsize);
-
-            startdata += nextsize;
-            bytesleft -= nextsize;
-            assert (sp->num_valid_elements() == nextsize);
-
-            // Add the shared_ptr to the queue
-            VideoCapture::video_capture_queue::s_ringbuf.put(sp, VideoCapture::video_capture_queue::s_condvar);
-        }
+        uint8_t *up = static_cast<uint8_t*>(p);
+        auto sp = shared_uint8_data_t::create(up, bsize);
+        VideoCapture::video_capture_queue::s_ringbuf.put(sp, VideoCapture::video_capture_queue::s_condvar);
     }
 }
 
@@ -301,47 +285,43 @@ FILE * VideoCapture::create_output_process()
     return output_stream;
 }
 
-size_t VideoCapture::write_frame_to_file(FILE *filestream,
-            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
+size_t VideoCapture::write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame)
 {
     using Util::Utility;
 
-    size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), filestream);
+    size_t elementswritten = std::fwrite(sp_frame->_begin(), sizeof(uint8_t), sp_frame->num_items(), filestream);
     int errnocopy = 0;
     size_t byteswritten = elementswritten * sizeof(uint8_t);
 
     auto loggerp = Util::UtilLogger::getLoggerPtr();
 
-    if (byteswritten != sp_frame->num_valid_elements())
+    if (byteswritten != sp_frame->num_items())
     {
         loggerp->error() << "VideoCapture::write_frame_to_file: fwrite returned a short count or 0 bytes written. Requested: " <<
-                        sp_frame->num_valid_elements() << ", got " << byteswritten << " bytes: " <<
+                        sp_frame->num_items() << ", got " << byteswritten << " bytes: " <<
                         Utility::get_errno_message(errnocopy);
     }
     fflush(filestream);
-
     return byteswritten;
 }
 
-size_t VideoCapture::write_frame_to_process(FILE *processstream,
-            std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame)
+size_t VideoCapture::write_frame_to_process(FILE *processstream, Util::shared_ptr_uint8_data_t sp_frame)
 {
     using Util::Utility;
 
     auto loggerp = Util::UtilLogger::getLoggerPtr();
 
-    size_t elementswritten = std::fwrite(sp_frame->data().data(), sizeof(uint8_t), sp_frame->num_valid_elements(), processstream);
+    size_t elementswritten = std::fwrite(sp_frame->_begin(), sizeof(uint8_t), sp_frame->num_items(), processstream);
     int errnocopy = 0;
     size_t byteswritten = elementswritten * sizeof(uint8_t);
 
-    if (byteswritten != sp_frame->num_valid_elements())
+    if (byteswritten != sp_frame->num_items())
     {
         loggerp->error() << "VideoCapture::write_frame_to_process: fwrite returned a short count or 0 bytes written. Requested: " <<
-                        sp_frame->num_valid_elements() << ", got " << byteswritten << " bytes: " <<
+                        sp_frame->num_items() << ", got " << byteswritten << " bytes: " <<
                         Utility::get_errno_message(errnocopy);
     }
     fflush(processstream);
-
     return byteswritten;
 }
 

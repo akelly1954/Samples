@@ -29,7 +29,6 @@
 #include <vidcap_capture_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
 #include <MainLogger.hpp>
 #include <errno.h>
 #include <string.h>

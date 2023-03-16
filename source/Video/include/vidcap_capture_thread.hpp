@@ -29,7 +29,6 @@
 #include <MainLogger.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
 #include <stdio.h>
 #include <thread>

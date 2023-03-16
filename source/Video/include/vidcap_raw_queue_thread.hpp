@@ -25,9 +25,8 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <Utility.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
 #include <condition_data.hpp>
+#include <generic_data.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <stdio.h>
@@ -45,11 +44,8 @@ FILE *create_output_file();
 
 FILE *create_output_process();
 
-size_t write_frame_to_file(FILE *filestream,
-                  std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame);
-
-size_t write_frame_to_process(FILE *filestream,
-                  std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>> sp_frame);
+size_t write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame);
+size_t write_frame_to_process(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame);
 
 class video_capture_queue
 {
@@ -63,7 +59,7 @@ public:
     static std::mutex capture_queue_mutex;
     static bool s_terminated;
     static Util::condition_data<int> s_condvar;
-    static Util::circular_buffer<std::shared_ptr<EnetUtil::fixed_size_array<uint8_t,EnetUtil::NtwkUtilBufferSize>>> s_ringbuf;
+    static Util::circular_buffer<Util::shared_ptr_uint8_data_t> s_ringbuf;
 };  // end of class video_capture_queue
 
 } // end of namespace VideoCapture

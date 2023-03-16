@@ -27,7 +27,6 @@
 #include <vidcap_profiler_thread.hpp>
 #include <Utility.hpp>
 #include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
 #include <video_capture_globals.hpp>
 #include <MainLogger.hpp>
 #include <stdio.h>
