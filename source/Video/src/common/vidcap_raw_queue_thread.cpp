@@ -70,7 +70,7 @@ void VideoCapture::raw_buffer_queue_handler()
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Waiting for kick-start...";
 
     {
-        std::lock_guard<std::mutex> lock(video_capture_queue::capture_queue_mutex);
+        // std::lock_guard<std::mutex> lock(video_capture_queue::capture_queue_mutex);
 
         if (video_capture_queue::s_terminated)
         {
@@ -261,26 +261,33 @@ FILE * VideoCapture::create_output_process()
     int errnocopy = 0;
     FILE *output_stream = NULL;
 
+    auto ifptr = VideoCapture::video_plugin_base::interface_ptr;
+    if (ifptr == nullptr)
+    {
+        throw std::runtime_error("VideoCapture::create_output_process: Got a NULL interface pointer.");
+    }
+
     auto loggerp = Util::UtilLogger::getLoggerPtr();
-    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
 
-    // Need to refresh output process since command line options
-    // may have changed the requested pixel-format.
-    Json::Value& cfg_root = Config::ConfigSingleton::GetJsonRootCopyRef();
+    ifptr->set_popen_process_string();
+    std::string actual_process = video_plugin_base::popen_process_string;
 
-    std::string actual_process = ifptr->get_popen_process_string();
+    if (actual_process == "")
+    {
+        throw std::runtime_error("VideoCapture::create_output_process: Got an empty process string.");
+    }
 
-    loggerp->debug() << "create_output_process: Starting output process:  " << actual_process;
+    loggerp->debug() << "create_output_process: Starting output process:  " << Utility::string_enquote(actual_process);
 
     if ((output_stream = ::popen (actual_process.c_str(), "w")) == NULL)
     {
         errnocopy = errno;
-        loggerp->error() << "create_output_process: Could not start the process \"" << actual_process
-                       << "\": " << Utility::get_errno_message(errnocopy);
+        loggerp->error() << "create_output_process: Could not start the process " << Utility::string_enquote(actual_process)
+                       << ": " << Utility::get_errno_message(errnocopy);
     }
     else
     {
-        loggerp->debug() << "create_output_process: Started the process \"" << actual_process << "\".";
+        loggerp->debug() << "create_output_process: Started the process " << Utility::string_enquote(actual_process) << ".";
     }
     return output_stream;
 }

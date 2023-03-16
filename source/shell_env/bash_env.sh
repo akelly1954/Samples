@@ -16,7 +16,7 @@ JsonCppSource_DIR="$jsoncppdir/$jsoncppsrcdirname"
 
 SampleRoot_DIR="$basepath"
 
-CMAKE_ECLIPSE_VERSION="4.22"
+export CMAKE_ECLIPSE_VERSION="4.26"
 
 function base_linux_build_Usage
 {

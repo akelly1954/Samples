@@ -61,12 +61,12 @@ namespace VideoCapture {
 
         void set_plugin_interface_pointer(video_plugin_base* interfaceptr)
         {
-            interface_ptr = interfaceptr;
+            video_plugin_base::interface_ptr = interfaceptr;
         }
 
         virtual std::string get_type() const = 0;
         virtual std::string get_filename() const = 0;
-        static video_plugin_base* get_interface_pointer()    { return interface_ptr; }
+        virtual video_plugin_base* get_interface_pointer()    { return video_plugin_base::interface_ptr; }
 
     protected:
         static std::string plugin_type;

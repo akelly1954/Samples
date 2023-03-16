@@ -46,7 +46,7 @@ void VideoCapture::test_raw_capture_ctl(std::string argv0)
     std::shared_ptr<Log::Logger> uloggerp = Util::UtilLogger::getLoggerPtr();
     uloggerp->debug() << argv0 << ": In test_raw_capture_ctl: thread running";
 
-    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::interface_ptr;
 
     if (!ifptr)
     {

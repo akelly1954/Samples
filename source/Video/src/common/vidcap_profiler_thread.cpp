@@ -71,52 +71,49 @@ void VideoCapture::video_profiler()
     Log::Logger logger = *(Util::UtilLogger::getLoggerPtr());
 
     int slp = Video::vcGlobals::profile_timeslice_ms;   //milliseconds
-    profiler_frame::initialize();
+    // TODO: I think this is a mistake:    profiler_frame::initialize();
 
     logger.debug() << "video_profiler(): Profiler thread started...";
-    logger.info() << "video_profiler(): Profiler thread: skipping first frame to establish a duration baseline.";
 
+    // TODO: Get rid of the condition_data mechanism for the profiler.
+
+    while (! profiler_frame::initialized)
     {
+        static int wt = 0;
         std::lock_guard<std::mutex> lock(vidcap_profiler::profiler_mutex);
-
-        if (false)       // TODO:  ????  !vidcap_profiler::s_terminated)
+        if ((wt++ % 4) == 0)
         {
-            logger.debug() << "video_profiler(): waiting for main() to kick-start thread";
-            vidcap_profiler::s_condvar.wait_for_ready();
-            logger.debug() << "video_profiler(): kick-started. Continue processing.";
+            logger.debug() << "video_profiler(): Waiting for initialization...";
         }
-        std::cerr << "Not waiting on condition variable." << std::endl;
+
+        if (profiler_frame::initialized) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 
-    while (!vidcap_profiler::s_terminated)
+    logger.info() << "video_profiler(): Profiler thread: Done waiting for initialization: skipping first frame to establish a duration baseline.";
+
+    if (Video::vcGlobals::framecount < 100)
     {
-        // This covers the time period from before we actually start streaming.
-        int ct = 1;
-        if (profiler_frame::get_total_num_frames() != 0)
-        {
-            break;
-        }
-        else
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(slp/4));
-            if (((ct-1) % 10) == 0)  // do this every 10 loops (about 8 seconds currently)
-            {
-                logger.debug() << "video_profiler(): Wait looping: " << (ct * slp / 4 / 100) << " seconds at a time for frames to start streaming.";
-            }
-            ct++;
-            continue;
-        }
+        logger.info() << "\n\nCAUTION: Profiling information for fewer than 100 frames is not logged.\n";
     }
 
     while (!vidcap_profiler::s_terminated)
     {
         if (Video::vcGlobals::profile_logprint_enabled)
         {
-            logger.info() << "  ---  Profiler info...";
-            logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
-            logger.info() << "Total number of frames received: " << profiler_frame::get_total_num_frames();
-            logger.info() << "Number of frames received while paused: " << profiler_frame::get_paused_num_frames();
-            logger.info() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
+            if (profiler_frame::get_total_num_frames() < 100)
+            {
+                logger.info() << "  ---  Profiler info not logged. Current count frames received is "
+                              << profiler_frame::get_total_num_frames();
+            }
+            else
+            {
+                logger.info() << "  ---  Profiler info...";
+                logger.info() << "Shared pointers in the ring buffer: " << video_capture_queue::s_ringbuf.size();
+                logger.info() << "Total number of frames received: " << profiler_frame::get_total_num_frames();
+                logger.info() << "Number of frames received while paused: " << profiler_frame::get_paused_num_frames();
+                logger.info() << "Current avg frame rate (per second): " << profiler_frame::frames_per_second();
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(slp));

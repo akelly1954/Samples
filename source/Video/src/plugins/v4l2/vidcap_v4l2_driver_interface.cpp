@@ -88,7 +88,7 @@ void vidcap_v4l2_driver_interface::initialize()
     }
     loggerp->debug() << "vidcap_v4l2_driver_interface: Initialized.";
 
-    std::string actual_process = video_plugin_base::set_popen_process_string();
+    std::string actual_process = this->set_popen_process_string();
     if (actual_process == "")
     {
         throw std::runtime_error("vidcap_v4l2_driver_interface: base popen() process string is empty.");

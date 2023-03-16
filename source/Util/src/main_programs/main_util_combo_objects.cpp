@@ -23,6 +23,12 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <shared_data_items.hpp>
+#include <condition_data.hpp>
+#include <Utility.hpp>
+#include <MainLogger.hpp>
+#include <LoggerCpp/LoggerCpp.h>
+#include <sys/types.h>
 #include <thread>
 #include <vector>
 #include <utility>
@@ -34,12 +40,6 @@
 #include <iostream>
 #include <chrono>
 #include <stdlib.h>
-#include <condition_data.hpp>
-#include <Utility.hpp>
-#include <MainLogger.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <sys/types.h>
-#include <generic_data.hpp>
 
 // This becomes the basis for all other data items
 static Util::data_item_container<uint8_t> reference_item;

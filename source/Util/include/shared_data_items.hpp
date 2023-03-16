@@ -25,6 +25,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <Utility.hpp>
+#include <data_item.hpp>
 #include <circular_buffer.hpp>
 #include <LoggerCpp/LoggerCpp.h>
 #include <mutex>
@@ -41,137 +42,6 @@
 
 namespace Util
 {
-
-////////////////////////////////////////////////////////////////////////////
-// Template class data_item_container definition
-////////////////////////////////////////////////////////////////////////////
-
-template<typename T>
-class data_item_container
-{
-public:
-    // Default constructor creates an empty object or a
-    // valid object (with at least one member).
-    data_item_container(size_t num_items = 0)
-        : m_numitems(0)
-        , mp_data(nullptr)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_numitems = num_items;
-        mp_data = new T[num_items];
-    }
-
-    // Destructor
-    virtual ~data_item_container()
-    {
-        if (mp_data != nullptr)
-        {
-            delete[] mp_data;
-            mp_data = nullptr;
-        }
-    }
-
-    // Copy constructor
-    data_item_container(data_item_container& obj)
-        : m_numitems(0)
-        , mp_data(nullptr)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-
-        m_numitems = obj.num_items();
-        mp_data = new T[m_numitems];
-
-        // copy from _begin() to (not including) _end, to data().
-        std::copy(obj._begin(), obj._end(), data());
-    }
-
-    // Raw data constructor (i.e. video frame from driver)
-    data_item_container(T* rawdata, size_t nelements)
-        : m_numitems(0)
-        , mp_data(nullptr)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-
-        m_numitems = nelements;
-        mp_data = new T[nelements];
-
-        // copy from beginning to (not including) the end, to data().
-        if (nelements > 0) std::copy(rawdata, rawdata + nelements, data());
-    }
-
-    // Move constructor
-    data_item_container(data_item_container&& obj)
-        : m_numitems(0)
-        , mp_data(nullptr)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-
-        mp_data = obj.data();
-        m_numitems = obj.num_items();
-        obj.set_invalid();
-    }
-
-    // Copy = (assignment)
-    data_item_container& operator=(data_item_container& obj)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-
-        if (this != &obj)
-        {
-            if (mp_data != nullptr) delete[] mp_data;
-            m_numitems = obj.num_items();
-            mp_data = new T[m_numitems];
-            // copy from _begin() to (not including) _end, to data().
-            std::copy( obj._begin(), obj._end(), data());
-        }
-        return *this;
-    }
-
-    // Move = (operator)
-    data_item_container& operator=(data_item_container&& obj)
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-
-        if (this != &obj)
-        {
-            if (mp_data != nullptr) delete[] mp_data;
-            mp_data = obj.data();
-            m_numitems = obj.num_items();
-            obj.set_invalid();
-        }
-        return *this;
-    }
-
-    void set_invalid()
-    {
-        m_numitems = 0;
-        mp_data = nullptr;
-    }
-
-    bool is_valid()
-    {
-        return m_numitems > 0 && mp_data != nullptr;
-    }
-
-    size_t num_items()
-    {
-        return m_numitems;
-    }
-
-    size_t bytelength()
-    {
-        return m_numitems * sizeof(mp_data[0]);
-    }
-
-    T* data()       { return mp_data; }
-    T* _begin()     { return mp_data; }
-    T* _end()       { return _begin() + num_items(); }
-
-private:
-    size_t m_numitems;
-    T *mp_data;
-    mutable std::mutex m_mutex;
-};
 
 ////////////////////////////////////////////////////////////////////////////
 // Template class shared_data_items definition
@@ -399,4 +269,5 @@ private:
 };
 
 } // end of namespace Util
+
 

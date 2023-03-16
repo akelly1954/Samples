@@ -1,7 +1,7 @@
 
 # Welcome.
 
-This project includes new software I've developed in the past year (since Jan 2022), as well as some newly rewritten older code 
+This project includes software I've developed in the past year or so (since Jan 2022), as well as some rewritten older code 
 from prehistoric times.     
       
 Whereas my original intent was to release the project into the Github mainstream, I now realize, a year++ later,
@@ -47,13 +47,16 @@ There are other README files listed below as well. Please have fun with it all.
 
 **Ongoing task:** Updating README files and doing some cleanup. It will be done when it's done.   
 
-**Up and coming task:** migrate the video capture objects (all the way to the Qt apps) to use the new data containers described below instead of the std::array<> based objects the video capture objects are currently using.  I will 
-probably do this before going back to finish the Qt project (**VideoCapturePlayer**) described further down.    
+**Up and coming task:** migrate the video capture objects (all the way to the Qt apps) to use the new data containers described 
+below instead of the std::array<> based objects the video capture objects are currently using.  I will 
+probably do this (already doing it) before going back to finish the Qt project (**VideoCapturePlayer**) described further down.    
 
-**Ongoing now:**  Developing a new data container tool and objects.  The file *generic_data.hpp* (in the **Util** project) includes the *data_item_container* object as well as the *shared_data_items* object.     
+**Ongoing now:**  Developing a new data container tool and objects.  The file *shared_data_items.hpp* 
+(in the **Util** project) as well as the file it includes - *data_item.hpp*, contain the *shared_data_items* object as well as the *data_item_container* object respectively.     
     
 Both objects are template based, where typename T is the underlying type of the data. Although both objects are 
-currently used with T = uint8_t (unsigned char) outside of the class definitions and declarations, the T type can be anything that complies with common std:: and STL requirements (int32_t, double, class whatever, etc).    
+currently used with T = uint8_t (unsigned char) from outside of the class definitions and declarations, the T type can 
+be anything that complies with common std:: and STL requirements (int32_t, double, class whatever, etc).    
 
 The *data_item_container* object holds a sequence of "typename T" items.  The object handles creation, assignment, 
 copy and move semantics, deletion, and access (to each element).
@@ -62,10 +65,12 @@ The *shared_data_items* object encapsulates (as opposed to "derives from") a *da
 and exposes most of *data_item_container*'s capablities and data to the outside world.  In addition, it derives 
 from **std::enable_shared_from_this<>**, and thus it manages the creation of **std::shared_ptr<>**'s to the 
 object as well as all other reasonable capabilities (see the source).  (**Note:** the *shared_data_items* object 
-currently disallows **move semantics** altogether (even though the *data_item_container* does not).  These will be implemented later if appropriate). 
+currently disallows **move semantics** altogether (even though the *data_item_container* does not).  These will be 
+implemented later if appropriate). 
 
 **Note:** this also is a good example of
-how to use the std:: **shared_from_this** construct properly (i.e. avoid having a dangling copy of the shared_ptr<>  which is not included in the reference count in the shared_ptr<> upon deletion).    
+how to use the std:: **shared_from_this** construct properly (i.e. avoid having a dangling copy of the shared_ptr<>  
+which is not included in the reference count in the shared_ptr<> upon deletion).    
 
 The basic test for these objects is in **source/Util/src/main/programs/main_util_combo_objects.cpp**.  It tests all 
 the basic objects' creation and capabilities, but still TODO: test multi-threaded operation. 
@@ -90,28 +95,7 @@ complete build of the **Samples** project.  To build it, you have to go to the a
        
        
 * The [README file in the Video project](source/Video/README.md) is complete in its current form.  This is a  multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is recommended reading if you want to wade into these waters. (Some of the sections are slightly out of date - but do not impede forward movement.  I will be updating this doc gradually over time).     
-    
-       
-* Done with the restructure of **main_video_capture** at the previous level of functionality that existed in *main_v4l2_raw_capture* (which is gone), and then some.    
-       
-      
-* Done with the restructure of the Video project source files (as well as the associated *CMake* files.   
-        
-       
-* There is no more **C** code in this project (previous interface to *V4L2*).  It's all **C++** now.     
-     
-       
-* Fully integrated **JsonCpp** into the code.  Only used in some applications at this time.    
-      
-       
-* Revamped the command line parsing utility (see CommandLine.cpp/.hpp), as well as the programs that use it.     
-      
-       
-* Completed the capability of **main_video_capture** to stream out video frames to a process. 
-This is controlled by the JSON config file (*video_capture.json*). Highly recommend taking a look at 
-[source/Video/README](source/Video/README.md).     
-      
-     
+         
 **Next Steps**:    
     
 1. Further development of the video capture plugin interface documentation - [source/Video/src/plugins/README.md](source/Video/src/plugins/README.md).  The document covers just about everything (Jan 2023), but will be fleshed out with more details in the future.     
