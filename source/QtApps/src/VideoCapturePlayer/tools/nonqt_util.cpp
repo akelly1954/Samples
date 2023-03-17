@@ -32,10 +32,10 @@ const char * NonQtUtil::nqUtil::Argv[] ={
       "-lg",
       "DBUG",
       // "-loginit",
-      "-dr",
+      // "-dr",
       "-fc",
       "0",
-      "-pr",
+      // "-pr",
       nullptr
 };
 

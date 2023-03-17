@@ -122,9 +122,75 @@ Even though the IDE and build environment are set here as the defaults (eclipse,
       
 ## Intetesting programs and objects:
 
-These programs are used to test objects, as well as to stress-test them.  They don't always have a useful purpose beyond that, except that 
-if the reader is looking for a focused project that can help them solve real problems they face, this is not a bad way to start.    
+These programs are used to test objects, as well as to stress-test them.  They don't always have a useful purpose beyond that, except that if the reader is looking for a focused project that can help them solve real problems they face, this is not a bad way to start.    
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
+**data_item.hpp** - contains the *data_item_container<T>* object.   
+**shared_data_items.hpp** - contains the *shared_data_items<T>* object.      
+Path: *source/Util/include/*   
+   
+These objects have been created to overcome difficulties encountered with the practical use of 
+**std::array<>**-based objects. To avoid expressing vague but polite explanations, I'd prefer to be 
+blunt: Having to define an object with a fixed size, particularly when the object is passed 
+around various 
+parts of a program (and even between programs) practically forces the consumer of the data object 
+into having unreasonable data size requirements.  The basic requirement of always declaring an 
+array object with a predetermined size which is well known at compile-time, dictates requirements on consumer objects which are, 
+say, attempting to use the array based object found in a 3rd party library - even years after 
+it was written. At compile time.   
+
+I'm well aware of efforts to circumvent the C++ compiler's enforcement of its tight and strict policy regarding the declaration of **std::array<>**, but have found little merit in designing a complete set of tools whose goal is to circumvent a somewhat major c++ language requirement.   
+
+So the idea is that the *data_item_container<T>* manages and handles a sequence of typname T objects in a container, and the number of items in the container is determined at runtime separately from any requirement akin to those enforced with C++ std::array<>'s.    
+
+This (the dynamic number of items in a collection) could well be solved by using say, **std::vector<T>** objects, but those objects are geared for frequent editing of the data - adding, appending, inserting and resizing its internal data objects.  The need satisfied by the two objects defined here is how to simply use a container with large amounts of data, without having to do too much manipulation of the data itself, but simply to move it around the system using shared_ptr<T>'s.   
+
+By encapsulating the *data_item_container<T>* object in a shared_ptr<T> based *shared_data_items<T>* object, convenient management of the data within the data_item_container is made easy. The shared_ptr<> is assignable, copyable, delete'able, and most of all will prevent unneccessary copying and recopying of the data. Runtime typing is enforced, with no memory leaks, while being able to use the shared_ptr<> within STL objects (std::vector<>, std::map<>, etc) as well as std:: objects in general (std::copy(...), std::sort(...), etc).   
+
+Prologue over...    
+
+The two objects introduced here are designed to be "moved around" the running program using std::shared_ptr<T>'s. The *data_item_container<T>* is not meant to be used standalone (without using the shared_ptr<> pointing to it), although it can be: There are no restrictions enforcing the use of 
+a *data_item_container<T>* solely within an accompanying *shared_data_items<T>* object.  It's just not useful IMO.   
+
+Both objects are template based, where typename T is the underlying type of the data.  Although currently both objects are used with T = uint8_t (unsigned char) from within programs that use them, 
+the T type can be anything that complies with common std:: and STL requirements (int32_t, double, std::vector<T>, class whatever, etc).   
+
+**Note**: Currently these objects are not yet tested with *std::string*. This is a **TODO** item. 
+(3-17-2023)   
+
+The *data_item_container* object holds a sequence of "typename T" items.  The object handles creation, assignment, copy and move semantics, deletion, and access (to each element).
+
+The *shared_data_items* object encapsulates (as opposed to "derives from") a *data_item_container* object, and exposes most of *data_item_container*'s capablities and data to the outside world.  In addition, it derives from **std::enable_shared_from_this<>**, and so it manages the creation of **std::shared_ptr<>**'s to the object as well as all other reasonable capabilities (see the source).   
+
+**Note:** the *shared_data_items* object currently disallows **move semantics** altogether (even though the *data_item_container* does not).  These will be implemented later if appropriate). 
+
+**Note:** the *shared_data_items* object is a good example of how to use the std:: **shared_from_this** construct properly (i.e. avoid having a dangling copy of the shared_ptr<> which is not included in the reference count in the shared_ptr<> upon deletion).    
+
+The basic test for these objects is in **source/Util/src/main/programs/main_util_combo_objects.cpp**.  It tests all the basic objects' creation and capabilities, but still **TODO:** additional tests, including test of multi-threaded operations). 
+      
      
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **main_video_capture.cpp**    
 found in *...Samples/source/Video/src/main_programs/*    
      
@@ -144,7 +210,9 @@ The (now a) C++ class uses a set of configurable parameters (now read from the J
 Obviously this is a Linux-only solution.  The Windows-only solution for grabbing frames will have to be considerably different (and is not being planned at the moment).   
     
 Run time profiling implemented in this set of objects, gathers stats of various factors in this mechanism that control how well the whole mechanism works:  various configurable hardware parameters (the V4L2 interface), the number of frame buffer pointers in the ring buffer (the queue size), the current frame rate, etc.   
-    
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **Class ConfigSingleton**     
 found in *...Samples/source/Util/include/ConfigSingleton.hpp*    
 found in *...Samples/source/Util/src/ConfigSingleton.cpp*    
@@ -155,7 +223,9 @@ This object reads, parses, validates, and updates **JSON** files that deal with 
     
 (**Deficiencies** - at this time (Jan 2023) this object has not been put to strenuous use yet in this project.  I will continue to 
 develop it in the future as needed by new applications).     
-     
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **main_ntwk_basic_sock_server.cpp** and **main_client_for_basic_server.cpp**   
 found in *...Samples/source/EnetUtil/src/main_programs/*     
      
@@ -165,30 +235,39 @@ Enough information is written to the server log file to enable the user to compa
 The basis for handling the data is the **fixed_size_array** object (see *NtwkFixedArray.hpp* below) which encapsulates an *std::array<>* object (see *NtwkFixedArray.hpp* below). All communication of data is based on this fixed size container.    
     
 In the same source directory the script **test_basic_server.bash** runs one test scenario which requires various data files (that are not checked in to this repository - some can be rather large). The script setup and use is documented at the beginning of the source file in a comment.    
-    
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **NtwkFixedArray.hpp**     
 found in *...Samples/source/EnetUtil/include/*    
      
 This is a template based object which encapsulates an std::array<T,N> which is where the data is kept for most of the network based
 objects covered here. The current implementation uses an std::array<T,N> where **T** is **uint8_t** (for std::array<uint8_t,N>), and **N** is the size of the std::array<> (number of elements). In addition to other facets, it demonstrates a decent implementation of how to use the **shared_from_this()** mechanism properly.  By having **shared_ptr<>**'s holding fixed size buffers, a program (like **main_ntwk_basic_sock_server.cpp** in this case) can move the data around by moving the **shared_ptr<>**'s around instead of having to copy the data from one array buffer to the next.  Worth a look. (Who uses std::array<>'s anyways?)     
-     
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **main_condition_data.cpp**      
 found in *...Samples/source/Util/src/main_programs*    
      
 Exercises the condition_data object extensively for use from multiple threads. The program stretches the number of multipe threads to
 a really large number (30,000 in one successful case on my system). This program was used while testing the **LoggerCpp** library at the time when it was eveluated for use in these sources.  This meant writing lots of log lines of output from 30,000 threads concurrently, into a single log file without any of the lines being broken, nor losing any data.  (I settled on **LoggerCpp** for use in these sources after that little experiment - see the *3rdparty* directory for more info on the package).
 
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **main_circular_buffer.cpp**    
 found in *...Samples/source/Util/src/main_programs*   
      
-Exercises the ring buffer and shows functionality.  This is a great mechanism to use with **std::shared_ptr<>**'s.     
-     
+Exercises the ring buffer and shows functionality.  This is a great mechanism to use with **std::shared_ptr<>**'s.   
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **main_enet_util.cpp**     
 found in *...Samples/source/EnetUtil/src/main_programs* (see also *...Samples/source/EnetUtil/src/EnetUtil.cpp* and *...Samples/source/EnetUtil/include/EnetUtil.hpp*)     
       
 Shows how to iterate through all of a system's network links and obtain useful information from them (ip address, family type, interface type, mac address, etc), without resorting to use of command line utilities embedded in the c++ code.  Also shows how to obtain a system's primary interface to the internet - including the system's self ip address and mac address.     
-     
-     
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **Includes:**     
      
 The following **include/** directories include the declaration of the objects used in the above programs:    
@@ -201,8 +280,9 @@ The following **include/** directories include the declaration of the objects us
 See also the 3rd party packages' directories:     
 *...Samples/source/3rdparty/LoggerCpp/SRombauts-LoggerCpp-a0868a8-modified/include/*     
 *...Samples/source/3rdparty/JsonCpp/JsonCpp-8190e06-2022-07-15/jsoncpp/include/*     
-     
-     
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **Shell scripts:**    
      
 base-linux-build.bash (in *...Samples/source/*)   
@@ -212,8 +292,9 @@ linux-build.bash   (in *...Samples/source/Video/*)
 bash_env.sh (in *...Samples/source/shell_env/*)   
 test_basic_server.bash (in *...Samples/source/EnetUtil/src/main_programs/*)     
 localbuild.sh  (in *...Samples/source/3rdparty/LoggerCpp/* and in *...Samples/source/3rdparty/JsonCpp/*)     
-     
-                
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **CMake Files:**      
      
 *cmake/EnetUtil.cmake*   
@@ -224,23 +305,24 @@ localbuild.sh  (in *...Samples/source/3rdparty/LoggerCpp/* and in *...Samples/so
 *EnetUtil/CMakeLists.txt*   
 *Util/CMakeLists.txt*    
 *Video/CMakeLists.txt*    
-     
-      
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **The flow:**    
      
 The shell scripts create the file structure and shell environment for CMake to run.   
 The CMake files set up **cmake** to create an **Eclipse IDE** project using **make** for building the code.   
 **Eclipse** does all the rest...   
-   
-   __________________   
-   
-    
-    
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 # Please Note:
 This is work in progress -- I'm writing code and uploading the sources to the repository while ensuring that everything is tested, building properly (at least on my system), and working. There are no Github "collaborators" established for the project (that would happen only in rare cases). In the meantime, if there's something critically important you need to communicate, please email me at **andrew@akelly.com**.     
      
 Thank you.     
-     
+
+<hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
+
 **SEE ALSO:**    
 
 The [README](source/README.md) in the **source** folder.    

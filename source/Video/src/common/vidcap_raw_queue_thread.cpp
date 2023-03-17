@@ -69,20 +69,16 @@ void VideoCapture::raw_buffer_queue_handler()
 
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Waiting for kick-start...";
 
+    if (video_capture_queue::s_terminated)
     {
-        // std::lock_guard<std::mutex> lock(video_capture_queue::capture_queue_mutex);
-
-        if (video_capture_queue::s_terminated)
-        {
-            loggerp->info() << "VideoCapture::raw_buffer_queue_handler: Terminated before start of streaming...";
-            return;
-        }
-        else
-        {
-            // Main is going to kick-start us to free this.
-            // Wait for main() to signal us to start
-            video_capture_queue::s_condvar.wait_for_ready();
-        }
+        loggerp->info() << "VideoCapture::raw_buffer_queue_handler: Terminated before start of streaming...";
+        return;
+    }
+    else
+    {
+        // Main is going to kick-start us to free this.
+        // Wait for main() to signal us to start
+        video_capture_queue::s_condvar.wait_for_ready();
     }
 
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Running.";

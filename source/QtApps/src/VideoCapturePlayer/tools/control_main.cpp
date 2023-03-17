@@ -77,6 +77,10 @@ int control_main(int argc, const char *argv[])
     vcGlobals::loglevel =                         Log::Log::Level::eDebug;
     vcGlobals::log_level =                        Log::Log::toString(Video::vcGlobals::loglevel);
     vcGlobals::config_file_name =                 Video::vcGlobals::logChannelName + ".json";
+    vcGlobals::profiling_enabled =                false;
+    vcGlobals::write_frames_to_file =             false;
+    vcGlobals::write_frames_to_process =          false;
+
     VideoCapture::video_plugin_base::set_base_paused(true);
     Video::vcGlobals::profile_logprint_enabled =  false;     // We don't want two profilers writing to the log
 
