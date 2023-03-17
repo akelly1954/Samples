@@ -47,53 +47,33 @@ There are other README files listed below as well. Please have fun with it all.
 
 **Ongoing task:** Updating README files and doing some cleanup. It will be done when it's done.   
 
-**Up and coming task:** migrate the video capture objects (all the way to the Qt apps) to use the new data containers described 
-below instead of the std::array<> based objects the video capture objects are currently using.  I will 
-probably do this (already doing it) before going back to finish the Qt project (**VideoCapturePlayer**) described further down.    
+**And...**   
 
-**Ongoing now:**  Developing a new data container tool and objects.  The file *shared_data_items.hpp* 
-(in the **Util** project) as well as the file it includes - *data_item.hpp*, contain the *shared_data_items* object as well as the *data_item_container* object respectively.     
-    
-Both objects are template based, where typename T is the underlying type of the data. Although both objects are 
-currently used with T = uint8_t (unsigned char) from outside of the class definitions and declarations, the T type can 
-be anything that complies with common std:: and STL requirements (int32_t, double, class whatever, etc).    
+* Enhancing the raw queue (ring buffer of shared_ptr<>'s) thread to split out each each major functionality 
+required of the raw queue thread (writing to file, writing to an external process like ffmpeg, or sending the video 
+frame's shared_ptr<> to a consumer app like a GUI based video player) into their own threads.   
 
-The *data_item_container* object holds a sequence of "typename T" items.  The object handles creation, assignment, 
-copy and move semantics, deletion, and access (to each element).
-
-The *shared_data_items* object encapsulates (as opposed to "derives from") a *data_item_container* object, 
-and exposes most of *data_item_container*'s capablities and data to the outside world.  In addition, it derives 
-from **std::enable_shared_from_this<>**, and thus it manages the creation of **std::shared_ptr<>**'s to the 
-object as well as all other reasonable capabilities (see the source).  (**Note:** the *shared_data_items* object 
-currently disallows **move semantics** altogether (even though the *data_item_container* does not).  These will be 
-implemented later if appropriate). 
-
-**Note:** this also is a good example of
-how to use the std:: **shared_from_this** construct properly (i.e. avoid having a dangling copy of the shared_ptr<>  
-which is not included in the reference count in the shared_ptr<> upon deletion).    
-
-The basic test for these objects is in **source/Util/src/main/programs/main_util_combo_objects.cpp**.  It tests all 
-the basic objects' creation and capabilities, but still TODO: test multi-threaded operation. 
-      
-**And still...**     
-     
-...developing a video streaming app in Qt6 (**VideoCapturePlayer**) relying on the video capture project. 
+* Developing a video streaming app in Qt6 (**VideoCapturePlayer**) relying on the video capture project. 
 For now this is merely a sandbox for ideas and trying things out in the **dev** branch.  But it's beginning
-to look like a real app. Work in progress - please stay tuned. 
+to look like a real app.   
 
 As a sidenote, to see how that project (**VideoCapturePlayer**) is progressing, see *.../source/QtApps/src/VideoCapturePlayer*. 
 The project is built by **QtCreator** with **cmake** (using **ninja**, not **make**) and does not participate in the 
 complete build of the **Samples** project.  To build it, you have to go to the above directory, and run **qtcreator** 
 (after Qt6 and all other requirements have been installed).  Currently the app looks great, and is fully functional except for... ~~actually showing the streamed video~~ -- never mind that - it's showing video finally - from a file, not video capture.  That's the part I'm working on right now (actual streaming of captured video) (3/9/2023). 
      
-~~It's become obvious that we're losing frame-rate performance in the video capture project as a result of writing frames to a file and/or to an external process from the very same thread that's picking off shared_ptr's from the video frames in the raw video queue thread. The actual I/O (writing of buffers) needs to be moved to two different threads. That's the next thing on the todo list.~~   Or...  maybe not so obvious.  Turns out that there were a few bugs in the profiling mechanism that were the actual cause for the decay in performance reported by the profiling mechanism. Those bugs are now fixed, and performance is good.  However, it might actually be a good idea to split out two additional threads regardless.  But not at a higher priority than other items on the todo  list.     
-      
       
 **Done with the following projects:**     
      
+* Finished migrating the video capture objects (all the way to the Qt apps) to use the new data containers described 
+below instead of the std::array<> based objects the video capture objects were previously using.   
+
+* Completed the objects declared/defined in **data_item.hpp** and **shared_data_items.hpp** (path: *source/Util/include/*). 
+these are described in detail below - a way manage large amounts of data (say, video frames) and move the data around the system 
+without having to copy (much).   
+
 * Modified the Video project to use **plugins** for dealing with the different streaming interfaces (currently **v4l2** - next, **opencv**).  This involved refactoring some of the design, and much of the code.  First and formoset, the **v4l2** interface was implemented as a plugin, and next comes OpenCV - it is constantly getting pushed down in the priority list - my apologies. At startup, the main program (main_video_capture) loads the interface plugin as per the JSON config file, and it will error-exit if anything goes wrong. The interface for plugins is defined by [README.md](source/Video/src/plugins/README.md) under source/Video/plugins/.      
-       
-       
+
 * The [README file in the Video project](source/Video/README.md) is complete in its current form.  This is a  multi page (multi-screenful) document full of useful information for those who are interested in using the Video capturing and processing of raw image buffers.  This is recommended reading if you want to wade into these waters. (Some of the sections are slightly out of date - but do not impede forward movement.  I will be updating this doc gradually over time).     
          
 **Next Steps**:    
