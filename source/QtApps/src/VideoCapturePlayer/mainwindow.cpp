@@ -130,7 +130,8 @@ void MainWindow::PauseButtonClicked()
     static bool isDiagPaused = true;
 
     std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
-    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+    // VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+    auto ifptr = VideoCapture::video_plugin_base::interface_ptr;
 
     if (isDiagPaused)
     {
@@ -176,8 +177,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::set_terminated(std::string str)
 {
     std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
-    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
-
+    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::interface_ptr;
     if (loggerp != nullptr) loggerp->debug() << str;
     if (ifptr) ifptr->set_terminated(true);
 }
@@ -185,7 +185,7 @@ void MainWindow::set_terminated(std::string str)
 void MainWindow::onFrameCountLineEditReturnPressed()
 {
     std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
-    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::get_interface_pointer();
+    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::interface_ptr;
 
     QString message;
     QMessageBox msgBox;

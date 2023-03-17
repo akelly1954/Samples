@@ -84,8 +84,7 @@ int main(int argc, char *argv[])
     // has been loaded.  If it winds up being null, something very very bad
     // has happened (examine stdout output, as well as the log file to find
     // out what happened.
-    VideoCapture::video_plugin_base *ifptr =
-            VideoCapture::video_plugin_base::get_interface_pointer();
+    VideoCapture::video_plugin_base *ifptr = VideoCapture::video_plugin_base::interface_ptr;
 
     if (ifptr == nullptr)
     {
