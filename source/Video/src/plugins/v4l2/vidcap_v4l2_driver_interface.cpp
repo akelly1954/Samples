@@ -243,13 +243,6 @@ int vidcap_v4l2_driver_interface::v4l2if_xioctl(int fh, int request, void *arg)
 
 void vidcap_v4l2_driver_interface::v4l2if_process_image(void *p, int size)
 {
-    if (ispaused())
-    {
-        // if we're paused, continue the frame capture
-        // but don't really do anything with it.
-        return;
-    }
-
     add_buffer_to_raw_queue(p, size);
 }
 

@@ -37,6 +37,7 @@
 #include <vidcap_capture_thread.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <vidcap_raw_queue_thread.hpp>
+#include <vidcap_queue_frame_workers.hpp>
 #include <vidcap_plugin_factory.hpp>
 #include <json/json.h>
 #include <thread>
@@ -221,6 +222,7 @@ int main(int argc, const char *argv[])
             uloggerp->debug() << argv0 << ":  started video profiler thread";
             profilingthread.detach();
         }
+
 
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
         queuethread = std::thread(VideoCapture::raw_buffer_queue_handler);

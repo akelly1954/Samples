@@ -3,7 +3,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-// Copyright (c) 2022 Andrew Kelly
+// Copyright (c) 2022 - 2023 Andrew Kelly
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -39,27 +39,64 @@ namespace VideoCapture {
 
     // Queue handler thread
     void raw_buffer_queue_handler();
-
     FILE *create_output_file();
-
-    FILE *create_output_process();
-
     size_t write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame);
-    size_t write_frame_to_process(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame);
 
+    // This object serves as the consumer for frame buffers (shared_ptr<>'s)
+    // received from the raw queue, and dealt with in this new thread.
+    class frame_worker_thread_base
+    {
+    public:
+        frame_worker_thread_base(std::string label, size_t elements_in_ring_buffer = 100)
+            : m_condvar(0)
+            , m_ringbuf(elements_in_ring_buffer)
+            , m_label(label)
+            , m_terminated(false)
+            , splogger(Util::UtilLogger::getLoggerPtr())
+        { ; }
+        virtual ~frame_worker_thread_base() = default;
+        virtual void setup() = 0;
+        virtual void run() = 0;
+        virtual void finish() = 0;
+        virtual void set_terminated(bool t) = 0;
+        virtual void add_buffer_to_queue(Util::shared_ptr_uint8_data_t) = 0;
+
+    public:
+        Util::condition_data<int> m_condvar;
+        Util::circular_buffer<Util::shared_ptr_uint8_data_t> m_ringbuf;
+        std::string m_label;
+        bool m_terminated;
+        std::mutex worker_base_queue_mutex;
+        std::shared_ptr<Log::Logger> splogger;
+    };
+
+    // The main video frame queueing object.
     class video_capture_queue
     {
     public:
+
+        virtual ~video_capture_queue();
+
         static void set_terminated(bool t);         // main() sets this to true or false
 
         // Note: this method runs on a different thread than the other methods in this object.
         // It's called from the specific video raw capture driver on its thread.
         static void add_buffer_to_raw_queue(void *p, size_t bsize);
 
+        static void register_worker_thread(std::thread *workerthread);
+        static void register_worker(frame_worker_thread_base *worker);
+
         static std::mutex capture_queue_mutex;
         static bool s_terminated;
         static Util::condition_data<int> s_condvar;
         static Util::circular_buffer<Util::shared_ptr_uint8_data_t> s_ringbuf;
+
+        // pointers to all std::threads started by the raw queue object (this->)
+        static std::vector<std::thread *> s_workerthreads;
+
+        // pointers to all frame worker objects started by the raw queue object (this->)
+        static std::vector<frame_worker_thread_base *> s_workers;
+
     };  // end of class video_capture_queue
 
 } // end of namespace VideoCapture
