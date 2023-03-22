@@ -36,7 +36,6 @@
 #include <ConfigSingleton.hpp>
 #include <vidcap_capture_thread.hpp>
 #include <vidcap_profiler_thread.hpp>
-#include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_queue_frame_workers.hpp>
 #include <vidcap_plugin_factory.hpp>
 #include <json/json.h>
@@ -60,6 +59,9 @@ int main(int argc, const char *argv[])
 {
     using namespace Video;
     using Util::Utility;
+    using VideoCapture::video_capture_queue;
+    using VideoCapture::write2process_frame_worker;
+    using VideoCapture::write2file_frame_worker;
 
     // This vector is for lines written to the log file
     // before the logger is set up.  We will accumulate
@@ -223,9 +225,35 @@ int main(int argc, const char *argv[])
             profilingthread.detach();
         }
 
-
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
         queuethread = std::thread(VideoCapture::raw_buffer_queue_handler);
+
+        /////////////////////////////////////////////////////////////////////////
+        // Set up the queue thread consumer objects needed in this run.
+        // This can only be done after the queue handler thread has started.
+        /////////////////////////////////////////////////////////////////////////
+
+        // write-to-file
+        write2file_frame_worker *ff = nullptr;
+        if (Video::vcGlobals::write_frames_to_file)
+        {
+            // start the thread
+            ff = new write2file_frame_worker(50);
+            std::thread fileworkerthread(&write2file_frame_worker::run, std::ref(*ff));
+            fileworkerthread.detach();
+            video_capture_queue::register_worker_thread( &fileworkerthread );
+        }
+
+        write2process_frame_worker *fw = nullptr;
+        if (Video::vcGlobals::write_frames_to_process)
+        {
+            // start the thread
+            fw = new write2process_frame_worker(100);
+            std::thread processworkerthread(&write2process_frame_worker::run, std::ref(*fw));
+            processworkerthread.detach();
+            video_capture_queue::register_worker_thread( &processworkerthread );
+        }
+
         queuethread.detach();
 
         /////////////////////////////////////////////////////////////////////
@@ -238,7 +266,6 @@ int main(int argc, const char *argv[])
         videocapturethread = std::thread(VideoCapture::video_capture, command_line_string);
         videocapturethread.detach();
         uloggerp->debug() << argv0 << ":  kick-starting the video capture operations.";
-
         VideoCapture::video_plugin_base::s_condvar.send_ready(0, Util::condition_data<int>::NotifyEnum::All);
         ifptr->start_streaming(vcGlobals::framecount);
         uloggerp->debug() << argv0 << ":  sent start_streaming indicator to driver.";
@@ -308,12 +335,12 @@ int main(int argc, const char *argv[])
     // Wait for the threads to finish
     if (queuethread.joinable())
     {
-        if (!VideoCapture::video_capture_queue::s_terminated) VideoCapture::video_capture_queue::set_terminated(true);
+        if (!video_capture_queue::s_terminated) video_capture_queue::set_terminated(true);
         queuethread.join();
     }
     else
     {
-        if (!VideoCapture::video_capture_queue::s_terminated) VideoCapture::video_capture_queue::set_terminated(true);
+        if (!video_capture_queue::s_terminated) video_capture_queue::set_terminated(true);
     }
 
     if (vcGlobals::profiling_enabled)

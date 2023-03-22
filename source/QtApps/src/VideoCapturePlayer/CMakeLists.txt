@@ -58,6 +58,8 @@ include_directories( ${JsonCpp_HEADERS} )
 
 set(PROJECT_SOURCES
         main.cpp
+        stream2qt_video_capture.hpp
+        stream2qt_video_capture.cpp
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui

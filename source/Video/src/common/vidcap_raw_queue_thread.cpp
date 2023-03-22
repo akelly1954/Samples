@@ -100,34 +100,8 @@ void VideoCapture::raw_buffer_queue_handler()
 
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Running.";
 
-    /////////////////////////////////////////////////////////////////////////
-    // Set up the queue thread consumer objects needed in this run
-    /////////////////////////////////////////////////////////////////////////
 
-    // write-to-file
-    write2file_frame_worker *ff = nullptr;
-    if (Video::vcGlobals::write_frames_to_file)
-    {
-        // start the thread
-        ff = new write2file_frame_worker(50);
-        std::thread fileworkerthread(&write2file_frame_worker::run, std::ref(*ff));
-        fileworkerthread.detach();
-
-        video_capture_queue::register_worker_thread( &fileworkerthread );
-    }
-
-    write2process_frame_worker *fw = nullptr;
-    if (Video::vcGlobals::write_frames_to_process)
-    {
-        // start the thread
-        fw = new write2process_frame_worker(100);
-        std::thread processworkerthread(&write2process_frame_worker::run, std::ref(*fw));
-        processworkerthread.detach();
-
-        video_capture_queue::register_worker_thread( &processworkerthread );
-    }
-
-    // This for loop starts all the registered worker threads and their queues
+    // This for loop checks all the registered worker threads
     for (auto itr = video_capture_queue::s_workers.begin();
                     itr != video_capture_queue::s_workers.end(); itr++)
     {
@@ -142,6 +116,7 @@ void VideoCapture::raw_buffer_queue_handler()
         }
     }
 
+    // Cannot run without any consumers. Fatal.
     if (video_capture_queue::s_workers.size() == 0)
     {
         throw std::runtime_error("VideoCapture::raw_buffer_queue_handler(): No registered consumer threads for video frames. Aborting...");

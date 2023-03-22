@@ -38,6 +38,7 @@
 #include <ConfigSingleton.hpp>
 #include <vidcap_capture_thread.hpp>
 #include <vidcap_profiler_thread.hpp>
+#include <stream2qt_video_capture.hpp>
 #include <vidcap_raw_queue_thread.hpp>
 #include <vidcap_plugin_factory.hpp>
 #include <json/json.h>
@@ -67,6 +68,8 @@ int control_main(int argc, const char *argv[])
     using namespace Video;
     using NonQtUtil::nqUtil;
     using Util::Utility;
+    using VideoCapture::stream2qt_video_capture;
+    using VideoCapture::video_capture_queue;
 
     // TODO: Do something about this...  should become a video capture method which
     //       initializes main-specific globals close to the beginning of most/all main()'s.
@@ -251,6 +254,20 @@ int control_main(int argc, const char *argv[])
 
         // Start the thread which handles the queue of raw buffers that obtained from the video hardware.
         queuethread = std::thread(VideoCapture::raw_buffer_queue_handler);
+
+        /////////////////////////////////////////////////////////////////////////
+        // Set up the queue thread consumer objects needed in this run.
+        // This can only be done after the queue handler thread has started.
+        /////////////////////////////////////////////////////////////////////////
+
+         stream2qt_video_capture *ff = nullptr;
+
+        // start the thread
+        ff = new stream2qt_video_capture(50);
+        std::thread fileworkerthread(&stream2qt_video_capture::run, std::ref(*ff));
+        fileworkerthread.detach();
+        video_capture_queue::register_worker_thread( &fileworkerthread );
+
         queuethread.detach();
 
         /////////////////////////////////////////////////////////////////////

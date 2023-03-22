@@ -36,8 +36,7 @@
 VideoCapture::write2file_frame_worker::write2file_frame_worker(size_t elements_in_ring_buffer)
             : frame_worker_thread_base (std::string("write_frames_to file"), elements_in_ring_buffer)
 {
-    setup();
-    splogger->debug() << "write2file_frame_worker constructor: setup called.";
+    ;
 }
 
 void VideoCapture::write2file_frame_worker::setup()
@@ -57,6 +56,13 @@ void VideoCapture::write2file_frame_worker::setup()
 void VideoCapture::write2file_frame_worker::run()
 {
     splogger->debug() << "write2file_frame_worker::run(): thread is running....";
+
+    if (!initialized)
+    {
+        setup();
+        initialized = true;
+        splogger->debug() << "write2file_frame_worker::run(): setup completed.";
+    }
 
     while (!m_terminated)
     {
@@ -182,8 +188,7 @@ size_t VideoCapture::write2file_frame_worker
 VideoCapture::write2process_frame_worker::write2process_frame_worker(size_t elements_in_ring_buffer)
             : frame_worker_thread_base (std::string("write_frames_to process"), elements_in_ring_buffer)
 {
-    setup();
-    splogger->debug() << "write2process_frame_worker constructor: setup called.";
+    ;
 }
 
 void VideoCapture::write2process_frame_worker::setup()
@@ -203,6 +208,13 @@ void VideoCapture::write2process_frame_worker::setup()
 void VideoCapture::write2process_frame_worker::run()
 {
     splogger->debug() << "write2process_frame_worker::run(): thread is running....";
+
+    if (!initialized)
+    {
+        setup();
+        initialized = true;
+        splogger->debug() << "write2process_frame_worker::run(): setup completed.";
+    }
 
     while (!m_terminated)
     {

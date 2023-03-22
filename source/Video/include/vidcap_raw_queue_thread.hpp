@@ -51,6 +51,7 @@ namespace VideoCapture {
             , m_label(label)
             , m_terminated(false)
             , splogger(Util::UtilLogger::getLoggerPtr())
+            , initialized(false)
         { ; }
         virtual ~frame_worker_thread_base() = default;
         virtual void setup() = 0;
@@ -66,6 +67,7 @@ namespace VideoCapture {
         bool m_terminated;
         std::mutex worker_base_queue_mutex;
         std::shared_ptr<Log::Logger> splogger;
+        bool initialized;
     };
 
     // The main video frame queueing object.
