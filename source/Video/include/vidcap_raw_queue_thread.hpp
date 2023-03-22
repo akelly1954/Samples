@@ -39,7 +39,6 @@ namespace VideoCapture {
 
     // Queue handler thread
     void raw_buffer_queue_handler();
-    FILE *create_output_file();
 
     // This object serves as the consumer for frame buffers (shared_ptr<>'s)
     // received from the raw queue, and dealt with in this new thread.
@@ -78,8 +77,6 @@ namespace VideoCapture {
 
         static void set_terminated(bool t);         // main() sets this to true or false
 
-        // Note: this method runs on a different thread than the other methods in this object.
-        // It's called from the specific video raw capture driver on its thread.
         static void add_buffer_to_raw_queue(void *p, size_t bsize);
 
         static void register_worker_thread(std::thread *workerthread);

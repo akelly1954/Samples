@@ -51,11 +51,20 @@ There are other README files listed below as well. Please have fun with it all.
 
 * Enhancing the raw queue (ring buffer of shared_ptr<>'s) thread to split out each each major functionality 
 required of the raw queue thread (writing to file, writing to an external process like ffmpeg, or sending the video 
-frame's shared_ptr<> to a consumer app like a GUI based video player) into their own threads.   
-
-* Developing a video streaming app in Qt6 (**VideoCapturePlayer**) relying on the video capture project. 
-For now this is merely a sandbox for ideas and trying things out in the **dev** branch.  But it's beginning
-to look like a real app.   
+frame's shared_ptr<> to a consumer app like a GUI based video player) into their own threads (see also next bullet item below).   
+    
+     
+* Developing a video streaming app in Qt6 (**VideoCapturePlayer**) relying on the 
+video capture project.  Currently under development, it is beginning to look like a real app, 
+but is not done yet.  Currently implementing a worker thread subscriber object to 
+the new raw buffer queue mechanism implemented in the *Video* library.  This pattern is not a 
+a true **pub/sub** pattern - it operates within a process that links in the *Video* library, and 
+derives from base class *frame_worker_thread_base* declared in *vidcap_raw_queue_thread.hpp*. 
+Working mechanisms of the **write-to-file** and **write-to-process** subscriber threads are 
+implemented in the video capture mechanism implemented in the *Video* library, and are 
+good examples of how to add a new subscriber thread object deriving from the mostly virtual 
+base class *frame_worker_thread_base*.  The two derived thread objects are declared and defined 
+in *shared_data_items.hpp* and *.cpp* respectively.  
 
 As a sidenote, to see how that project (**VideoCapturePlayer**) is progressing, see *.../source/QtApps/src/VideoCapturePlayer*. 
 The project is built by **QtCreator** with **cmake** (using **ninja**, not **make**) and does not participate in the 
@@ -126,7 +135,7 @@ So the idea is that the *data_item_container<T>* manages and handles a sequence 
 
 This (the dynamic number of items in a collection) could well be solved by using say, **std::vector<T>** objects, but those objects are geared for frequent editing of the data - adding, appending, inserting and resizing its internal data objects.  The need satisfied by the two objects defined here is how to simply use a container with large amounts of data, without having to do too much manipulation of the data itself, but simply to move it around the system using shared_ptr<T>'s.   
 
-By encapsulating the *data_item_container<T>* object in a shared_ptr<T> based *shared_data_items<T>* object, convenient management of the data within the data_item_container is made easy. The shared_ptr<> is assignable, copyable, delete'able, and most of all will prevent unneccessary copying and recopying of the data. Runtime typing is enforced, with no memory leaks, while being able to use the shared_ptr<> within STL objects (std::vector<>, std::map<>, etc) as well as std:: objects in general (std::copy(...), std::sort(...), etc).   
+By encapsulating the *data_item_container<T>* object in a shared_ptr<T> based *shared_data_items<T>* object, convenient management of the data within the *data_item_container* is made easy. The shared_ptr<> is assignable, copyable, delete'able, and most of all will prevent unneccessary copying and recopying of the data. Runtime typing is enforced, with no memory leaks, while being able to use the shared_ptr<> within STL objects (std::vector<>, std::map<>, etc) as well as std:: objects in general (std::copy(...), std::sort(...), etc).   
 
 Prologue over...    
 
@@ -143,32 +152,12 @@ The *data_item_container* object holds a sequence of "typename T" items.  The ob
 
 The *shared_data_items* object encapsulates (as opposed to "derives from") a *data_item_container* object, and exposes most of *data_item_container*'s capablities and data to the outside world.  In addition, it derives from **std::enable_shared_from_this<>**, and so it manages the creation of **std::shared_ptr<>**'s to the object as well as all other reasonable capabilities (see the source).   
 
-**Note:** the *shared_data_items* object currently disallows **move semantics** altogether (even though the *data_item_container* does not).  These will be implemented later if appropriate). 
+**Note:** the *shared_data_items* object currently disallows **move semantics** altogether (even though the *data_item_container* does not).  These will be implemented later if appropriate. 
 
 **Note:** the *shared_data_items* object is a good example of how to use the std:: **shared_from_this** construct properly (i.e. avoid having a dangling copy of the shared_ptr<> which is not included in the reference count in the shared_ptr<> upon deletion).    
 
 The basic test for these objects is in **source/Util/src/main/programs/main_util_combo_objects.cpp**.  It tests all the basic objects' creation and capabilities, but still **TODO:** additional tests, including test of multi-threaded operations). 
       
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-     
-
 <hr style="border: 0.3px solid lightgray; width:40%;"></hr>   
 
 **main_video_capture.cpp**    
