@@ -100,20 +100,31 @@ void VideoCapture::raw_buffer_queue_handler()
 
     loggerp->debug() << "VideoCapture::raw_buffer_queue_handler: Running.";
 
+    /////////////////////////////////////////////////////////////////////////
     // Set up the queue thread consumer objects needed in this run
-    write2process_frame_worker *fw = new write2process_frame_worker(100);
-    if (!Video::vcGlobals::write_frames_to_process)
-    {
-        delete fw;
-        fw = nullptr;
-    }
-    else
+    /////////////////////////////////////////////////////////////////////////
+
+    // write-to-file
+    write2file_frame_worker *ff = nullptr;
+    if (Video::vcGlobals::write_frames_to_file)
     {
         // start the thread
-        std::thread workerthread(&write2process_frame_worker::run, std::ref(*fw));
-        workerthread.detach();
+        ff = new write2file_frame_worker(50);
+        std::thread fileworkerthread(&write2file_frame_worker::run, std::ref(*ff));
+        fileworkerthread.detach();
 
-        video_capture_queue::register_worker_thread( &workerthread );
+        video_capture_queue::register_worker_thread( &fileworkerthread );
+    }
+
+    write2process_frame_worker *fw = nullptr;
+    if (Video::vcGlobals::write_frames_to_process)
+    {
+        // start the thread
+        fw = new write2process_frame_worker(100);
+        std::thread processworkerthread(&write2process_frame_worker::run, std::ref(*fw));
+        processworkerthread.detach();
+
+        video_capture_queue::register_worker_thread( &processworkerthread );
     }
 
     // This for loop starts all the registered worker threads and their queues
@@ -131,19 +142,9 @@ void VideoCapture::raw_buffer_queue_handler()
         }
     }
 
-    // Captured frames also go to the output file only if the
-    // option is set (which it is not, by default)
-    if (Video::vcGlobals::write_frames_to_file)
+    if (video_capture_queue::s_workers.size() == 0)
     {
-        filestream = create_output_file();
-        if (filestream == NULL)
-        {
-            // detailed error message already emitted by the create function
-            loggerp->error() << "Exiting...";
-            video_capture_queue::set_terminated(true);
-            return;
-        }
-        loggerp->debug() << "In VideoCapture::raw_buffer_queue_handler(): created " << Video::vcGlobals::output_file << ".";
+        throw std::runtime_error("VideoCapture::raw_buffer_queue_handler(): No registered consumer threads for video frames. Aborting...");
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -175,87 +176,18 @@ void VideoCapture::raw_buffer_queue_handler()
                 }
             }
 
-            if (Video::vcGlobals::write_frames_to_file)
-            {
-                size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
-                assert (nbytes == sp_frame->num_items());
-
-                //////////////////////////////////////////////////////////////////////
-                // Used in the code for DEBUG purposes only to simulate a heavy load.
-                // Do not un-comment it lightly.
-                // std::this_thread::sleep_for(std::chrono::milliseconds(40));
-                //////////////////////////////////////////////////////////////////////
-            }
         }
     }
 
     loggerp->debug() << "Queue thread terminating ...";
 
+#if 0
     // terminating: clear out the circular buffer queue
     while (!video_capture_queue::s_ringbuf.empty())
     {
-        auto sp_frame = video_capture_queue::s_ringbuf.get();
-        loggerp->debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_items() << " bytes ";
-        if (Video::vcGlobals::write_frames_to_file)
-        {
-            size_t nbytes = VideoCapture::write_frame_to_file(filestream, sp_frame);
-            assert (nbytes == sp_frame->num_items());
-
-            //////////////////////////////////////////////////////////////////////
-            // Used in the code for DEBUG purposes only to simulate a heavy load.
-            // Do not un-comment it lightly.
-            // std::this_thread::sleep_for(std::chrono::milliseconds(40));
-            //////////////////////////////////////////////////////////////////////
-        }
+        // TODO: does this need to be flushed?
     }
-    if (Video::vcGlobals::write_frames_to_file && filestream != NULL)
-    {
-        fflush(filestream);
-        fclose(filestream);
-    }
-}
-
-// Open/truncate the output file that will hold captured frames
-FILE * VideoCapture::create_output_file()
-{
-    using Util::Utility;
-
-    int errnocopy = 0;
-    FILE *output_stream = NULL;
-
-    auto loggerp = Util::UtilLogger::getLoggerPtr();
-
-    if ((output_stream = ::fopen (Video::vcGlobals::output_file.c_str(), "w+")) == NULL)
-    {
-        errnocopy = errno;
-        loggerp->error() << "Cannot create/truncate output file \"" <<
-        Video::vcGlobals::output_file << "\": " << Utility::get_errno_message(errnocopy);
-    }
-    else
-    {
-        loggerp->debug() << "Created/truncated output file \"" << Video::vcGlobals::output_file << "\"";
-    }
-    return output_stream;
-}
-
-size_t VideoCapture::write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame)
-{
-    using Util::Utility;
-
-    size_t elementswritten = std::fwrite(sp_frame->_begin(), sizeof(uint8_t), sp_frame->num_items(), filestream);
-    int errnocopy = 0;
-    size_t byteswritten = elementswritten * sizeof(uint8_t);
-
-    auto loggerp = Util::UtilLogger::getLoggerPtr();
-
-    if (byteswritten != sp_frame->num_items())
-    {
-        loggerp->error() << "VideoCapture::write_frame_to_file: fwrite returned a short count or 0 bytes written. Requested: " <<
-                        sp_frame->num_items() << ", got " << byteswritten << " bytes: " <<
-                        Utility::get_errno_message(errnocopy);
-    }
-    fflush(filestream);
-    return byteswritten;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////

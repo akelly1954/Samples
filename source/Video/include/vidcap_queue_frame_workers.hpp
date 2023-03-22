@@ -38,6 +38,26 @@
 
 namespace VideoCapture
 {
+    // This worker thread/queue takes care of the write-to-file functionality
+    class write2file_frame_worker : public frame_worker_thread_base
+    {
+    public:
+        write2file_frame_worker(size_t elements_in_ring_buffer = 50);
+        virtual ~write2file_frame_worker() = default;
+        virtual void setup();
+        virtual void run();
+        virtual void finish();
+        virtual void set_terminated(bool t);
+        virtual void add_buffer_to_queue(Util::shared_ptr_uint8_data_t);
+
+        // methods specific to the derived worker
+        FILE * create_output_file();
+        size_t write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame);
+    public:
+        FILE *filestream = NULL;
+    };
+
+    // This worker thread/queue takes care of the write-to-process functionality
     class write2process_frame_worker : public frame_worker_thread_base
     {
     public:

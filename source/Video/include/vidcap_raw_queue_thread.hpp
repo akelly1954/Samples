@@ -40,7 +40,6 @@ namespace VideoCapture {
     // Queue handler thread
     void raw_buffer_queue_handler();
     FILE *create_output_file();
-    size_t write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame);
 
     // This object serves as the consumer for frame buffers (shared_ptr<>'s)
     // received from the raw queue, and dealt with in this new thread.
