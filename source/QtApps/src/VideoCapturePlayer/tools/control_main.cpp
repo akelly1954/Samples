@@ -230,7 +230,6 @@ int control_main(int argc, const char *argv[])
     std::thread queuethread;
     std::thread profilingthread;
     std::thread videocapturethread;
-    //    std::thread vidstreamprofilerthread;
     ProfilingController pctl;
 
     bool error_termination = false;
@@ -263,7 +262,7 @@ int control_main(int argc, const char *argv[])
          stream2qt_video_capture *ff = nullptr;
 
         // start the thread
-        ff = new stream2qt_video_capture(50);
+        ff = new stream2qt_video_capture(100);
         std::thread fileworkerthread(&stream2qt_video_capture::run, std::ref(*ff));
         fileworkerthread.detach();
         video_capture_queue::register_worker_thread( &fileworkerthread );
@@ -321,7 +320,9 @@ int control_main(int argc, const char *argv[])
         error_termination = true;
         uloggerp->error() << argv0 << ": Got exception starting threads: " << exp.what() << ". Aborting...";
         return_for_exit = EXIT_FAILURE;
-    } catch (...) {
+    }
+    catch (...)
+    {
        error_termination = true;
        uloggerp->error() << argv0 << ": General exception occurred in MAIN() starting the queueing and profiling threads. Aborting...";
        return_for_exit = EXIT_FAILURE;
@@ -345,9 +346,6 @@ int control_main(int argc, const char *argv[])
     {
         VideoCapture::vidcap_profiler::set_terminated(true);
         if(profilingthread.joinable()) profilingthread.join();
-
-        // VideoCapture::vidstream_profiler::set_terminated(true);
-        // if(vidstreamprofilerthread.joinable()) vidstreamprofilerthread.join();
     }
 
     if (videocapturethread.joinable()) videocapturethread.join();

@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
     w.show();
 
     /* TODO: If the "return ret" below is uncommented, the "int ret" declaration
-   * needs to be as well. int ret = */
+     * needs to be as well. int ret = */
 
     a.exec();
 

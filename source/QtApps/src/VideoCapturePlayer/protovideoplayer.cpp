@@ -63,7 +63,6 @@ VideoPlayer::VideoPlayer(QWidget *parent, Ui::MainWindow *ui )
             this, &VideoPlayer::handleError);
 
     this->show();
-    // videoWidget->show();
 }
 
 VideoPlayer::~VideoPlayer()
@@ -98,6 +97,11 @@ void VideoPlayer::play()
         m_mediaPlayer->play();
         break;
     }
+}
+
+void VideoPlayer::receiveFrameBuffer(Util::shared_ptr_uint8_data_t fbuf)
+{
+    ; // TODO: Everything
 }
 
 void VideoPlayer::mediaStateChanged(QMediaPlayer::PlaybackState state)

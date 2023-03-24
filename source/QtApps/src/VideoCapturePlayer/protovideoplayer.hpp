@@ -8,6 +8,7 @@
 #include <mainwindow.h>
 #include <QMediaPlayer>
 #include <QWidget>
+#include <stream2qt_video_capture.hpp>
 
 QT_BEGIN_NAMESPACE
 class QAbstractButton;
@@ -28,6 +29,7 @@ public:
 public slots:
     void openFile();
     void play();
+    void receiveFrameBuffer(Util::shared_ptr_uint8_data_t fbuf);
 
 private slots:
     void mediaStateChanged(QMediaPlayer::PlaybackState state);

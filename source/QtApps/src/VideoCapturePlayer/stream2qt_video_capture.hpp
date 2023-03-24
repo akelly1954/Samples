@@ -27,6 +27,7 @@
 #include <Utility.hpp>
 #include <condition_data.hpp>
 #include <shared_data_items.hpp>
+#include <stream2qt_video_capture.hpp>
 #include <vidcap_profiler_thread.hpp>
 #include <vidcap_raw_queue_thread.hpp>
 #include <LoggerCpp/LoggerCpp.h>
@@ -49,12 +50,6 @@ namespace VideoCapture
         virtual void finish();
         virtual void set_terminated(bool t);
         virtual void add_buffer_to_queue(Util::shared_ptr_uint8_data_t);
-
-        // methods specific to the derived worker
-        FILE * create_output_file();
-        size_t write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame);
-    public:
-        FILE *filestream = NULL;
     };
 } // end of namespace VideoCapture
 

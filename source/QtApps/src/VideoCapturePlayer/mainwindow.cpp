@@ -47,9 +47,6 @@ MainWindow::MainWindow(std::shared_ptr<Log::Logger> loggerp, QWidget *parent)
     makeConnections();
     setInitialState();
     profctl.operateProfilingStats();
-
-    // VidstreamController::setupVideoPlayer(ui);
-    // streamctl.operateVidstreamThread();
 }
 
 MainWindow::~MainWindow()

@@ -26,13 +26,11 @@
 #include <stream2qt_video_capture.hpp>
 
 ///////////////////////////////////////////////////////////////////////
-// Member functions for the write-to-process class are in the
-// second half of this file
+//
+// Member functions for (mostly pure) virtual class stream2qt_video_capture
+//
 ///////////////////////////////////////////////////////////////////////
 
-
-// The first part (here) includes the declarations of
-// the write-to-file thread/queue
 VideoCapture::stream2qt_video_capture::stream2qt_video_capture(size_t elements_in_ring_buffer)
             : frame_worker_thread_base (std::string("stream2qt_video_capture"), elements_in_ring_buffer)
 {
@@ -42,15 +40,6 @@ VideoCapture::stream2qt_video_capture::stream2qt_video_capture(size_t elements_i
 void VideoCapture::stream2qt_video_capture::setup()
 {
     video_capture_queue::register_worker(this);
-    filestream = create_output_file();
-    if (filestream == NULL)
-    {
-        // detailed error message already emitted by the create function
-        splogger->error() << "Exiting...";
-        set_terminated(true);
-        return;
-    }
-    splogger->debug() << "In stream2qt_video_capture::setup(): Successfully opened file \"" << Video::vcGlobals::output_file << "\".";
 }
 
 void VideoCapture::stream2qt_video_capture::run()
@@ -73,8 +62,8 @@ void VideoCapture::stream2qt_video_capture::run()
             // This shared_ptr serves all consumers of this particular video data buffer
             auto sp_frame = m_ringbuf.get();
 
-            size_t nbytes = write_frame_to_file(filestream, sp_frame);
-            assert (nbytes == sp_frame->num_items());
+            // size_t nbytes = write_frame_to_file(filestream, sp_frame);
+            // assert (nbytes == sp_frame->num_items());
 
             //////////////////////////////////////////////////////////////////////
             // Used in the code for DEBUG purposes only to simulate a heavy load.
@@ -100,8 +89,8 @@ void VideoCapture::stream2qt_video_capture::finish()
     {
         auto sp_frame = m_ringbuf.get();
         splogger->debug() << "From queue (after terminate): Got buffer with " << sp_frame->num_items() << " bytes ";
-        size_t nbytes = write_frame_to_file(filestream, sp_frame);
-        assert (nbytes == sp_frame->num_items());
+        // size_t nbytes = write_frame_to_file(sp_frame);
+        // assert (nbytes == sp_frame->num_items());
 
         //////////////////////////////////////////////////////////////////////
         // Used in the code for DEBUG purposes only to simulate a heavy load.
@@ -109,9 +98,6 @@ void VideoCapture::stream2qt_video_capture::finish()
         // std::this_thread::sleep_for(std::chrono::milliseconds(40));
         //////////////////////////////////////////////////////////////////////
      }
-
-    fflush(filestream);
-    fclose(filestream);
 }
 
 void VideoCapture::stream2qt_video_capture::set_terminated(bool t)
@@ -137,44 +123,4 @@ void VideoCapture::stream2qt_video_capture::set_terminated(bool t)
 void VideoCapture::stream2qt_video_capture::add_buffer_to_queue(Util::shared_ptr_uint8_data_t sp)
 {
     m_ringbuf.put(sp, m_condvar);
-}
-
-// Start up the process that will receive video frames in it's std input
-FILE * VideoCapture::stream2qt_video_capture::create_output_file()
-{
-    using Util::Utility;
-
-    int errnocopy = 0;
-    FILE *output_stream = NULL;
-
-    if ((output_stream = ::fopen (Video::vcGlobals::output_file.c_str(), "w+")) == NULL)
-    {
-        errnocopy = errno;
-        splogger->error() << "Cannot create/truncate output file \"" <<
-        Video::vcGlobals::output_file << "\": " << Utility::get_errno_message(errnocopy);
-    }
-    else
-    {
-        splogger->debug() << "Created/truncated output file \"" << Video::vcGlobals::output_file << "\"";
-    }
-    return output_stream;
-}
-
-size_t VideoCapture::stream2qt_video_capture
-            ::write_frame_to_file(FILE *filestream, Util::shared_ptr_uint8_data_t sp_frame)
-{
-    using Util::Utility;
-
-    size_t elementswritten = std::fwrite(sp_frame->_begin(), sizeof(uint8_t), sp_frame->num_items(), filestream);
-    int errnocopy = 0;
-    size_t byteswritten = elementswritten * sizeof(uint8_t);
-
-    if (byteswritten != sp_frame->num_items())
-    {
-        splogger->error() << "VideoCapture::write_frame_to_file: fwrite returned a short count or 0 bytes written. Requested: " <<
-                             sp_frame->num_items() << ", got " << byteswritten << " bytes: " <<
-                             Utility::get_errno_message(errnocopy);
-    }
-    fflush(filestream);
-    return byteswritten;
 }
