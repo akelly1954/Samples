@@ -109,22 +109,6 @@ int main(int argc, char *argv[])
         // Change a single array element in sp30.  It should not show in sp1
         print(logger, "Object sp30 after assignment from sp1, with a single element change", sp30);
         print(logger, "Checking sp1. Element 2 should be unchanged", sp1);
-
-        /////////////////////////////////////////////
-        // Intentional Errors
-        /////////////////////////////////////////////
-
-        //////    fixed_size_array<uint8_t,NtwkUtilBufferSize> errorObject;
-        //
-        // This will produce a compile error as intended (should use ::create() instead.
-        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = NtwkUtilBufferSize]’
-        //                                                                           is private within this context
-
-        /////    std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp1_error = std::make_shared<fixed_size_array<uint8_t,NtwkUtilBufferSize>>();
-        //
-        // This will produce a compile error as intended (should use ::create() instead.
-        // EnetUtil::fixed_size_array<T, N>::fixed_size_array() [with T = unsigned char; long unsigned int N = NtwkUtilBufferSize]’
-        //                                                                           is private within this context
     }
     catch (std::exception& e)
     {
