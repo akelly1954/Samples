@@ -25,10 +25,12 @@ namespace NonQtUtil
     // to get ready. So this waits for it.  This method runs in the main() thread.
     static void initializeCapture();
 
+    static void setMainWindowReady(MainWindow *wp);
     static bool isControlMainFinished;
     static std::shared_ptr<Log::Logger> loggerp;
     static const char *Argv[];
     static int Argc;
+    static MainWindow *mwp;
   };
 
 } // end of namespace NonQtUtil

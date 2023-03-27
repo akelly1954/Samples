@@ -85,7 +85,7 @@ int control_main(int argc, const char *argv[])
     vcGlobals::write_frames_to_process =          false;
 
     VideoCapture::video_plugin_base::set_base_paused(true);
-    Video::vcGlobals::profile_logprint_enabled =  false;     // We don't want two profilers writing to the log
+    Video::vcGlobals::profile_logprint_enabled =  false;
 
     // This vector is for lines written to the log file
     // before the logger is set up.  We will accumulate

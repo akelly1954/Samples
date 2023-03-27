@@ -24,6 +24,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 
 #include <stream2qt_video_capture.hpp>
+#include <nonqt_util.hpp>
 
 ///////////////////////////////////////////////////////////////////////
 //
@@ -44,6 +45,8 @@ void VideoCapture::stream2qt_video_capture::setup()
 
 void VideoCapture::stream2qt_video_capture::run()
 {
+    using NonQtUtil::nqUtil;
+
     splogger->debug() << "stream2qt_video_capture::run(): thread is running....";
 
     if (!initialized)
@@ -56,14 +59,39 @@ void VideoCapture::stream2qt_video_capture::run()
     while (!m_terminated)
     {
         m_condvar.wait_for_ready();
+        static int count = 0;
+
+        // Allow the ring buffer to fill up until the main window
+        // is ready.
+        for (count = 0; nqUtil::mwp == nullptr; count++)
+        {
+            if (count > 10)
+            {
+                splogger->debug() << "stream2qt_video_capture::run(): FATAL ERROR: MainWindow is not ready. Terminating...";
+                std::cerr << "stream2qt_video_capture::run(): FATAL ERROR: MainWindow is not ready. Terminating..." << std::endl;
+                set_terminated(true);
+                return;
+            }
+            else if ((count % 5) == 0)
+            {
+                splogger->debug() << "stream2qt_video_capture::run(): (count=" << count << ") Waiting for MainWindow to be established.";
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        if (nqUtil::mwp->getPlayer() == nullptr)
+        {
+            splogger->debug() << "stream2qt_video_capture::run(): FATAL ERROR: video player in NULL. Terminating...";
+            std::cerr << "stream2qt_video_capture::run(): FATAL ERROR: video player in NULL. Terminating..." << std::endl;
+            set_terminated(true);
+            return;
+        }
 
         while (!m_terminated && !m_ringbuf.empty())
         {
             // This shared_ptr serves all consumers of this particular video data buffer
             auto sp_frame = m_ringbuf.get();
-
-            // size_t nbytes = write_frame_to_file(filestream, sp_frame);
-            // assert (nbytes == sp_frame->num_items());
+            nqUtil::mwp->getPlayer()->receiveFrameBuffer(sp_frame);
 
             //////////////////////////////////////////////////////////////////////
             // Used in the code for DEBUG purposes only to simulate a heavy load.

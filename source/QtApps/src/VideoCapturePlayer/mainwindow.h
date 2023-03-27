@@ -27,11 +27,10 @@
 #include <./ui_mainwindow.h>
 #include <QWidget>
 #include <QApplication>
-// #include <QtWidgets/QApplication>
 #include <QLineEdit>
 #include <QRegularExpressionValidator>
 #include <vidstream_profiler_thread.hpp>
-// #include <video_stream_buffers.hpp>
+#include <video_stream_buffers.hpp>
 #include <protovideoplayer.hpp>
 #include <MainLogger.hpp>
 #include <memory>
@@ -44,34 +43,36 @@ QT_END_NAMESPACE
 
 class MainWindow : public QWidget
 {
-  Q_OBJECT
+    Q_OBJECT
 
 public:
-  MainWindow(std::shared_ptr<Log::Logger> loggerp = nullptr, QWidget *parent = nullptr);
-  ~MainWindow();
+    MainWindow(std::shared_ptr<Log::Logger> loggerp = nullptr, QWidget *parent = nullptr);
+    ~MainWindow();
 
 private slots:
-  void StartButtonClicked();
-  void PauseButtonClicked();
-  void StopButtonClicked();
-  void onFrameCountLineEditReturnPressed();
+    void StartButtonClicked();
+    void PauseButtonClicked();
+    void StopButtonClicked();
+    void onFrameCountLineEditReturnPressed();
 
 public slots:
-  void CallCloseEvent();
-  void UpdateProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps);
-  void NoOpProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps);
+    void CallCloseEvent();
+    void UpdateProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps);
+    void NoOpProfilerStats(long long numPausedframes, long long numUnpausedframes, double fps);
+
+public:
+    VideoPlayer *getPlayer()    { return player; }   // CAUTION: player can be nullptr
 
 private:
-  void makeConnections();
-  void setInitialState();
-  void initializeCapture();
-  void closeEvent(QCloseEvent *event);
-  void set_terminated(std::string str = "Termination requested (Qt)");
+    void makeConnections();
+    void setInitialState();
+    void initializeCapture();
+    void closeEvent(QCloseEvent *event);
+    void set_terminated(std::string str = "Termination requested (Qt)");
 
 private:
-  Ui::MainWindow *ui;
-  std::shared_ptr<Log::Logger> uloggerp;
-  ProfilingController profctl;
-  VideoPlayer *player;
-  // VidstreamController streamctl;
+    Ui::MainWindow *ui;
+    std::shared_ptr<Log::Logger> uloggerp;
+    ProfilingController profctl;
+    VideoPlayer *player = nullptr;
 };

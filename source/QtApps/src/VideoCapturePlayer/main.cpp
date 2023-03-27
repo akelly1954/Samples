@@ -68,11 +68,8 @@ int main(int argc, char *argv[])
 
     nqUtil::isControlMainFinished = false;
 
-    std::thread control_main_thread;
-    std::thread detect_video_capture_done_thread;
-
     // control_main runs in its own thread.
-    control_main_thread = std::thread(control_main, nqUtil::Argc, nqUtil::Argv);
+    std::thread  control_main_thread = std::thread(control_main, nqUtil::Argc, nqUtil::Argv);
     control_main_thread.detach();
 
     // this waits for the video capture thread to start running and initialize.
@@ -99,15 +96,19 @@ int main(int argc, char *argv[])
 
     MainWindow w(nqUtil::loggerp);
 
-    detect_video_capture_done_thread =
+    std::thread detect_video_capture_done_thread =
             std::thread(nqUtil::detect_video_capture_done, nqUtil::loggerp, &w);
     detect_video_capture_done_thread.detach();
 
     w.show();
 
-    /* TODO: If the "return ret" below is uncommented, the "int ret" declaration
-     * needs to be as well. int ret = */
+    // Let non-Qt threads know that the main window is up and running
+    NonQtUtil::nqUtil::setMainWindowReady(&w);
 
+    // TODO: If the "return ret" below is uncommented, the "int ret" declaration
+    // needs to be as well:
+
+    // int ret =
     a.exec();
 
     if (control_main_thread.joinable()) control_main_thread.join();

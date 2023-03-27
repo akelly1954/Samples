@@ -40,7 +40,6 @@ MainWindow::MainWindow(std::shared_ptr<Log::Logger> loggerp, QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::MainWindow)
     , uloggerp(loggerp)
-    // , streamctl(ui)
 {
     ui->setupUi(this);
     player = new VideoPlayer(this, ui);
@@ -66,11 +65,8 @@ void MainWindow::makeConnections()
     connect(ui->PauseButton, &QPushButton::clicked, this, &MainWindow::PauseButtonClicked);
     connect(ui->StopButton, &QPushButton::clicked, this, &MainWindow::StopButtonClicked);
     connect(ui->FrameCountLineEdit, &QLineEdit::returnPressed, this, &MainWindow::onFrameCountLineEditReturnPressed);
-
-    // TODO: fix last arg below
-    // connect(&streamctl, &VidstreamController::update_Stream_signal, this, &MainWindow::NoOpProfilerStats);
-
     connect(&profctl, &ProfilingController::update_stats_signal, this, &MainWindow::NoOpProfilerStats);
+
     // Soon after start, the ProfilingController::update_stats_signal will be disconnected:
     // From Qt6 doc:  Disconnect everything connected to a specific signal:
     // disconnect(myObject, &MyObject::mySignal(), nullptr, nullptr);

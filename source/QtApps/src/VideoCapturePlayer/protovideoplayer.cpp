@@ -5,7 +5,9 @@
 // Original comes from Qt6.2 examples - VideoWidget
 
 #include <protovideoplayer.hpp>
-
+#include <shared_data_items.hpp>
+#include <stream2qt_video_capture.hpp>
+#include <QByteArray>
 #include <QtWidgets>
 #include <QVideoWidget>
 
@@ -99,9 +101,13 @@ void VideoPlayer::play()
     }
 }
 
-void VideoPlayer::receiveFrameBuffer(Util::shared_ptr_uint8_data_t fbuf)
+void VideoPlayer::receiveFrameBuffer(Util::shared_ptr_uint8_data_t sp_frame)
 {
     ; // TODO: Everything
+    auto loggerp = Util::UtilLogger::getLoggerPtr();
+
+            const char *data = reinterpret_cast<const char *>(sp_frame->_begin());
+            QByteArray ByteArrayData(QByteArray::fromRawData(data, sp_frame->num_items()));
 }
 
 void VideoPlayer::mediaStateChanged(QMediaPlayer::PlaybackState state)
