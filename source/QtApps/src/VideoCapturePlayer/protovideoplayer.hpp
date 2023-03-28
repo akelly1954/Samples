@@ -31,17 +31,19 @@ public slots:
     void play();
     void receiveFrameBuffer(Util::shared_ptr_uint8_data_t fbuf);
 
+#if 0
 private slots:
     void mediaStateChanged(QMediaPlayer::PlaybackState state);
     void positionChanged(qint64 position);
     void durationChanged(qint64 duration);
     void setPosition(int position);
     void handleError();
+#endif
 
 private:
     QMediaPlayer* m_mediaPlayer;
     QAbstractButton *m_playButton;
-    QSlider *m_positionSlider;
-    QLabel *m_errorLabel;
+    // QSlider *m_positionSlider;
+    // QLabel *m_errorLabel;
 };
 

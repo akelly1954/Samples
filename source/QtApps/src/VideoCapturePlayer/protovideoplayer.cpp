@@ -17,38 +17,36 @@ VideoPlayer::VideoPlayer(QWidget *parent, Ui::MainWindow *ui )
     m_mediaPlayer = new QMediaPlayer(this);
     QVideoWidget *videoWidget = new QVideoWidget;
 
-    QAbstractButton *openButton = new QPushButton(tr("Open..."));
-    connect(openButton, &QAbstractButton::clicked, this, &VideoPlayer::openFile);
+    // QAbstractButton *openButton = new QPushButton(tr("Open..."));
+    // connect(openButton, &QAbstractButton::clicked, this, &VideoPlayer::openFile);
 
-    m_playButton = new QPushButton;
-    m_playButton->setEnabled(false);
-    m_playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
+    // m_playButton = new QPushButton;
+    // m_playButton->setEnabled(false);
+    // m_playButton->setIcon(style()->standardIcon(QStyle::SP_MediaPlay));
 
-    connect(m_playButton, &QAbstractButton::clicked,
-            this, &VideoPlayer::play);
+    // connect(m_playButton, &QAbstractButton::clicked,
+    //         this, &VideoPlayer::play);
 
-    m_positionSlider = new QSlider(Qt::Horizontal);
-    m_positionSlider->setRange(0, 0);
+    // m_positionSlider = new QSlider(Qt::Horizontal);
+    // m_positionSlider->setRange(0, 0);
 
-    connect(m_positionSlider, &QAbstractSlider::sliderMoved,
-            this, &VideoPlayer::setPosition);
+    // connect(m_positionSlider, &QAbstractSlider::sliderMoved,
+    //         this, &VideoPlayer::setPosition);
 
-    m_errorLabel = new QLabel;
-    m_errorLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    // m_errorLabel = new QLabel;
+    // m_errorLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
 
-    QHBoxLayout *controlLayout = new QHBoxLayout;
-    controlLayout->setContentsMargins(0, 0, 0, 0);
-    controlLayout->addWidget(openButton);
-    controlLayout->addWidget(m_playButton);
-    controlLayout->addWidget(m_positionSlider);
+    // QHBoxLayout *controlLayout = new QHBoxLayout;
+    // controlLayout->setContentsMargins(0, 0, 0, 0);
+    // controlLayout->addWidget(openButton);
+    // controlLayout->addWidget(m_playButton);
+    // controlLayout->addWidget(m_positionSlider);
 
     QVBoxLayout *layout = ui->verticalLayout;
-    // QBoxLayout *layout = new QVBoxLayout;
-    // controlLayout->setContentsMargins(0, 0, 0, 0);
 
     layout->addWidget(videoWidget);
-    layout->addLayout(controlLayout);
-    layout->addWidget(m_errorLabel);
+    // layout->addLayout(controlLayout);
+    // layout->addWidget(m_errorLabel);
 
     this->setLayout(layout);
 
@@ -57,13 +55,12 @@ VideoPlayer::VideoPlayer(QWidget *parent, Ui::MainWindow *ui )
     this->resize(availableGeometry);
 
     m_mediaPlayer->setVideoOutput(videoWidget);
-    connect(m_mediaPlayer, &QMediaPlayer::playbackStateChanged,
-            this, &VideoPlayer::mediaStateChanged);
-    connect(m_mediaPlayer, &QMediaPlayer::positionChanged, this, &VideoPlayer::positionChanged);
-    connect(m_mediaPlayer, &QMediaPlayer::durationChanged, this, &VideoPlayer::durationChanged);
-    connect(m_mediaPlayer, &QMediaPlayer::errorChanged,
-            this, &VideoPlayer::handleError);
-
+//    connect(m_mediaPlayer, &QMediaPlayer::playbackStateChanged,
+//            this, &VideoPlayer::mediaStateChanged);
+//    connect(m_mediaPlayer, &QMediaPlayer::positionChanged, this, &VideoPlayer::positionChanged);
+//    connect(m_mediaPlayer, &QMediaPlayer::durationChanged, this, &VideoPlayer::durationChanged);
+//     connect(m_mediaPlayer, &QMediaPlayer::errorChanged,
+//             this, &VideoPlayer::handleError);
     this->show();
 }
 
@@ -83,7 +80,7 @@ void VideoPlayer::openFile()
 
 void VideoPlayer::setUrl(const QUrl &url)
 {
-    m_errorLabel->setText(QString());
+    // m_errorLabel->setText(QString());
     setWindowFilePath(url.isLocalFile() ? url.toLocalFile() : QString());
     m_mediaPlayer->setSource(url);
     m_playButton->setEnabled(true);
@@ -110,6 +107,7 @@ void VideoPlayer::receiveFrameBuffer(Util::shared_ptr_uint8_data_t sp_frame)
             QByteArray ByteArrayData(QByteArray::fromRawData(data, sp_frame->num_items()));
 }
 
+#if 0
 void VideoPlayer::mediaStateChanged(QMediaPlayer::PlaybackState state)
 {
     switch(state) {
@@ -121,7 +119,6 @@ void VideoPlayer::mediaStateChanged(QMediaPlayer::PlaybackState state)
         break;
     }
 }
-
 void VideoPlayer::positionChanged(qint64 position)
 {
     m_positionSlider->setValue(position);
@@ -151,3 +148,4 @@ void VideoPlayer::handleError()
         message += errorString;
     m_errorLabel->setText(message);
 }
+#endif // 0
