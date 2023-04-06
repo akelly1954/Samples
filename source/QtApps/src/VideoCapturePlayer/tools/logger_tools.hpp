@@ -32,18 +32,9 @@
 #include <ostream>
 #include <sstream>
 
-namespace Util
-{
-
-    LoggerOptions setLocalLoggerOptions();
-
-} // end of namespace Util
-
 namespace Video
 {
-
     void setup_video_capture_logger(const std::string& cmdline, std::vector<std::string>& delayedLinesForLogger);
-
 } // end of namespace Video
 
 
