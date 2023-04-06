@@ -119,6 +119,9 @@ void Util::MainLogger::configureLogManager( Log::Config::Vector& configList, std
 
 // statics
 
+// This is just global initialization.  After runtime initialization this
+// will most probably be unused. The UtilLogger::setLocalLoggerOptions(...)
+// setup from the app will override this.
 LoggerOptions UtilLogger::s_defaultLogOpt = {
                                         // loglevel (in LoggerOptions)
                                         Log::Log::Level::eInfo,
@@ -169,6 +172,31 @@ Util::UtilLoggerSPtr UtilLogger::create(Util::LoggerOptions& logopt)
     UtilLoggerSPtr spu_logger = std::make_shared<UtilLogger>(Util::UtilLogger());
 
     return spu_logger;
+}
+
+
+// This version assigns the values from the parameter list.
+// The log file name and json config file names are implied by the log channel name.
+// The string version of the log level is assigned as well (as a string).
+Util::LoggerOptions UtilLogger::setLocalLoggerOptions(
+                std::string                     logChannelNameString,
+                Log::Log::Level                 logLevelEnum,
+                Util::MainLogger::ConsoleOutput consoleOutputEnum,
+                Util::MainLogger::UseLogFile    useLogFileEnum
+            )
+{
+    using namespace Util;
+    LoggerOptions localopt;
+
+    localopt.logChannelName = logChannelNameString;
+    localopt.loglevel = logLevelEnum;
+    localopt.log_level = UtilLogger::getLoggerLevelEnumString(logLevelEnum);
+    localopt.logFilelName = logChannelNameString + "_log.txt";
+    localopt.useConsole = consoleOutputEnum;
+    localopt.useLogFile = useLogFileEnum;
+
+    setLoggerOptions(localopt);
+    return localopt;
 }
 
 Util::LoggerOptions& UtilLogger::setLoggerOptions(Util::LoggerOptions& logopt)

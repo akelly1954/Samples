@@ -99,6 +99,12 @@ namespace Util
         MainLogger::UseLogFile useLogFile;
     };
 
+    // class UtilLogger -- geared for being operated using shared_ptr<>'s.
+    // The first shared_ptr<> is created in your app by constructing the object
+    // using the ::create(...) method.  The object's constructors must not (cannot)
+    // be used directly.  Past the point of the initial ::create() call, subsequent
+    // shared_ptr<>'s are obtained by calling the static ::getLoggerPtr() method.
+
     class UtilLogger
     {
     public:
@@ -119,11 +125,25 @@ namespace Util
     public:
         static Util::LoggerOptions getLoggerOptions()                       { return m_runtimeLogOpt; }
         static Util::LoggerOptions& getDefaultLoggerOptions()               { return UtilLogger::s_defaultLogOpt; }
+
+        // This (potentially) overloaded method assigns values to the logger object from the
+        // parameter list. The log file name and json config file names are implied by the log
+        // channel name. The string version of the log level is determined inside the method,
+        // and is assigned to the logger object as well (as a string).
+        static LoggerOptions setLocalLoggerOptions(
+                        std::string                     logChannelNameString,
+                        Log::Log::Level                 logLevelEnum,
+                        Util::MainLogger::ConsoleOutput consoleOutputEnum,
+                        Util::MainLogger::UseLogFile    useLogFileEnum
+                    );
+
         static Util::LoggerOptions& setLoggerOptions(Util::LoggerOptions& logopt);
         static std::string getLoggerLevelEnumString(Log::Log::Level llevel) { return std::string(Log::Log::toString(llevel)); }
         static UtilLoggerSPtr getUtilLoggerPtr()                            { return sp_UtilLogger; }
         static LoggerSPtr getLoggerPtr()                                    { return sp_Logger; }
-        static int stringToEnumLoglevel(const std::string& slog_level);     // returns -1 on error, or (>= 0) value for enum value
+
+        // returns -1 on error, or (>= 0) value for enum value
+        static int stringToEnumLoglevel(const std::string& slog_level);
 
         // This can be called with std::cout, std::cerr, std::stringstream mystream, etc
         static void streamLoggerOptions(std::ostream& strm, Util::LoggerOptions logopt, std::string label);

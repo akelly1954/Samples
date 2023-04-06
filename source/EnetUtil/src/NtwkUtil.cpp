@@ -122,8 +122,6 @@ int NtwkUtil::server_listen(Log::Logger& logger, struct ::sockaddr *address, int
     // or zero if the option is to be disabled
     int optval = 1;
 
-    // signal(SIGPIPE, SIG_IGN);  // this will affect all running threads
-
     // Creating socket file descriptor
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -268,11 +266,6 @@ int NtwkUtil::enet_receive( Log::Logger& logger,
                     std::string("NtwkUtil::enet_receive: socket read error: ") + Utility::get_errno_message(errnocopy));
             return -1;  // Should never even get here....
         }
-
-        // if (num == 0)  // Remove soon - this just for a debugger breakpoint
-        //      return bytesreceived;
-        // logger.debug() << "NtwkUtil::enet_receive: got end of file/disconnect on socket read...";
-
         return bytesreceived;
 
     } catch (std::exception &exp)
