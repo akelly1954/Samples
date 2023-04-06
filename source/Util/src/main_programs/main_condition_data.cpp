@@ -128,10 +128,16 @@ int main(int argc, const char *argv[])
     int numthreads = parse(argc, argv);
     // DEBUG   std::cerr << "Parse returned: " << numthreads << std::endl;
 
-    Log::Config::Vector configList;
-    Util::MainLogger::initializeLogManager(configList, Log::Log::Level::eNotice, "main_condition_data_log.txt", MainLogger::disableConsole, MainLogger::enableLogFile);
-    MainLogger::configureLogManager( configList, logChannelName );
-    Log::Logger logger(logChannelName);
+    // This picks the values from Video::vcGlobals (which was modified
+    // by the json file and then the command line.
+    Util::LoggerOptions localopt = Util::UtilLogger::setLocalLoggerOptions(
+                                                logChannelName,
+                                                Log::Log::Level::eNotice,
+                                                Util::MainLogger::disableConsole,
+                                                Util::MainLogger::enableLogFile
+                                        );
+    Util::UtilLogger::create(localopt);
+    std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
 
     // Static global data on the heap.
     // This is the single condition_data object ruling the various running threads
@@ -162,12 +168,7 @@ int main(int argc, const char *argv[])
     // does all the work for each thread.
     for (int i = 1; i <= numthreads; i++)
     {
-        // Create a Logger object, using a "main_condition_data_log" Channel
-        // This is still running in the main thread - just before the new
-        // thread is created
-        Log::Logger logger(logChannelName);
-
-        workers.push_back( std::thread([i, &logger, &sleeptimes, &condvar]()
+        workers.push_back( std::thread([i, loggerp, &sleeptimes, &condvar]()
         {
             int threadno = i-1;
             int slp = sleeptimes[threadno];
@@ -194,7 +195,7 @@ int main(int argc, const char *argv[])
             threadData newvalue = threadData(threadno, result);
 
             // Log it
-            logger.notice() << result;
+            loggerp->notice() << result;
 
             // And set it free
             condvar.send_ready(newvalue);

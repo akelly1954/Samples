@@ -27,7 +27,6 @@
 #include <condition_data.hpp>
 #include <Utility.hpp>
 #include <MainLogger.hpp>
-#include <LoggerCpp/LoggerCpp.h>
 #include <sys/types.h>
 #include <thread>
 #include <vector>
@@ -177,16 +176,18 @@ int main(int argc, const char *argv[])
     // DEBUG
     std::cerr << "Parsed command line: num_data_elements = " << num_data_items << std::endl;
 
-    std::string logfilename(logChannelName);
-    logfilename += "_log.txt";
+    // This picks the values from Video::vcGlobals (which was modified
+    // by the json file and then the command line.
+    Util::LoggerOptions localopt = Util::UtilLogger::setLocalLoggerOptions(
+                                                logChannelName,
+                                                Log::Log::Level::eDebug,
+                                                Util::MainLogger::disableConsole,
+                                                Util::MainLogger::enableLogFile
+                                        );
+    Util::UtilLogger::create(localopt);
+    std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
 
-    Log::Config::Vector configList;
-    Util::MainLogger::initializeLogManager(configList, Log::Log::Level::eDebug, logfilename,
-                                           MainLogger::disableConsole, MainLogger::enableLogFile);
-    MainLogger::configureLogManager( configList, logChannelName );
-    Log::Logger logger(logChannelName);
-
-    logger.debug() << "Started main_util_combo_objects...";
+    loggerp->debug() << "Started main_util_combo_objects...";
 
     // Static global data on the heap.
     // This is the single condition_data object ruling the various running threads
@@ -248,6 +249,7 @@ int main(int argc, const char *argv[])
 
 #if 0
                     THIS IS WORK IN PROGRESS - NOT DONE YET
+                    TODO: Fix logger/loggerp below
 
     initializeSleeptimes(numthreads, sleeptimes);
 
@@ -256,12 +258,7 @@ int main(int argc, const char *argv[])
     // does all the work for each thread.
     for (int i = 1; i <= numthreads; i++)
     {
-        // Create a Logger object, using a "main_util_combo_objects_log" Channel
-        // This is still running in the main thread - just before the new
-        // thread is created
-        Log::Logger logger(logChannelName);
-
-        workers.push_back( std::thread([i, &logger, &sleeptimes, &condvar]()
+        workers.push_back( std::thread([i, loggerp, &sleeptimes, &condvar]()
         {
             int threadno = i-1;
             int slp = sleeptimes[threadno];
@@ -288,7 +285,7 @@ int main(int argc, const char *argv[])
             threadData newvalue = threadData(threadno, result);
 
             // Log it
-            logger.notice() << result;
+            loggerp->notice() << result;
 
             // And set it free
             condvar.send_ready(newvalue);
