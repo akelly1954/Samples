@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Utility.hpp>
+#include <MainLogger.hpp>
 #include <NtwkUtil.hpp>
 #include <NtwkFixedArray.hpp>
 #include <LoggerCpp/LoggerCpp.h>
@@ -47,7 +48,7 @@ namespace EnetUtil {
         static std::string get_seq_num_string(long num);    // utility function
 
         // This member function (static) runs in the main thread.
-        static void start (int socket, int threadno, const char *logChannelName = "socket_connection_thread");
+        static void start (int socket, int threadno, Util::LoggerSPtr loggerp);
 
         static void terminate_all_threads()
         {

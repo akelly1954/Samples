@@ -1,25 +1,3 @@
-#include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
-#include <Utility.hpp>
-#include <MainLogger.hpp>
-#include <commandline.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <thread>
-#include <sys/stat.h>
-#include <time.h>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -45,24 +23,43 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
+#include <Utility.hpp>
+#include <MainLogger.hpp>
+#include <commandline.hpp>
+#include <NtwkUtil.hpp>
+#include <NtwkFixedArray.hpp>
+#include <LoggerCpp/LoggerCpp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <thread>
+#include <sys/stat.h>
+#include <time.h>
 using namespace EnetUtil;
 
 // Defaults and other constants
 
-const char *logChannelName = "main_client_for_basic_server";
-const char *logFileName = "main_client_for_basic_server_log.txt";
-
-const char *default_connection_ip = "127.0.0.1"; // default address to connect to
-std::string connection_ip(default_connection_ip); // can be modified from the command line
+const char *logChannelName          = "client_for_basic_server";
+const char *default_connection_ip   = "127.0.0.1"; // default address to connect to
+std::string connection_ip(default_connection_ip);  // can be modified from the command line
 
 const uint16_t default_connection_port_number = simple_server_port_number;
 uint16_t connection_port_number = default_connection_port_number; // can be modified from the command line
 
 std::string input_filename = ""; // This has to be specified on the command line
 
-std::string default_log_level = "notice";
-std::string log_level = default_log_level;
 Log::Log::Level loglevel = Log::Log::eNotice;
+std::string log_level = Util::UtilLogger::getLoggerLevelEnumString(loglevel);
 
 // fixed size of the std::array<> used for the data
 const int server_buffer_size = NtwkUtilBufferSize;
@@ -78,9 +75,9 @@ void Usage(std::ostream &strm, std::string command)
             << "              [ -ip server-ip-address ] (default is \"IADDR_ANY\" same as \"\")\n"
             << "              [ -pn port-number ]       (port num to connect to, default is the port number \n"
             << "                                        used by the server - see NOTE below)\n"
-            << "              [ -lg log-level ]         (see below, default is \"notice\"\n"
+            << "              [ -lg log-level ]         (see below, default is \"NOTE\"\n"
             << "\n"
-            << "log-level can be one of: {\"debug\", \"info\", \"notice\", \"warning\", \"error\", \"critical\"}\n"
+            << "log-level can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}\n"
             << "\n"
             << "NOTE: the default port numbers that both client and server use match up at the time the sources were built.\n"
             << "      If the port number is set on the command line, it should be done for both client and server.\n"
@@ -196,13 +193,16 @@ int main(int argc, const char *argv[])
     /////////////////
     // Set up logger
     /////////////////
+    Util::LoggerOptions localopt = Util::UtilLogger::setLocalLoggerOptions(
+                                                        logChannelName,
+                                                        loglevel,
+                                                        Util::MainLogger::enableConsole,
+                                                        Util::MainLogger::disableLogFile
+                                                    );
+    Util::UtilLogger::create(localopt);
+    std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
 
-    Log::Config::Vector configList;
-    MainLogger::initializeLogManager(configList, loglevel, logFileName, MainLogger::enableConsole, MainLogger::disableLogFile);
-    MainLogger::configureLogManager(configList, logChannelName);
-    Log::Logger logger(logChannelName);
-
-    logger.debug() << "Using " << input_filename << " for input. Size is " << numbytesinfile << " bytes.";
+    loggerp->debug() << "Using " << input_filename << " for input. Size is " << numbytesinfile << " bytes.";
 
     /////////////////
     // Set up connection to server
@@ -211,18 +211,18 @@ int main(int argc, const char *argv[])
     if (connection_ip.empty() || connection_ip == "INADDR_ANY")
     {
         connection_ip = "";
-        logger.debug() << "    Client connecting to ip: INADDR_ANY:" << connection_port_number;
+        loggerp->debug() << "    Client connecting to ip: INADDR_ANY:" << connection_port_number;
     }
     else
     {
-        logger.debug() << "    Client connecting to ip: " << connection_ip << ":" << connection_port_number;
+        loggerp->debug() << "    Client connecting to ip: " << connection_ip << ":" << connection_port_number;
     }
 
     struct ::sockaddr_in sin_addr;
     if (!NtwkUtil::setup_sockaddr_in(std::string(connection_ip),
             (uint16_t) connection_port_number, (sockaddr*) &sin_addr))
     {
-        logger.error()
+        loggerp->error()
                 << "Error returned from setup_sockaddr_in(): Setup connection for "
                 << connection_ip << ":" << connection_port_number
                 << " failed. Aborting...";
@@ -231,9 +231,9 @@ int main(int argc, const char *argv[])
     }
 
     int socket_fd = -1;
-    if ((socket_fd = NtwkUtil::client_socket_connect(logger, (sockaddr*) &sin_addr)) < 0)
+    if ((socket_fd = NtwkUtil::client_socket_connect(loggerp, (sockaddr*) &sin_addr)) < 0)
     {
-        logger.error()
+        loggerp->error()
                 << "Error returned from client_socket_connect(): Connection to "
                 << connection_ip << ":" << connection_port_number
                 << " failed. Aborting...";
@@ -241,7 +241,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    logger.notice() << "Client connected to " << connection_ip << ":"
+    loggerp->notice() << "Client connected to " << connection_ip << ":"
             << connection_port_number << " Successfully.";
 
 
@@ -250,7 +250,7 @@ int main(int argc, const char *argv[])
     std::string initialMessage = file_basename + "|" + std::to_string(numbytesinfile);
 
     // Log output has been written already
-    if (!NtwkUtil::send_ntwk_message(logger, socket_fd, initialMessage))
+    if (!NtwkUtil::send_ntwk_message(loggerp, socket_fd, initialMessage))
     {
         if (input_stream != NULL) ::fclose(input_stream);
         if (socket_fd >= 0) ::close(socket_fd);
@@ -273,20 +273,20 @@ int main(int argc, const char *argv[])
 
         if (::ferror(input_stream))
         {
-            logger.error() << argv0 << ": Error in reading " << input_filename;
+            loggerp->error() << argv0 << ": Error in reading " << input_filename;
             ret = 1;
             break;
         }
 
         if (numread > 0)
         {
-            ret = NtwkUtil::enet_send(logger, socket_fd, array_element_buffer,
+            ret = NtwkUtil::enet_send(loggerp, socket_fd, array_element_buffer,
                     numread, MSG_NOSIGNAL);
             if (ret < 0)
                 break;  // error message logged from inside enet_send()
             else if (ret == 0)
             {
-                logger.debug() << argv0 << ": No data was sent to "
+                loggerp->debug() << argv0 << ": No data was sent to "
                         << connection_ip << ":" << connection_port_number
                         << ", size requested: " << array_element_buffer.size();
                 ret = 1;
@@ -294,25 +294,25 @@ int main(int argc, const char *argv[])
             }
             else
             {
-                // logger.debug() << argv0 << ": Successfully sent " << ret << " bytes to " << connection_ip << ":" << connection_port_number;
+                // loggerp->debug() << argv0 << ": Successfully sent " << ret << " bytes to " << connection_ip << ":" << connection_port_number;
             }
             totalbytes_sent += ret;
         }
     }
 
-    logger.notice() << argv0 << ": Successfully sent file \"" << input_filename
+    loggerp->notice() << argv0 << ": Successfully sent file \"" << input_filename
             << "\" with " << totalbytes_sent << " bytes to " << connection_ip
             << ":" << connection_port_number;
 
     // get server response in a string
     std::string response;
-    if (NtwkUtil::get_ntwk_message(logger, socket_fd, response))
+    if (NtwkUtil::get_ntwk_message(loggerp, socket_fd, response))
     {
-        logger.notice() << "Server response (for file \"" << input_filename << "\"): " << response;
+        loggerp->notice() << "Server response (for file \"" << input_filename << "\"): " << response;
     }
     else
     {
-        logger.error() << response;
+        loggerp->error() << response;
     }
 
     /////////////////
@@ -402,16 +402,9 @@ bool parse(std::ostream &strm, Util::CommandLine& cmdline)
     /////////////////
     // Check out specified log level
     /////////////////
-
-    if (log_level == "debug") loglevel = Log::Log::eDebug;
-    else if (log_level == "info") loglevel = Log::Log::eInfo;
-    else if (log_level == "notice") loglevel = Log::Log::eNotice;
-    else if (log_level == "warning") loglevel = Log::Log::eWarning;
-    else if (log_level == "error") loglevel = Log::Log::eError;
-    else if (log_level == "critical") loglevel = Log::Log::eCritic;
-    else
+    if (UtilLogger::stringToEnumLoglevel(log_level) < 0)
     {
-        strm << "ERROR: Incorrect use of the \"-lg\" flag." << std::endl;
+        std::cerr << "\nERROR: Invalid log level (" << log_level << ").  Exiting...\n" << std::endl;
         return false;
     }
 

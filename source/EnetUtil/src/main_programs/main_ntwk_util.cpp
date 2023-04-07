@@ -49,7 +49,7 @@
 
 using namespace EnetUtil;
 
-void writeData(Log::Logger& logger, datapairUint8_t& readypair)
+void writeData(Util::LoggerSPtr loggerp, datapairUint8_t& readypair)
 {
     if (readypair.first > 0)
     {
@@ -61,16 +61,21 @@ void writeData(Log::Logger& logger, datapairUint8_t& readypair)
     }
 }
 
-std::string logChannelName = "main_ntwk_util";
+std::string logChannelName = "ntwk_util";
 Log::Log::Level logLevel = Log::Log::Level::eDebug;
 
 int main(int argc, char *argv[])
 {
     using namespace Util;
 
-    Log::Config::Vector configList;
-    MainLogger::initialize( configList, logChannelName, logLevel, MainLogger::enableConsole, MainLogger::disableLogFile);
-    Log::Logger logger(logChannelName.c_str());
+    LoggerOptions localopt = UtilLogger::setLocalLoggerOptions(
+                                                    logChannelName,
+                                                    logLevel,
+                                                    MainLogger::enableConsole,
+                                                    MainLogger::disableLogFile
+                                                );
+    Util::UtilLogger::create(localopt);
+    std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
 
     arrayUint8 ibuffer;                     // input buffer
     datapairUint8_t pairdata(0,ibuffer);    // pairdata.first will hold the valid number elements in the std::array<>
@@ -82,7 +87,7 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////////////////////
     while (1)
     {
-        ret = NtwkUtil::enet_receive(logger, 0, pairdata.second, pairdata.second.size());
+        ret = NtwkUtil::enet_receive(loggerp, 0, pairdata.second, pairdata.second.size());
         if (ret == -1)
         {
             ret = 1;    // ret becomes the return code for main()
@@ -93,7 +98,7 @@ int main(int argc, char *argv[])
             break;
         }
         pairdata.first = ret;
-        writeData(logger, pairdata);
+        writeData(loggerp, pairdata);
     }
 
     // Terminate the Log Manager (destroy the Output objects)

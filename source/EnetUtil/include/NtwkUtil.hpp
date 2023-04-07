@@ -1,16 +1,5 @@
 #pragma once
 
-#include <LoggerCpp/LoggerCpp.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <memory>
-#include <string>
-#include <vector>
-#include <mutex>
-#include <utility>
-#include <stdint.h>
-#include <assert.h>
-
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
@@ -34,6 +23,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
+
+#include <MainLogger.hpp>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <memory>
+#include <string>
+#include <vector>
+#include <mutex>
+#include <utility>
+#include <stdint.h>
+#include <assert.h>
 
 namespace EnetUtil
 {
@@ -108,12 +108,12 @@ public:
     // Returns socket file descriptor, or -1 on error.
     // We use the logger because we want to capture errno as early as possible
     // after an important system call(socket(), listen(), bind(), etc) and log it.
-    static int client_socket_connect(Log::Logger& logger, struct ::sockaddr *address);
+    static int client_socket_connect(Util::LoggerSPtr loggerp, struct ::sockaddr *address);
 
     // Returns socket file descriptor, or -1 on error.
     // We use the logger because we want to capture errno as early as possible
     // after an important system call(socket(), listen(), bind(), etc) and log it.
-    static int server_listen(Log::Logger& logger,
+    static int server_listen(Util::LoggerSPtr loggerp,
                       struct ::sockaddr *address_struct,
                       int backlog_size);
 
@@ -123,18 +123,18 @@ public:
     // if and only if the file descriptor is a valid positive file descriptor
     // from a successful accept() system call, and the sockaddr_in structure
     // is valid.
-    static int server_accept( Log::Logger& logger,
+    static int server_accept( Util::LoggerSPtr loggerp,
                               int listen_socket_fd,
                               struct ::sockaddr *address_struct,
                               int retries = 3);
 
-    static int enet_send (Log::Logger& logger,
+    static int enet_send (Util::LoggerSPtr loggerp,
                           int fd,
                           arrayUint8 & array_element_buffer,
                           size_t actual_size,
                           int flag = MSG_NOSIGNAL);
 
-    static int enet_receive(Log::Logger& logger,
+    static int enet_receive(Util::LoggerSPtr loggerp,
                             int fd,
                             arrayUint8 & array_element_buffer,
                             // requestsize can be smaller than the array<>::size()
@@ -145,10 +145,10 @@ public:
     // socket_fd - open connection to the remote system
     // Returns true if successful - restring contains the message from the remote connection.
     // Returns false if failure - retstring contains text about the error.
-    static bool get_ntwk_message(Log::Logger& logger, int socket_fd, std::string& retstring);
+    static bool get_ntwk_message(Util::LoggerSPtr loggerp, int socket_fd, std::string& retstring);
 
     // Send the string message to remote connection socket_fd (already open).
-    static bool send_ntwk_message(Log::Logger& logger, int socket_fd, std::string& message);
+    static bool send_ntwk_message(Util::LoggerSPtr loggerp, int socket_fd, std::string& message);
 
 };  // end of class NtwkUtil
 

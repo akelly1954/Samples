@@ -1,23 +1,3 @@
-#include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
-#include <Utility.hpp>
-#include <MainLogger.hpp>
-#include <commandline.hpp>
-#include <NtwkUtil.hpp>
-#include <NtwkFixedArray.hpp>
-#include <LoggerCpp/LoggerCpp.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-#include <vector>
-#include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <thread>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
@@ -43,16 +23,33 @@
 // SOFTWARE.
 /////////////////////////////////////////////////////////////////////////////////
 
+#include <ntwk_basic_sock_server/ntwk_connection_thread.hpp>
+#include <Utility.hpp>
+#include <MainLogger.hpp>
+#include <commandline.hpp>
+#include <NtwkUtil.hpp>
+#include <NtwkFixedArray.hpp>
+#include <LoggerCpp/LoggerCpp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <thread>
 using namespace EnetUtil;
 
 // Defaults and other constants
-                                                        // All threads, including main, output to this channel
-const char *logChannelName = "main_basic_socket_server";
 
-const char *logFileName = "main_basic_socket_server_log.txt";
-
-std::string default_log_level = "notice";
-std::string log_level = default_log_level;
+const char *logChannelName  = "basic_socket_server";
+Log::Log::Level loglevel    = Log::Log::eNotice;
+std::string log_level       = Util::UtilLogger::getLoggerLevelEnumString(loglevel);
 
 const char *default_server_listen_ip = "INADDR_ANY";    // default listen ip address type
 std::string server_listen_ip(default_server_listen_ip); // can be modified from the command line
@@ -76,9 +73,9 @@ void Usage(std::ostream& strm, std::string command)
             "                                            during the build - see NOTE below)\n" <<
             "                  [ -bl connections ]       (maximum number of connection requests queued before \n" <<
             "                                            requests are dropped - default is 50) \n" <<
-            "                  [ -lg log-level ]         (see below, default is \"notice\"\n" <<
+            "                  [ -lg log-level ]         (see below, default is \"NOTE\"\n" <<
             "\n" <<
-            "log-level can be one of: {\"debug\", \"info\", \"notice\", \"warning\", \"error\", \"critical\"}\n" <<
+            "log-level can be one of: {\"DBUG\", \"INFO\", \"NOTE\", \"WARN\", \"EROR\", \"CRIT\"}\n" <<
             "\n"
             "NOTE: the default port numbers that both client and server use match up at the time the sources were built.\n" <<
             "      If the port number is set on the command line, it should be done for both client and server.\n" <<
@@ -112,6 +109,12 @@ bool parse(int argc, const char *argv[], Util::CommandLine& cmdline )
     specified["-pn"] = cmdline.get_template_arg("-pn", server_listen_port_number);
     specified["-bl"] = cmdline.get_template_arg("-bl", server_listen_max_backlog);
     specified["-lg"] = cmdline.get_template_arg("-lg", log_level);
+
+    if (UtilLogger::stringToEnumLoglevel(log_level) < 0)
+    {
+        std::cerr << "\nERROR: Invalid log level (" << log_level << ").  Exiting...\n" << std::endl;
+        return false;
+    }
 
     bool ret = true;  // Currently all flags have default values, so it's always good.
     std::for_each(specified.begin(), specified.end(), [&ret](auto member) { if (member.second) { ret = true; }});
@@ -154,51 +157,36 @@ int main(int argc, const char *argv[])
     }
 
     /////////////////
-    // Check out specified log level
-    /////////////////
-
-    Log::Log::Level loglevel = Log::Log::eNotice;
-
-    if (log_level == "debug") loglevel = Log::Log::eDebug;
-    else if (log_level == "info") loglevel = Log::Log::eInfo;
-    else if (log_level == "notice") loglevel = Log::Log::eNotice;
-    else if (log_level == "warning") loglevel = Log::Log::eWarning;
-    else if (log_level == "error") loglevel = Log::Log::eError;
-    else if (log_level == "critical") loglevel = Log::Log::eCritic;
-    else
-    {
-        std::cerr << "\nIncorrect use of the \"-lg\" flag." << std::endl;
-        Usage(std::cerr, argv0);
-        return 1;
-    }
-
-    /////////////////
     // Set up logger
     /////////////////
+    Util::LoggerOptions localopt = Util::UtilLogger::setLocalLoggerOptions(
+                                                        logChannelName,
+                                                        loglevel,
+                                                        Util::MainLogger::disableConsole,
+                                                        Util::MainLogger::enableLogFile
+                                                    );
+    Util::UtilLogger::create(localopt);
+    std::shared_ptr<Log::Logger> loggerp = Util::UtilLogger::getLoggerPtr();
 
-    Log::Config::Vector configList;
-
-    MainLogger::initializeLogManager(configList, loglevel, logFileName, MainLogger::disableConsole, MainLogger::enableLogFile);
-    MainLogger::configureLogManager( configList, logChannelName );
-    Log::Logger logger(logChannelName);
     std::cout << "Log level is set to \"" << log_level << "\"" << std::endl;
 
-    logger.notice() << "======================================================================";
-    logger.notice() << "Starting the server:";
+
+    loggerp->notice() << "======================================================================";
+    loggerp->notice() << "Starting the server:";
 
     if (server_listen_ip.empty() || server_listen_ip == "INADDR_ANY")
     {
         server_listen_ip = "";
-        logger.notice() << "    listening on ip address: INADDR_ANY";
+        loggerp->notice() << "    listening on ip address: INADDR_ANY";
     }
     else
     {
-        logger.notice() << "    listening on ip address: " << server_listen_ip;
+        loggerp->notice() << "    listening on ip address: " << server_listen_ip;
     }
 
-    logger.notice() << "    port number: " << server_listen_port_number;
-    logger.notice() << "    max backlog connection requests: " << server_listen_max_backlog;
-    logger.notice() << "======================================================================";
+    loggerp->notice() << "    port number: " << server_listen_port_number;
+    loggerp->notice() << "    max backlog connection requests: " << server_listen_max_backlog;
+    loggerp->notice() << "======================================================================";
 
     /////////////////
     // Set up and bind the listener socket on which client connection requests are made
@@ -207,18 +195,18 @@ int main(int argc, const char *argv[])
     struct ::sockaddr_in sin_addr;
     if(! NtwkUtil::setup_sockaddr_in(std::string(server_listen_ip), (uint16_t) server_listen_port_number, (sockaddr *) &sin_addr))
     {
-        logger.error() << "Error returned from setup_sockaddr_in(): Aborting...";
+        loggerp->error() << "Error returned from setup_sockaddr_in(): Aborting...";
         return 1;
     }
 
     int socket_fd = -1;
-    if ((socket_fd = NtwkUtil::server_listen(logger, (sockaddr *) &sin_addr, server_listen_max_backlog)) < 0)
+    if ((socket_fd = NtwkUtil::server_listen(loggerp, (sockaddr *) &sin_addr, server_listen_max_backlog)) < 0)
     {
-        logger.error() << "Error returned from server_listen(): Aborting...";
+        loggerp->error() << "Error returned from server_listen(): Aborting...";
         return 1;
     }
 
-    logger.notice() << "In main(): Server created and accepting connection requests";
+    loggerp->notice() << "In main(): Server created and accepting connection requests";
 
     //////////////////////////////////////////////////////////////////////////////////////
     // MAIN SERVER LOOP:  All connections have been set up.
@@ -232,19 +220,19 @@ int main(int argc, const char *argv[])
     int i = 0;
     for (i = 1; !aborted; i++)
     {
-        if ((accept_socket_fd = NtwkUtil::server_accept(logger, socket_fd, (sockaddr *) &sin_addr)) < 0)
+        if ((accept_socket_fd = NtwkUtil::server_accept(loggerp, socket_fd, (sockaddr *) &sin_addr)) < 0)
         {
             // Aborting
             aborted = true;
             continue;
         }
 
-        logger.debug() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
+        loggerp->debug() << "In main(): Connection " << i << " accepted: fd = " << accept_socket_fd;
 
         // Start a thread to handle the connection. Each one of these threads, once
         // they're started (in sequence), gets all the data from the connection and
         // writes it out to a file.
-        socket_connection_thread::start (accept_socket_fd, i, logChannelName);
+        socket_connection_thread::start (accept_socket_fd, i, loggerp);
     }
 
     int ret = (aborted? 1 : 0);

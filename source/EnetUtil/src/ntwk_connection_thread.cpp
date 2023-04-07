@@ -45,17 +45,17 @@ using namespace EnetUtil;
 std::mutex socket_connection_thread::s_vector_mutex;
 std::vector<std::thread> socket_connection_thread::s_connection_workers;
 
-// One of these objects is instantiated in every thread which is started from
-// start() below for every client connection which is accepted.
-auto thread_connection_handler =
-        [](int socketfd, int threadno, Log::Logger logger)
+// This function is in a new thread which is started for every accepted connection
+// from start() below.
+void thread_connection_handler(int socketfd, int threadno, Util::LoggerSPtr loggerp)
 {
     using Util::Utility;
 
     // FOR DEBUG    std::cout << "socket_connection_thread::handler(): started thread for connection "
     //                        << threadno << ", fd = " << socketfd << std::endl;
 
-    // logger.debug() << "socket_connection_thread::handler(" << threadno <<
+    // TODO: Commented out for DEBUG
+    // loggerp->debug() << "socket_connection_thread::handler(" << threadno <<
     //                   "): Beginning of thread for connection " << threadno << ", fd = " << socketfd;
 
     /////////////////
@@ -66,13 +66,13 @@ auto thread_connection_handler =
 
     // get initial client message in a string
     std::string message;
-    if (NtwkUtil::get_ntwk_message(logger, socketfd, message))
+    if (NtwkUtil::get_ntwk_message(loggerp, socketfd, message))
     {
-        logger.debug() << "thread_connection_handler: Initial client message: " << message;
+        loggerp->debug() << "thread_connection_handler: Initial client message: " << message;
     }
     else
     {
-        logger.error() << message;
+        loggerp->error() << message;
         if (socketfd >= 0) ::close(socketfd);
         return;
     }
@@ -81,12 +81,12 @@ auto thread_connection_handler =
 
     // for (std::string const& str: remote_message_vector)
     // {
-    //     logger.debug() << str;
+    //     loggerp->debug() << str;
     // }
 
     if (remote_message_vector.size() != 2)
     {
-        logger.error() << "thread_connection_handler: ERROR: Initial client message expects two fields.  Received " <<
+        loggerp->error() << "thread_connection_handler: ERROR: Initial client message expects two fields.  Received " <<
                           remote_message_vector.size() << ". Terminating connection...";
         if (socketfd >= 0) ::close(socketfd);
         return;
@@ -101,7 +101,7 @@ auto thread_connection_handler =
                                   "." +
                                   remote_filename;
 
-    logger.debug() << "thread_connection_handler: byte count from remote = " <<
+    loggerp->debug() << "thread_connection_handler: byte count from remote = " <<
                        std::to_string(remote_bytecount) << ", local server output to \"" <<
                        output_filename << "\"";
 
@@ -114,8 +114,8 @@ auto thread_connection_handler =
     {
         std::shared_ptr<fixed_uint8_array_t> sp_data = fixed_uint8_array_t::create();
 
-        int num_elements_received = NtwkUtil::enet_receive(logger, socketfd, sp_data->data(), sp_data->data().size());
-        // logger.debug() << "socket_connection_thread::handler(" << threadno << "): Read " <<
+        int num_elements_received = NtwkUtil::enet_receive(loggerp, socketfd, sp_data->data(), sp_data->data().size());
+        // loggerp->debug() << "socket_connection_thread::handler(" << threadno << "): Read " <<
         //     num_elements_received << " bytes on fd " << socketfd << ", remaining: " << bytesremaining;
 
         if (num_elements_received == 0)// EOF
@@ -127,13 +127,13 @@ auto thread_connection_handler =
         {
             if (! sp_data->set_num_valid_elements(num_elements_received))
             {
-                logger.error() << "socket_connection_thread::handler: Error in setting socket_connection_thread::handler(" << threadno <<
+                loggerp->error() << "socket_connection_thread::handler: Error in setting socket_connection_thread::handler(" << threadno <<
                 ") num_valid_elements. Got  " << num_elements_received << " elements on fd " << socketfd <<
                 ". Aborting...";
                 finished = true;
                 continue;
             }
-            //logger.debug() << "socket_connection_thread::handler(" << threadno << "): " <<
+            //loggerp->debug() << "socket_connection_thread::handler(" << threadno << "): " <<
             //                    "Set number of valid elements to " <<
             //                    num_elements_received << " bytes on fd " << socketfd;
 
@@ -148,12 +148,12 @@ auto thread_connection_handler =
                 if ((output_stream = ::fopen (output_filename.c_str(), "w")) == NULL)
                 {
                     errnocopy = errno;
-                    logger.error() << "Cannot create/truncate output file (thread " << threadno << ") \"" <<
+                    loggerp->error() << "Cannot create/truncate output file (thread " << threadno << ") \"" <<
                     output_filename << "\": " << Utility::get_errno_message(errnocopy);
                     finished = true;
                     continue;
                 }
-                // logger.debug() << "Created/truncated output file (thread " << threadno << ") \"" << output_filename << "\"";
+                // loggerp->debug() << "Created/truncated output file (thread " << threadno << ") \"" << output_filename << "\"";
             }
 
             size_t elementswritten = std::fwrite(sp_data->data().data(), sizeof(uint8_t), sp_data->num_valid_elements(), output_stream);
@@ -165,14 +165,14 @@ auto thread_connection_handler =
             if (elementswritten != sp_data->num_valid_elements())
             {
                 errnocopy = errno;
-                logger.error() << "Error writing output file (thread " << threadno << ") \"" <<
+                loggerp->error() << "Error writing output file (thread " << threadno << ") \"" <<
                 output_filename << "\": " << Utility::get_errno_message(errnocopy);
                 finished = true;
                 continue;
             }
 
             bytesremaining -= byteswritten;
-            // logger.debug() << "Wrote " << (elementswritten * sizeof(uint8_t)) << " bytes into " << output_filename << ". Bytes remaining: " << bytesremaining;
+            // loggerp->debug() << "Wrote " << (elementswritten * sizeof(uint8_t)) << " bytes into " << output_filename << ". Bytes remaining: " << bytesremaining;
             if (bytesremaining <= 0)
             {
                 finished = true;
@@ -192,7 +192,7 @@ auto thread_connection_handler =
 
     // No need to check return - the function writes to the
     // log file, and we are done anyways.
-    NtwkUtil::send_ntwk_message(logger, socketfd, response);
+    NtwkUtil::send_ntwk_message(loggerp, socketfd, response);
 
     // CLEANUP.
 
@@ -203,14 +203,14 @@ auto thread_connection_handler =
     close(socketfd);
 };
 
-void socket_connection_thread::start(int accpt_socket, int threadno,
-        const char *logChannelName)
+void socket_connection_thread::start(int accpt_socket, int threadno,  Util::LoggerSPtr loggerp)
 {
-    assert(logChannelName);
+    // TODO: Need to check this out
+    loggerp->setLevel(Log::Log::eDebug);
 
-    Log::Logger logger(logChannelName);
-    // logger.debug() << "socket_connection_handler(): starting a connection handler thread: ";
-    // logger.debug() << "fd = " << accpt_socket << ", thread number: " << threadno << ", log channel: " << logChannelName;
+    // TODO: Commented out for debug
+    // loggerp->debug() << "socket_connection_handler(): starting a connection handler thread: ";
+    // loggerp->debug() << "fd = " << accpt_socket << ", thread number: " << threadno;  //  << ", log channel: " << logChannelName;
 
     try
     {
@@ -220,22 +220,22 @@ void socket_connection_thread::start(int accpt_socket, int threadno,
             // the main thread (right here) before it is used from inside the new thread.
             std::lock_guard<std::mutex> lock(s_vector_mutex);
             socket_connection_thread::s_connection_workers.push_back(
-                    std::thread(thread_connection_handler, accpt_socket, threadno, logger));
+                    std::thread(thread_connection_handler, accpt_socket, threadno, loggerp));
         }
     } catch (std::exception &exp)
     {
-        logger.error()
+        loggerp->error()
                 << "Got exception in socket_connection_handler() starting thread "
                 << threadno << " for socket fd " << accpt_socket << ": "
                 << exp.what();
     } catch (...)
     {
-        logger.error()
+        loggerp->error()
                 << "General exception occurred in socket_connection_handler() starting thread "
                 << threadno << " for socket fd " << accpt_socket;
     }
 
-    // logger.debug() << "socket_connection_handler(): started thread " <<
+    // loggerp->debug() << "socket_connection_handler(): started thread " <<
     //                       threadno << " for socket fd " << accpt_socket;
 }
 
