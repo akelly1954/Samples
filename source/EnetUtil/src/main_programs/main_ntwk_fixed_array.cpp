@@ -83,14 +83,6 @@ int main(int argc, char *argv[])
 
     std::cout << "Log level is set to \"" << Log::Log::toString(loglevel) << "\"" << std::endl;
 
-
-#if 0 // TODO:
-    Log::Config::Vector configList;
-    MainLogger::initializeLogManager(configList, Log::Log::Level::eNotice, "", Util::MainLogger::enableConsole, Util::MainLogger::disableLogFile);
-    MainLogger::configureLogManager( configList, logChannelName );
-    Log::Logger logger(logChannelName);
-#endif // 0
-
     try
     {
         std::shared_ptr<fixed_size_array<uint8_t,NtwkUtilBufferSize>> sp1 = fixed_size_array<uint8_t,NtwkUtilBufferSize>::create();
