@@ -88,13 +88,15 @@ public:
     // If n is greater than the size of the buffer, only that size number of members is returned.
     // The first member of the deque will be the latest member added to buffer, the next will be
     // the one before that, etc.
-    void get_members_in_deque(std::deque<T>& result, size_t num = 0) const {
-        std::lock_guard<std::mutex> lock(mutex_);
+    void get_members_in_deque(std::deque<T>& result, size_t num = 0) const
+    {
         result.clear();
         if (empty())
             return;
 
         int avail = size();
+
+        std::lock_guard<std::mutex> lock(mutex_);
         size_t n = num;
         if (n > avail || n == 0)
             n = avail;

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <iostream>
-#include "circular_buffer.hpp"
+#include <circular_buffer.hpp>
 
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
