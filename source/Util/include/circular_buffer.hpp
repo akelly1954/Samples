@@ -48,7 +48,7 @@ public:
 
         head_ = (head_ + 1) % max_size_;
 
-        full_ = head_ == tail_;
+        full_ = (head_ == tail_);
     }
 
     // Call put() with a condition_data mechanism to
